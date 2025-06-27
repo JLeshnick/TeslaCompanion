@@ -2,8 +2,6 @@
 
 Your all-in-one web-based toolkit for viewing TeslaCam clips, estimating charging time, calculating phantom drain, and more. This app is a single, self-contained HTML file that runs entirely in your browser.
 
----
-
 ## ✨ Features
 
 - **Multi-Camera Viewer:** Simultaneously view clips from all cameras (Front, Back, Left/Right Repeaters, Left/Right Pillars) in a synchronized grid.
@@ -18,16 +16,13 @@ Your all-in-one web-based toolkit for viewing TeslaCam clips, estimating chargin
 - **Fully Responsive:** Works beautifully on desktop, tablet, and mobile browsers.
 - **Privacy Focused:** No data ever leaves your computer. Everything is processed locally in your browser.
 
----
-
 ## 🚀 Live Demo
 
 You can try a live version of the Tesla Companion hosted on GitHub Pages:
 
 👉 [**https://jleshnick.github.io/TeslaCompanion/**](https://jleshnick.github.io/TeslaCompanion/)
 
-
----
+> _To set this up for your own repository: Go to **Settings > Pages**, then under "Build and deployment," select **Deploy from a branch**, and choose the branch with the `/root` folder._
 
 ## 💻 How to Use
 
@@ -39,8 +34,6 @@ You can try a live version of the Tesla Companion hosted on GitHub Pages:
    - Choose the **TeslaCam** folder or a specific event folder (e.g., `2024-06-27_17-19-01`). Both work.
 4. **View Events:** Use the dropdown or navigation buttons to move between events.
 
----
-
 ## 🛠️ Technologies Used
 
 - **HTML5** – Core structure  
@@ -48,8 +41,6 @@ You can try a live version of the Tesla Companion hosted on GitHub Pages:
 - **Vanilla JavaScript (ES6+)** – Logic, video handling, DOM manipulation  
 - **Google Fonts** – “Inter” font  
 - **Feather Icons** – Simple, clean UI icons  
-
----
 
 ## 🖼️ Gallery
 
@@ -72,14 +63,10 @@ You can try a live version of the Tesla Companion hosted on GitHub Pages:
 **Phantom Drain Estimator**  
 ![Phantom Drain Estimator Tool](assets/PhantomDrainEstimator.png)
 
----
-
 ## 🙏 Acknowledgements
 
 - Core camera viewer functionality based on **Lythinari's TeslaCamViewer**
 - Enhanced UI and features developed by **Joshua Leshnick**
-
----
 
 ## 📄 License
 
