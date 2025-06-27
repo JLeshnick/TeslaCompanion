@@ -22,8 +22,6 @@ You can try a live version of the Tesla Companion hosted on GitHub Pages:
 
 👉 [**https://jleshnick.github.io/TeslaCompanion/**](https://jleshnick.github.io/TeslaCompanion/)
 
-> _To set this up for your own repository: Go to **Settings > Pages**, then under "Build and deployment," select **Deploy from a branch**, and choose the branch with the `/root` folder._
-
 ## 💻 How to Use
 
 1. **View Sentry/Dashcam Clips:** Plug your Tesla's USB drive into your computer.  
