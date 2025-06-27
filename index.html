@@ -101,9 +101,9 @@
         }
         
         #landing-page.hidden {
-           opacity: 0;
-           transform: scale(0.95);
-           pointer-events: none;
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
         }
 
         .landing-content {
@@ -149,10 +149,10 @@
         }
         
         .feature-item:hover {
-           transform: translateY(-2px);
-           box-shadow: var(--shadow-md);
-           color: var(--text-color);
-           border-color: var(--border-hover-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            color: var(--text-color);
+            border-color: var(--border-hover-color);
         }
         
         #launch-app-btn {
@@ -169,14 +169,13 @@
         }
         
         #launch-app-btn:hover {
-           transform: translateY(-3px) scale(1.05);
-           box-shadow: var(--shadow-xl);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-xl);
         }
         
         #launch-app-btn:active {
-           transform: translateY(-1px) scale(1.02);
+            transform: translateY(-1px) scale(1.02);
         }
-
 
         /* --- Main App Styles --- */
         .layout-container { 
@@ -186,12 +185,12 @@
             transition: opacity 0.5s ease-in;
             opacity: 1;
         }
-        
+
         .layout-container.hidden {
             display: none;
             opacity: 0;
         }
-
+        
         .header {
             background: var(--surface-color);
             backdrop-filter: blur(20px);
@@ -301,8 +300,8 @@
         #play-pause-button { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; border-color: var(--primary-color); width: 48px; height: 48px; box-shadow: var(--shadow-md); }
         #play-pause-button:hover { background: linear-gradient(135deg, var(--primary-hover-color), var(--primary-color)); transform: scale(1.05); box-shadow: var(--shadow-lg); }
         
-        .content-container { flex-grow: 1; overflow: hidden; /* Changed */ background: var(--bg-color); display: flex; flex-direction: column;}
-        .tab-content { display: none; flex-grow: 1; flex-direction: column; overflow-y: auto; /* Changed */ }
+        .content-container { flex-grow: 1; overflow: hidden; background: var(--bg-color); display: flex; flex-direction: column;}
+        .tab-content { display: none; flex-grow: 1; flex-direction: column; overflow-y: auto; }
         .tab-content.active { display: flex; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -349,6 +348,12 @@
         input:checked + .slider:before { transform: translateX(20px); }
         .toggle-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; font-size: 0.875rem; font-weight: 500; transition: var(--transition-fast); }
         .toggle-label:hover { color: var(--primary-color); }
+        
+        select.styled-input option {
+            background: var(--surface-elevated);
+            color: var(--text-color);
+        }
+
         .styled-input { background: var(--control-bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.5rem 1rem; font-size: 0.875rem; cursor: pointer; transition: var(--transition-fast); -webkit-appearance: none; appearance: none; backdrop-filter: blur(10px); }
         .styled-input:hover { border-color: var(--border-hover-color); box-shadow: var(--shadow-sm); }
         .styled-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(232, 33, 39, 0.1); }
@@ -379,11 +384,6 @@
             .video-grid { gap: 0.5rem; }
             .panel-section { padding: 1rem; gap: 1rem; }
             .grid, .grid-4 { grid-template-columns: 1fr; }
-            
-            .landing-logo { font-size: 2.5rem; }
-            .landing-subtitle { font-size: 1rem; }
-            .feature-list { gap: 0.5rem; }
-            .feature-item { font-size: 0.9rem; padding: 0.5rem 1rem; }
         }
     </style>
 </head>
@@ -393,11 +393,11 @@
 <div id="landing-page">
     <div class="landing-content">
         <div class="landing-logo">Tesla Companion</div>
-        <p class="landing-subtitle">Your All-in-One Toolkit for Camera Clips, Charging, and More.</p>
+        <p class="landing-subtitle">Your Toolkit for Viewing Camera Clips, Estimating Charging Time, Phantom Drain, and more.</p>
         <div class="feature-list">
             <div class="feature-item">Camera Viewer</div>
-            <div class="feature-item">Charging Estimator</div>
-            <div class="feature-item">Phantom Drain Calc</div>
+            <div class="feature-item">Charging Time Estimator</div>
+            <div class="feature-item">Phantom Drain Estimator</div>
         </div>
         <button id="launch-app-btn">Launch Application</button>
     </div>
@@ -407,7 +407,7 @@
 <div class="layout-container hidden"> 
     <header class="header">
         <div class="title-area">
-             <div class="title">Tesla Companion</div>
+              <div class="title">Tesla Companion</div>
         </div>
         <div class="main-tabs">
             <button class="tab-button active" onclick="openTab(event, 'HowTo')">How To</button>
@@ -417,10 +417,10 @@
             <button class="tab-button" onclick="openTab(event, 'About')">About</button>
         </div>
         <div class="top-right-controls">
-             <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
-                 <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                 <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-             </button>
+              <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
+                  <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                  <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              </button>
         </div>
     </header>
 
@@ -437,11 +437,11 @@
                     <li><strong>Navigate Events:</strong> Use the dropdown menu to select a specific event date and time. You can also use the Previous/Next arrow buttons or your keyboard's Up/Down arrows to cycle through events.</li>
                     <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
                     <li><strong>Jump to Event:</strong> If an event was triggered (e.g., by Sentry Mode), an "Event" button will appear. Click it to jump directly to the moment of the trigger.</li>
-                    <li><strong>Enhanced Screenshots:</strong> Use the "Screenshot" button in the top controls to download a single, high-quality image stitching all visible camera feeds together.</li>
+                    <li><strong>Grid Screenshots:</strong> Use the "Screenshot" button in the top controls to download a single, high-quality image stitching all visible camera feeds together.</li>
                 </ul>
 
                 <h2>Charging Time Estimator</h2>
-                 <ul>
+                  <ul>
                     <li><strong>Enter Details:</strong> Input your vehicle's original battery capacity, your current and target battery percentage, and the efficiency of your charger.</li>
                     <li><strong>Select Charger:</strong> Choose from common charger types (Mobile, Level 2, Supercharger) or select "Custom" to input specific voltage and amperage.</li>
                     <li><strong>Calculate:</strong> Click the button to get an estimate of how long your charging session will take.</li>
@@ -458,110 +458,110 @@
         
         <!-- Camera Viewer Tab -->
         <div id="CameraViewer" class="tab-content">
-             <div id="camera-controls-container" style="display: none;">
-                 <div class="header-main">
-                     <div class="header-row top-ribbon">
-                         <div class="title-area">
-                             <div class="clip-info">
-                                 <span class="title-folder-name">No Clips Selected</span>
-                                 <div id="event-reason-display" style="display: none;"></div>
-                             </div>
+             <div id="camera-controls-container">
+                   <div class="header-main">
+                         <div class="header-row top-ribbon">
+                               <div class="title-area">
+                                   <div class="clip-info">
+                                       <span class="title-folder-name">No Clips Selected</span>
+                                       <div id="event-reason-display" style="display: none;"></div>
+                                   </div>
+                               </div>
+                               <div class="main-playback-controls">
+                                   <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Event</button>
+                                   <button class="btn icon-btn previous" title="Previous Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"></path></svg></button>
+                                   <button class="btn" id="skip-rewind" title="Rewind 5s">-5s</button>
+                                   <button class="btn icon-btn" id="play-pause-button"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M8 5v14l11-7z"></path></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
+                                   <button class="btn" id="skip-forward" title="Forward 5s">+5s</button>
+                                   <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
+                                   <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
+                                   <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
+                               </div>
+                               <div class="top-right-controls">
+                                   <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
+                                   <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                                   <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
+                                   <select id="date-select" class="styled-input" style="max-width: 160px;"><option>Select Event</option></select>
+                                   <button class="btn" id="toggle-controls-btn" title="Select Camera Angles">Select Camera Angles <svg id="chevron-down" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"></path></svg><svg id="chevron-up" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display:none;"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"></path></svg></button>
+                               </div>
                          </div>
-                         <div class="main-playback-controls">
-                             <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Event</button>
-                             <button class="btn icon-btn previous" title="Previous Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"></path></svg></button>
-                             <button class="btn" id="skip-rewind" title="Rewind 5s">-5s</button>
-                             <button class="btn icon-btn" id="play-pause-button"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M8 5v14l11-7z"></path></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
-                             <button class="btn" id="skip-forward" title="Forward 5s">+5s</button>
-                             <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
-                             <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
-                             <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
+                         <div class="header-row progress-container">
+                               <div id="event-marker"></div>
+                               <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
                          </div>
-                         <div class="top-right-controls">
-                             <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
-                             <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
-                             <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
-                             <select id="date-select" class="styled-input" style="max-width: 160px;"><option>Select Event</option></select>
-                             <button class="btn" id="toggle-controls-btn" title="Select Camera Angles">Select Camera Angles <svg id="chevron-down" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"></path></svg><svg id="chevron-up" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display:none;"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"></path></svg></button>
+                   </div>
+                   <div id="collapsible-controls" class="collapsible-panel">
+                         <div class="panel-section">
+                               <div class="camera-toggles" id="camera-toggles">
+                                   <label class="toggle-label" for="select-all-cameras">All Cameras<label class="switch"><input type="checkbox" id="select-all-cameras" checked><span class="slider"></span></label></label>
+                                   <div class="divider"></div>
+                                   <label class="toggle-label" for="cam-front">Front<label class="switch"><input type="checkbox" id="cam-front" data-camera="front" checked><span class="slider"></span></label></label>
+                                   <label class="toggle-label" for="cam-back">Back<label class="switch"><input type="checkbox" id="cam-back" data-camera="back" checked><span class="slider"></span></label></label>
+                                   <label class="toggle-label" for="cam-left-repeater">L Fender<label class="switch"><input type="checkbox" id="cam-left-repeater" data-camera="left_repeater" checked><span class="slider"></span></label></label>
+                                   <label class="toggle-label" for="cam-right-repeater">R Fender<label class="switch"><input type="checkbox" id="cam-right-repeater" data-camera="right_repeater" checked><span class="slider"></span></label></label>
+                                   <label class="toggle-label" for="cam-left-pillar">L Pillar<label class="switch"><input type="checkbox" id="cam-left-pillar" data-camera="left_pillar" checked><span class="slider"></span></label></label>
+                                   <label class="toggle-label" for="cam-right-pillar">R Pillar<label class="switch"><input type="checkbox" id="cam-right-pillar" data-camera="right_pillar" checked><span class="slider"></span></label></label>
+                               </div>
                          </div>
-                     </div>
-                     <div class="header-row progress-container">
-                         <div id="event-marker"></div>
-                         <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
-                     </div>
-                 </div>
-                 <div id="collapsible-controls" class="collapsible-panel">
-                     <div class="panel-section">
-                         <div class="camera-toggles" id="camera-toggles">
-                             <label class="toggle-label" for="select-all-cameras">All Cameras<label class="switch"><input type="checkbox" id="select-all-cameras" checked><span class="slider"></span></label></label>
-                             <div class="divider"></div>
-                             <label class="toggle-label" for="cam-front">Front<label class="switch"><input type="checkbox" id="cam-front" data-camera="front" checked><span class="slider"></span></label></label>
-                             <label class="toggle-label" for="cam-back">Back<label class="switch"><input type="checkbox" id="cam-back" data-camera="back" checked><span class="slider"></span></label></label>
-                             <label class="toggle-label" for="cam-left-repeater">L Fender<label class="switch"><input type="checkbox" id="cam-left-repeater" data-camera="left_repeater" checked><span class="slider"></span></label></label>
-                             <label class="toggle-label" for="cam-right-repeater">R Fender<label class="switch"><input type="checkbox" id="cam-right-repeater" data-camera="right_repeater" checked><span class="slider"></span></label></label>
-                             <label class="toggle-label" for="cam-left-pillar">L Pillar<label class="switch"><input type="checkbox" id="cam-left-pillar" data-camera="left_pillar" checked><span class="slider"></span></label></label>
-                             <label class="toggle-label" for="cam-right-pillar">R Pillar<label class="switch"><input type="checkbox" id="cam-right-pillar" data-camera="right_pillar" checked><span class="slider"></span></label></label>
-                         </div>
-                     </div>
-                 </div>
+                   </div>
              </div>
              <div class="video-grid-container">
-                 <div class="video-grid" id="video-grid">
-                     <div class="video-container front"><div class="video-label">Front</div><video class="front" muted playsinline></video></div>
-                     <div class="video-container back"><div class="video-label">Back</div><video class="back" muted playsinline></video></div>
-                     <div class="video-container left_repeater"><div class="video-label">Left Fender</div><video class="left_repeater" muted playsinline></video></div>
-                     <div class="video-container right_repeater"><div class="video-label">Right Fender</div><video class="right_repeater" muted playsinline></video></div>
-                     <div class="video-container left_pillar"><div class="video-label">Left Pillar</div><video class="left_pillar" muted playsinline></video></div>
-                     <div class="video-container right_pillar"><div class="video-label">Right Pillar</div><video class="right_pillar" muted playsinline></video></div>
-                 </div>
+                   <div class="video-grid" id="video-grid">
+                         <div class="video-container front"><div class="video-label">Front</div><video class="front" muted playsinline></video></div>
+                         <div class="video-container back"><div class="video-label">Back</div><video class="back" muted playsinline></video></div>
+                         <div class="video-container left_repeater"><div class="video-label">Left Fender</div><video class="left_repeater" muted playsinline></video></div>
+                         <div class="video-container right_repeater"><div class="video-label">Right Fender</div><video class="right_repeater" muted playsinline></video></div>
+                         <div class="video-container left_pillar"><div class="video-label">Left Pillar</div><video class="left_pillar" muted playsinline></video></div>
+                         <div class="video-container right_pillar"><div class="video-label">Right Pillar</div><video class="right_pillar" muted playsinline></video></div>
+                   </div>
              </div>
         </div>
         
         <!-- Charging Estimator Tab -->
         <div id="ChargingEstimator" class="tab-content">
              <div class="calculator-container">
-                 <h1>Charging Time Estimator</h1>
-                 <div class="grid">
-                     <div class="form-group"><label for="battery-capacity">Original Battery Capacity (kWh)</label><input type="number" id="battery-capacity" value="75"></div>
-                     <div class="form-group"><label for="charger-efficiency">Charger Efficiency (%)</label><input type="number" id="charger-efficiency" value="85"></div>
-                 </div>
-                 <div class="grid">
-                     <div class="form-group"><label for="current-soc">Current Battery (%)</label><input type="number" id="current-soc" placeholder="20" min="0" max="100"></div>
-                     <div class="form-group"><label for="target-soc">Target Battery (%)</label><input type="number" id="target-soc" placeholder="80" min="0" max="100"></div>
-                 </div>
-                 <div class="form-group">
-                     <label for="charger-type">Charger Type</label>
-                     <select id="charger-type" onchange="toggleCustomParams()"><option value="1.5">Mobile (15A / 120V)</option><option value="7.7">Mobile (50A / 240V)</option><option value="9.6" selected>Level 2 (Workplace/Home)</option><option value="250">Supercharger</option><option value="custom">Custom...</option></select>
-                 </div>
-                 <div id="custom-params" style="display:none;"><hr><div class="grid"><div class="form-group"><label for="voltage">Voltage (V)</label><input type="number" id="voltage" placeholder="240"></div><div class="form-group"><label for="amps">Amps (A)</label><input type="number" id="amps" placeholder="32"></div></div></div>
-                 <button class="primary-btn" onclick="calculateTime()">Calculate</button>
-                 <div id="result" class="result-box"></div>
+                   <h1>Charging Time Estimator</h1>
+                   <div class="grid">
+                         <div class="form-group"><label for="battery-capacity">Original Battery Capacity (kWh)</label><input type="number" id="battery-capacity" value="75"></div>
+                         <div class="form-group"><label for="charger-efficiency">Charger Efficiency (%)</label><input type="number" id="charger-efficiency" value="85"></div>
+                   </div>
+                   <div class="grid">
+                         <div class="form-group"><label for="current-soc">Current Battery (%)</label><input type="number" id="current-soc" placeholder="20" min="0" max="100"></div>
+                         <div class="form-group"><label for="target-soc">Target Battery (%)</label><input type="number" id="target-soc" placeholder="80" min="0" max="100"></div>
+                   </div>
+                   <div class="form-group">
+                         <label for="charger-type">Charger Type</label>
+                         <select id="charger-type" onchange="toggleCustomParams()"><option value="1.5">Mobile (15A / 120V)</option><option value="7.7">Mobile (50A / 240V)</option><option value="9.6" selected>Level 2 (Workplace/Home)</option><option value="250">Supercharger</option><option value="custom">Custom...</option></select>
+                   </div>
+                   <div id="custom-params" style="display:none;"><hr><div class="grid"><div class="form-group"><label for="voltage">Voltage (V)</label><input type="number" id="voltage" placeholder="240"></div><div class="form-group"><label for="amps">Amps (A)</label><input type="number" id="amps" placeholder="32"></div></div></div>
+                   <button class="primary-btn" onclick="calculateTime()">Calculate</button>
+                   <div id="result" class="result-box"></div>
              </div>
         </div>
 
         <!-- Phantom Drain Tab -->
         <div id="PhantomDrain" class="tab-content">
              <div class="calculator-container">
-                 <h1>Phantom Drain Estimator</h1>
-                 <div class="grid">
-                     <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
-                     <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
-                 </div>
-                 <div class="grid">
-                     <div class="form-group"><label for="battery-health">Current Battery Health (%)</label><input type="number" id="battery-health" value="100" min="50" max="100"></div>
-                     <div class="form-group"><label for="outside-temp">Outside Temperature (°F)</label><input type="number" id="outside-temp" value="70"></div>
-                 </div>
-                 <div class="form-group">
-                     <label>Auxiliary Features Enabled:</label>
-                     <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="250"><label for="sentry">Sentry Mode</label></div>
-                     <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
-                     <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
-                     <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
-                     <div class="checkbox-group"><input type="checkbox" id="overheat-ac" name="drain-feature" value="150"><label for="overheat-ac">Cabin Overheat Protection (A/C)</label></div>
-                     <div class="checkbox-group"><input type="checkbox" id="overheat-fan" name="drain-feature" value="50"><label for="overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
-                 </div>
-                 <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
-                 <div id="drain-result" class="result-box"></div>
+                   <h1>Phantom Drain Estimator</h1>
+                   <div class="grid">
+                         <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
+                         <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
+                   </div>
+                   <div class="grid">
+                         <div class="form-group"><label for="battery-health">Current Battery Health (%)</label><input type="number" id="battery-health" value="100" min="50" max="100"></div>
+                         <div class="form-group"><label for="outside-temp">Outside Temperature (°F)</label><input type="number" id="outside-temp" value="70"></div>
+                   </div>
+                   <div class="form-group">
+                         <label>Auxiliary Features Enabled:</label>
+                         <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="250"><label for="sentry">Sentry Mode</label></div>
+                         <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
+                         <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
+                         <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
+                         <div class="checkbox-group"><input type="checkbox" id="overheat-ac" name="drain-feature" value="150"><label for="overheat-ac">Cabin Overheat Protection (A/C)</label></div>
+                         <div class="checkbox-group"><input type="checkbox" id="overheat-fan" name="drain-feature" value="50"><label for="overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+                   </div>
+                   <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
+                   <div id="drain-result" class="result-box"></div>
              </div>
         </div>
 
@@ -569,18 +569,18 @@
         <div id="About" class="tab-content">
             <div class="info-container">
                 <h1>About Tesla Companion</h1>
-                <p>This application was created to provide a comprehensive, easy-to-use toolkit for Tesla owners. It combines several useful utilities into a single, responsive web interface that works on any device.</p>
+                <p>This application was created to provide an easy-to-use toolkit for Tesla owners. It combines several useful utilities into a single, responsive web interface that works on any device.</p>
                 
                 <h2>Credits & Acknowledgements</h2>
-                 <ul>
-                     <li>The core Camera Viewer functionality was originally created by <strong>Lythinari</strong>. You can find the original project on <a href="https://github.com/Lythinari/TeslaCamViewer" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
-                     <li>This version was further edited and refined by <strong>Joshua Leshnick</strong> to create a more sleek application with additional useful features.</li>
-                     <li>This app was built with HTML5, CSS3, and modern JavaScript.</li>
-                     <li>Icons provided by Feather Icons.</li>
-                     <li>Font by Google Fonts (Inter).</li>
-                 </ul>
+                  <ul>
+                        <li>The core Camera Viewer functionality was originally created by <strong>Lythinari</strong>. You can find the original project on <a href="https://github.com/Lythinari/TeslaCamViewer" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
+                        <li>This version was further edited and refined by <strong>Joshua Leshnick</strong> to create a more sleek application with additional useful features.</li>
+                        <li>This app was built with HTML5, CSS3, and modern JavaScript.</li>
+                        <li>Icons provided by Feather Icons.</li>
+                        <li>Font by Google Fonts (Inter).</li>
+                  </ul>
 
-                 <h2>Disclaimer</h2>
+                  <h2>Disclaimer</h2>
                 <p>This is an unofficial, open-source community project and is not affiliated with Tesla, Inc. All calculations are estimates and should be used for informational purposes only.</p>
             </div>
         </div>
@@ -600,7 +600,7 @@
         launchAppBtn: document.getElementById('launch-app-btn'),
         appContainer: document.querySelector('.layout-container'),
 
-        // Original App elements
+        // App elements
         body: document.body,
         videoGrid: document.querySelector("#video-grid"),
         allVideos: document.querySelectorAll("video"), 
@@ -619,7 +619,6 @@
         eventMarker: document.querySelector("#event-marker"),
         jumpToEventButton: document.querySelector("#jump-to-event"),
         cameraToggles: document.querySelector("#camera-toggles"),
-        mapButton: document.querySelector('#map-button'),
         selectAllCameras: document.querySelector('#select-all-cameras'),
         themeToggle: document.querySelector('#theme-toggle'),
         themeIconSun: document.querySelector('#theme-icon-sun'),
@@ -642,7 +641,7 @@
         dom.landingPage.classList.add('hidden');
         dom.appContainer.classList.remove('hidden');
     });
-
+    
     // --- Tabs ---
     function openTab(evt, tabName) {
         let i, tabcontent, tablinks;
@@ -777,7 +776,6 @@
         dom.durationDisplay.textContent = "00:00";
         dom.eventMarker.style.display = "none";
         dom.jumpToEventButton.style.display = "none";
-        dom.mapButton.style.display = 'none';
         dom.eventReasonDisplay.style.display = 'none';
         const eventKey = state.sortedEventKeys[index];
         const eventData = state.eventClips.get(eventKey);
@@ -853,7 +851,18 @@
     }
     function playVideos() {
         updatePlayButtonUI(true);
-        dom.allVideos.forEach(v => { if (v.src && v.paused) v.play().catch(e => {}); });
+        dom.allVideos.forEach(v => { 
+            if (v.src && v.paused) {
+                const playPromise = v.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error(`Video play failed for ${v.className}:`, error);
+                        // We will not pause other videos, just log the error for the failing one.
+                        // This prevents one broken/corrupt video from stopping all playback.
+                    });
+                }
+            }
+        });
     }
     function pauseVideos() { updatePlayButtonUI(false); dom.allVideos.forEach(v => v.pause()); }
     function playPause() { dom.frontVideo.paused && dom.frontVideo.src ? playVideos() : pauseVideos(); }
@@ -982,9 +991,17 @@
     dom.masterScrubber.addEventListener("input", () => { if (state.currentEventData.totalDuration) updateLiveTimestamp((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
     dom.masterScrubber.addEventListener("change", () => { if (state.currentEventData.totalDuration) seekAllVideos((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
     
-    // Play video when a new event is loaded
+    // This listener is a reliable trigger for starting playback once the first clip is ready.
     dom.frontVideo.addEventListener("loadedmetadata", () => { 
-        if (dom.frontVideo.src && dom.frontVideo.paused) playVideos(); 
+        if (dom.frontVideo.paused) {
+            playVideos(); 
+        }
+    });
+    
+    dom.frontVideo.addEventListener("timeupdate", () => {
+        if (!state.currentEventData.totalDuration) return;
+        if (!dom.masterScrubber.matches(':active')) dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
+        updateLiveTimestamp();
     });
 
     dom.allVideos.forEach(video => {
@@ -995,11 +1012,15 @@
             if (currentIdx < playlist.length) {
                 loadVideo(e.target, playlist[currentIdx]);
             } else if (camera === 'front') {
-                // When the main (front) video playlist ends, pause everything.
-                pauseVideos();
+                if (document.querySelector("#autoplay")?.checked && state.carouselIndex < state.sortedEventKeys.length - 1) {
+                    loadEvent(++state.carouselIndex);
+                } else {
+                    pauseVideos();
+                }
             }
         });
     });
+
     dom.fileBrowser.addEventListener("change", function(e) {
         state.eventClips.clear(); 
         state.sortedEventKeys = []; 
@@ -1022,6 +1043,7 @@
         state.sortedEventKeys.forEach((key, index) => { const option = document.createElement("option"); option.innerText = key; option.value = index; dom.dateSelector.appendChild(option); });
         loadEvent(0);
     });
+
     function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
     window.addEventListener('resize', updateEventMarkerPosition);
     function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
@@ -1040,13 +1062,10 @@
 
     // --- Initial Load ---
     document.addEventListener('DOMContentLoaded', () => {
+        // Set the theme based on user's preference or default to dark.
         applyTheme(localStorage.getItem('theme') || 'dark');
-        // Start with the main app hidden and landing page visible
-        dom.appContainer.classList.add('hidden');
-        dom.appContainer.style.display = 'flex'; // Set its natural display property
-        dom.landingPage.classList.remove('hidden');
-
-        // By default, the How To tab is active, so camera controls should be hidden
+        
+        // Hide camera controls initially since "How To" is the default tab
         dom.cameraControlsContainer.style.display = 'none'; 
     });
 
