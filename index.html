@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesla Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Dark Theme (Default) */
+            --bg-color: #0a0a0a;
+            --surface-color: #1a1a1a;
+            --surface-elevated: #252525;
+            --primary-color: #E82127;
+            --primary-hover-color: #c01a11;
+            --secondary-color: #0066ff;
+            --accent-color: #00d4aa;
+            --text-color: #f0f0f0;
+            --text-muted-color: #9ca3af;
+            --text-dim-color: #6b7280;
+            --border-color: #374151;
+            --border-hover-color: #4b5563;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+            --control-bg-color: rgba(255, 255, 255, 0.05);
+            --control-bg-hover: rgba(255, 255, 255, 0.1);
+            --control-bg-active: rgba(255, 255, 255, 0.15);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-xl: 16px;
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+
+        body.light-mode {
+            /* Light Theme */
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --surface-elevated: #f1f5f9;
+            --primary-color: #E82127;
+            --primary-hover-color: #d01e24;
+            --secondary-color: #0066ff;
+            --accent-color: #00d4aa;
+            --text-color: #1e293b;
+            --text-muted-color: #64748b;
+            --text-dim-color: #94a3b8;
+            --border-color: #e2e8f0;
+            --border-hover-color: #cbd5e1;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --control-bg-color: rgba(0, 0, 0, 0.03);
+            --control-bg-hover: rgba(0, 0, 0, 0.08);
+            --control-bg-active: rgba(0, 0, 0, 0.12);
+        }
+
+        /* --- Global Styles & Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--surface-color); border-radius: var(--border-radius-md); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: var(--border-radius-md); transition: var(--transition-fast); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover-color); }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color var(--transition-normal);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* --- Landing Page Styles --- */
+        #landing-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            height: 100vh;
+            width: 100%;
+            padding: 2rem;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, var(--bg-color) 0%, var(--surface-color) 100%);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            z-index: 100;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        #landing-page.hidden {
+           opacity: 0;
+           transform: scale(0.95);
+           pointer-events: none;
+        }
+
+        .landing-content {
+            max-width: 600px;
+            animation: fadeInFromBottom 1s ease-out;
+        }
+        
+        @keyframes fadeInFromBottom {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .landing-logo {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        
+        .landing-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted-color);
+            margin-bottom: 2.5rem;
+        }
+
+        .feature-list {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .feature-item {
+            background: var(--control-bg-color);
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--border-radius-lg);
+            font-weight: 500;
+            color: var(--text-muted-color);
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-fast);
+        }
+        
+        .feature-item:hover {
+           transform: translateY(-2px);
+           box-shadow: var(--shadow-md);
+           color: var(--text-color);
+           border-color: var(--border-hover-color);
+        }
+        
+        #launch-app-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color));
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 1rem 3rem;
+            border-radius: var(--border-radius-lg);
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        #launch-app-btn:hover {
+           transform: translateY(-3px) scale(1.05);
+           box-shadow: var(--shadow-xl);
+        }
+        
+        #launch-app-btn:active {
+           transform: translateY(-1px) scale(1.02);
+        }
+
+
+        /* --- Main App Styles --- */
+        .layout-container { 
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            transition: opacity 0.5s ease-in;
+            opacity: 1;
+        }
+        
+        .layout-container.hidden {
+            display: none;
+            opacity: 0;
+        }
+
+        .header {
+            background: var(--surface-color);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            box-shadow: var(--shadow-lg);
+            z-index: 20;
+            padding: 0.75rem 1.5rem;
+            transition: var(--transition-normal);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .title-area { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+        .title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            white-space: nowrap;
+        }
+
+        .main-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: var(--surface-elevated);
+            padding: 0.5rem;
+            border-radius: var(--border-radius-lg);
+        }
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background-color: transparent;
+            color: var(--text-muted-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: var(--border-radius-md);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            white-space: nowrap;
+        }
+        .tab-button.active {
+            background-color: var(--control-bg-hover);
+            color: var(--text-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .top-right-controls { display: flex; align-items: center; gap: 0.75rem; }
+        .clip-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.3; }
+        .title-folder-name { color: var(--text-color); font-weight: 600; font-size: 0.9rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 250px; }
+        #event-reason-display { font-size: 0.8rem; color: var(--text-muted-color); font-style: italic; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+
+        #camera-controls-container {
+            padding: 1rem 1.5rem;
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header-row { display: flex; width: 100%; align-items: center; flex-wrap: wrap; }
+        .top-ribbon { justify-content: space-between; gap: 1.5rem; min-height: 48px; }
+        
+        .main-playback-controls {
+            display: flex;
+            flex-grow: 1;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--surface-elevated);
+            border-radius: var(--border-radius-xl);
+            padding: 0.75rem;
+            box-shadow: var(--shadow-md);
+        }
+        .time-display {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            color: var(--text-muted-color);
+            margin-left: 1rem;
+            background: var(--control-bg-color);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-color);
+        }
+        
+        .progress-container { padding: 0.75rem 0; position: relative; }
+        #master-scrubber { width: 100%; cursor: pointer; -webkit-appearance: none; appearance: none; height: 6px; background: var(--border-color); border-radius: var(--border-radius-md); outline: none; transition: var(--transition-fast); }
+        #master-scrubber:hover { height: 8px; }
+        #master-scrubber::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); border-radius: 50%; cursor: pointer; border: 3px solid var(--surface-color); box-shadow: var(--shadow-md); transition: var(--transition-fast); }
+        #master-scrubber:hover::-webkit-slider-thumb { transform: scale(1.2); box-shadow: var(--shadow-lg); }
+        #event-marker { position: absolute; top: 50%; width: 4px; height: 20px; background: linear-gradient(135deg, var(--accent-color), var(--secondary-color)); border-radius: var(--border-radius-sm); transform: translate(-50%, -50%); z-index: 2; display: none; pointer-events: none; box-shadow: var(--shadow-md); }
+        
+        .collapsible-panel { max-height: 0; overflow: hidden; transition: max-height var(--transition-slow), padding var(--transition-slow); padding: 0; display: flex; flex-direction: column; gap: 1.5rem; border-top: 1px solid transparent; }
+        .collapsible-panel.visible { max-height: 600px; padding: 1.5rem 0 1rem; border-top: 1px solid var(--border-color); }
+        .panel-section { display: flex; flex-wrap: wrap; align-items: center; gap: 2rem; background: var(--surface-elevated); padding: 1rem 1.5rem; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); }
+        .panel-section .control-group { gap: 1rem; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; background: var(--control-bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: var(--transition-fast); gap: 0.5rem; text-decoration: none; user-select: none; position: relative; overflow: hidden; }
+        .btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent); transition: left var(--transition-normal); }
+        .btn:hover::before { left: 100%; }
+        .btn:hover { background: var(--control-bg-hover); border-color: var(--border-hover-color); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
+        .btn svg { width: 18px; height: 18px; transition: var(--transition-fast); flex-shrink: 0; }
+        #theme-toggle svg { width: 24px; height: 24px; }
+        .main-playback-controls .btn { width: 42px; height: 42px; padding: 0; flex-shrink: 0; border-radius: 50%; }
+        #play-pause-button { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; border-color: var(--primary-color); width: 48px; height: 48px; box-shadow: var(--shadow-md); }
+        #play-pause-button:hover { background: linear-gradient(135deg, var(--primary-hover-color), var(--primary-color)); transform: scale(1.05); box-shadow: var(--shadow-lg); }
+        
+        .content-container { flex-grow: 1; overflow: hidden; /* Changed */ background: var(--bg-color); display: flex; flex-direction: column;}
+        .tab-content { display: none; flex-grow: 1; flex-direction: column; overflow-y: auto; /* Changed */ }
+        .tab-content.active { display: flex; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #CameraViewer .video-grid-container { flex-grow: 1; overflow: auto; padding: 1rem; }
+        .video-grid { display: grid; height: 100%; width: 100%; gap: 0.5rem; grid-template-areas: "left-pillar front right-pillar" "left-repeater back right-repeater"; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .video-container.hidden { display: none; }
+        .video-grid.single-view-mode .video-container:not(.hidden) { grid-area: initial; grid-column: 1 / -1; grid-row: 1 / -1; }
+        .video-container { position: relative; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 2px solid var(--border-color); border-radius: var(--border-radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); box-shadow: var(--shadow-md); }
+        .video-container:hover { border-color: var(--primary-color); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .video-label { position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.9)); color: white; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; border-radius: var(--border-radius-md); pointer-events: none; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 1; }
+        video { width: 100%; height: 100%; object-fit: contain; border-radius: calc(var(--border-radius-lg) - 2px); }
+        .video-container.front { grid-area: front; } .video-container.back { grid-area: back; } .video-container.left_repeater { grid-area: left-repeater; } .video-container.right_repeater { grid-area: right-repeater; } .video-container.left_pillar { grid-area: left-pillar; } .video-container.right_pillar { grid-area: right-pillar; }
+        
+        .info-container, .calculator-container { max-width: 800px; margin: 2rem auto; padding: 2rem 2rem 4rem 2rem; background-color: var(--surface-color); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg); width: 100%; }
+        .info-container h1, .calculator-container h1 { text-align: center; font-size: 1.5rem; margin-top: 0; margin-bottom: 2rem; color: var(--text-color); }
+        .info-container h2 { font-size: 1.25rem; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1rem; }
+        .info-container p { color: var(--text-muted-color); }
+        .info-container ul { list-style-type: none; padding-left: 0; }
+        .info-container li { margin-bottom: 0.75rem; padding-left: 1.5rem; position: relative; color: var(--text-muted-color); }
+        .info-container li::before { content: '✓'; position: absolute; left: 0; color: var(--accent-color); font-weight: bold; }
+        .form-group { margin-bottom: 1.25rem; }
+        .calculator-container label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-muted-color); }
+        .calculator-container input, .calculator-container select { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-sizing: border-box; font-size: 1rem; background-color: var(--control-bg-color); color: var(--text-color); transition: var(--transition-fast); }
+        .calculator-container select option { background: var(--surface-elevated); color: var(--text-color); }
+        .calculator-container input:hover, .calculator-container select:hover { border-color: var(--border-hover-color); }
+        .calculator-container input:focus, .calculator-container select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(232, 33, 39, 0.1); }
+        .primary-btn { width: 100%; padding: 0.85rem; border: none; border-radius: var(--border-radius-md); background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1.5rem; transition: var(--transition-normal); box-shadow: var(--shadow-md); }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        hr { border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .result-box { margin-top: 2rem; padding: 1.5rem; text-align: center; font-size: 1.2rem; font-weight: 600; line-height: 1.5; background-color: var(--surface-elevated); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); min-height: 50px; color: var(--text-color); }
+        .checkbox-group { display: flex; align-items: center; margin-bottom: 0.75rem; padding: 0.5rem; border-radius: var(--border-radius-md); transition: background-color 0.2s; }
+        .checkbox-group:hover { background-color: var(--control-bg-color); }
+        .checkbox-group input { width: auto; margin-right: 0.75rem; accent-color: var(--primary-color); }
+        .checkbox-group label { margin-bottom: 0; font-weight: normal; color: var(--text-color); }
+
+        .camera-toggles { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .camera-toggles .divider { border-left: 2px solid var(--border-color); height: 24px; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border-color); transition: var(--transition-normal); border-radius: 24px; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: linear-gradient(135deg, #ffffff, #f0f0f0); transition: var(--transition-normal); border-radius: 50%; box-shadow: var(--shadow-sm); }
+        input:checked + .slider { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .toggle-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; font-size: 0.875rem; font-weight: 500; transition: var(--transition-fast); }
+        .toggle-label:hover { color: var(--primary-color); }
+        .styled-input { background: var(--control-bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.5rem 1rem; font-size: 0.875rem; cursor: pointer; transition: var(--transition-fast); -webkit-appearance: none; appearance: none; backdrop-filter: blur(10px); }
+        .styled-input:hover { border-color: var(--border-hover-color); box-shadow: var(--shadow-sm); }
+        .styled-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(232, 33, 39, 0.1); }
+        
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.5rem; transition: background-color 0.3s; }
+        .status-dot.ready { background: var(--success-color); animation: none; }
+        .status-dot.playing { background-color: var(--error-color); animation: playing-pulse 2s infinite; }
+        
+        @keyframes playing-pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        .btn:focus-visible, .switch:focus-within { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+        .switch:focus-within { border-radius: 24px; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .header { animation: slideIn 0.5s ease-out; }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .header { flex-direction: column; align-items: stretch; gap: 1rem; }
+            .main-tabs { justify-content: center; }
+        }
+        @media (max-width: 768px) {
+            .header { padding: 0.75rem 1rem; }
+            .title { font-size: 1.25rem; }
+            .main-playback-controls { gap: 0.5rem; padding: 0.5rem; }
+            .main-playback-controls .btn { width: 38px; height: 38px; }
+            #play-pause-button { width: 44px; height: 44px; }
+            #CameraViewer .video-grid-container { padding: 0.5rem; }
+            .video-grid { gap: 0.5rem; }
+            .panel-section { padding: 1rem; gap: 1rem; }
+            .grid, .grid-4 { grid-template-columns: 1fr; }
+            
+            .landing-logo { font-size: 2.5rem; }
+            .landing-subtitle { font-size: 1rem; }
+            .feature-list { gap: 0.5rem; }
+            .feature-item { font-size: 0.9rem; padding: 0.5rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Landing Page -->
+<div id="landing-page">
+    <div class="landing-content">
+        <div class="landing-logo">Tesla Companion</div>
+        <p class="landing-subtitle">Your All-in-One Toolkit for Camera Clips, Charging, and More.</p>
+        <div class="feature-list">
+            <div class="feature-item">Camera Viewer</div>
+            <div class="feature-item">Charging Estimator</div>
+            <div class="feature-item">Phantom Drain Calc</div>
+        </div>
+        <button id="launch-app-btn">Launch Application</button>
+    </div>
+</div>
+
+<!-- Main Application Container (Initially Hidden) -->
+<div class="layout-container hidden"> 
+    <header class="header">
+        <div class="title-area">
+             <div class="title">Tesla Companion</div>
+        </div>
+        <div class="main-tabs">
+            <button class="tab-button active" onclick="openTab(event, 'HowTo')">How To</button>
+            <button class="tab-button" onclick="openTab(event, 'CameraViewer')">Camera Viewer</button>
+            <button class="tab-button" onclick="openTab(event, 'ChargingEstimator')">Charging Time Estimator</button>
+            <button class="tab-button" onclick="openTab(event, 'PhantomDrain')">Phantom Drain Estimator</button>
+            <button class="tab-button" onclick="openTab(event, 'About')">About</button>
+        </div>
+        <div class="top-right-controls">
+             <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
+                 <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                 <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+             </button>
+        </div>
+    </header>
+
+    <div class="content-container">
+        <!-- How To Tab -->
+        <div id="HowTo" class="tab-content active">
+            <div class="info-container">
+                <h1>How To Use Tesla Companion</h1>
+                <p>Welcome to your all-in-one Tesla toolkit. Here's a guide to get you started:</p>
+                
+                <h2>Camera Viewer</h2>
+                <ul>
+                    <li><strong>Load Clips:</strong> Click the "Select Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
+                    <li><strong>Navigate Events:</strong> Use the dropdown menu to select a specific event date and time. You can also use the Previous/Next arrow buttons or your keyboard's Up/Down arrows to cycle through events.</li>
+                    <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
+                    <li><strong>Jump to Event:</strong> If an event was triggered (e.g., by Sentry Mode), an "Event" button will appear. Click it to jump directly to the moment of the trigger.</li>
+                    <li><strong>Enhanced Screenshots:</strong> Use the "Screenshot" button in the top controls to download a single, high-quality image stitching all visible camera feeds together.</li>
+                </ul>
+
+                <h2>Charging Time Estimator</h2>
+                 <ul>
+                    <li><strong>Enter Details:</strong> Input your vehicle's original battery capacity, your current and target battery percentage, and the efficiency of your charger.</li>
+                    <li><strong>Select Charger:</strong> Choose from common charger types (Mobile, Level 2, Supercharger) or select "Custom" to input specific voltage and amperage.</li>
+                    <li><strong>Calculate:</strong> Click the button to get an estimate of how long your charging session will take.</li>
+                </ul>
+                
+                <h2>Phantom Drain Estimator</h2>
+                <ul>
+                    <li><strong>Vehicle State:</strong> Enter your current battery percentage and the percentage you expect it to drain to. Add your battery's current health and the outside temperature for a more accurate calculation.</li>
+                    <li><strong>Select Features:</strong> Check the boxes for any power-consuming features you plan to leave active (like Sentry Mode or Cabin Overheat Protection).</li>
+                    <li><strong>Calculate:</strong> The tool will estimate how long your battery will last under the selected conditions.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Camera Viewer Tab -->
+        <div id="CameraViewer" class="tab-content">
+             <div id="camera-controls-container" style="display: none;">
+                 <div class="header-main">
+                     <div class="header-row top-ribbon">
+                         <div class="title-area">
+                             <div class="clip-info">
+                                 <span class="title-folder-name">No Clips Selected</span>
+                                 <div id="event-reason-display" style="display: none;"></div>
+                             </div>
+                         </div>
+                         <div class="main-playback-controls">
+                             <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Event</button>
+                             <button class="btn icon-btn previous" title="Previous Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"></path></svg></button>
+                             <button class="btn" id="skip-rewind" title="Rewind 5s">-5s</button>
+                             <button class="btn icon-btn" id="play-pause-button"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M8 5v14l11-7z"></path></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
+                             <button class="btn" id="skip-forward" title="Forward 5s">+5s</button>
+                             <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
+                             <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
+                             <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
+                         </div>
+                         <div class="top-right-controls">
+                             <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
+                             <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                             <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
+                             <select id="date-select" class="styled-input" style="max-width: 160px;"><option>Select Event</option></select>
+                             <button class="btn" id="toggle-controls-btn" title="Select Camera Angles">Select Camera Angles <svg id="chevron-down" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"></path></svg><svg id="chevron-up" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display:none;"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"></path></svg></button>
+                         </div>
+                     </div>
+                     <div class="header-row progress-container">
+                         <div id="event-marker"></div>
+                         <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
+                     </div>
+                 </div>
+                 <div id="collapsible-controls" class="collapsible-panel">
+                     <div class="panel-section">
+                         <div class="camera-toggles" id="camera-toggles">
+                             <label class="toggle-label" for="select-all-cameras">All Cameras<label class="switch"><input type="checkbox" id="select-all-cameras" checked><span class="slider"></span></label></label>
+                             <div class="divider"></div>
+                             <label class="toggle-label" for="cam-front">Front<label class="switch"><input type="checkbox" id="cam-front" data-camera="front" checked><span class="slider"></span></label></label>
+                             <label class="toggle-label" for="cam-back">Back<label class="switch"><input type="checkbox" id="cam-back" data-camera="back" checked><span class="slider"></span></label></label>
+                             <label class="toggle-label" for="cam-left-repeater">L Fender<label class="switch"><input type="checkbox" id="cam-left-repeater" data-camera="left_repeater" checked><span class="slider"></span></label></label>
+                             <label class="toggle-label" for="cam-right-repeater">R Fender<label class="switch"><input type="checkbox" id="cam-right-repeater" data-camera="right_repeater" checked><span class="slider"></span></label></label>
+                             <label class="toggle-label" for="cam-left-pillar">L Pillar<label class="switch"><input type="checkbox" id="cam-left-pillar" data-camera="left_pillar" checked><span class="slider"></span></label></label>
+                             <label class="toggle-label" for="cam-right-pillar">R Pillar<label class="switch"><input type="checkbox" id="cam-right-pillar" data-camera="right_pillar" checked><span class="slider"></span></label></label>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+             <div class="video-grid-container">
+                 <div class="video-grid" id="video-grid">
+                     <div class="video-container front"><div class="video-label">Front</div><video class="front" muted playsinline></video></div>
+                     <div class="video-container back"><div class="video-label">Back</div><video class="back" muted playsinline></video></div>
+                     <div class="video-container left_repeater"><div class="video-label">Left Fender</div><video class="left_repeater" muted playsinline></video></div>
+                     <div class="video-container right_repeater"><div class="video-label">Right Fender</div><video class="right_repeater" muted playsinline></video></div>
+                     <div class="video-container left_pillar"><div class="video-label">Left Pillar</div><video class="left_pillar" muted playsinline></video></div>
+                     <div class="video-container right_pillar"><div class="video-label">Right Pillar</div><video class="right_pillar" muted playsinline></video></div>
+                 </div>
+             </div>
+        </div>
+        
+        <!-- Charging Estimator Tab -->
+        <div id="ChargingEstimator" class="tab-content">
+             <div class="calculator-container">
+                 <h1>Charging Time Estimator</h1>
+                 <div class="grid">
+                     <div class="form-group"><label for="battery-capacity">Original Battery Capacity (kWh)</label><input type="number" id="battery-capacity" value="75"></div>
+                     <div class="form-group"><label for="charger-efficiency">Charger Efficiency (%)</label><input type="number" id="charger-efficiency" value="85"></div>
+                 </div>
+                 <div class="grid">
+                     <div class="form-group"><label for="current-soc">Current Battery (%)</label><input type="number" id="current-soc" placeholder="20" min="0" max="100"></div>
+                     <div class="form-group"><label for="target-soc">Target Battery (%)</label><input type="number" id="target-soc" placeholder="80" min="0" max="100"></div>
+                 </div>
+                 <div class="form-group">
+                     <label for="charger-type">Charger Type</label>
+                     <select id="charger-type" onchange="toggleCustomParams()"><option value="1.5">Mobile (15A / 120V)</option><option value="7.7">Mobile (50A / 240V)</option><option value="9.6" selected>Level 2 (Workplace/Home)</option><option value="250">Supercharger</option><option value="custom">Custom...</option></select>
+                 </div>
+                 <div id="custom-params" style="display:none;"><hr><div class="grid"><div class="form-group"><label for="voltage">Voltage (V)</label><input type="number" id="voltage" placeholder="240"></div><div class="form-group"><label for="amps">Amps (A)</label><input type="number" id="amps" placeholder="32"></div></div></div>
+                 <button class="primary-btn" onclick="calculateTime()">Calculate</button>
+                 <div id="result" class="result-box"></div>
+             </div>
+        </div>
+
+        <!-- Phantom Drain Tab -->
+        <div id="PhantomDrain" class="tab-content">
+             <div class="calculator-container">
+                 <h1>Phantom Drain Estimator</h1>
+                 <div class="grid">
+                     <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
+                     <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
+                 </div>
+                 <div class="grid">
+                     <div class="form-group"><label for="battery-health">Current Battery Health (%)</label><input type="number" id="battery-health" value="100" min="50" max="100"></div>
+                     <div class="form-group"><label for="outside-temp">Outside Temperature (°F)</label><input type="number" id="outside-temp" value="70"></div>
+                 </div>
+                 <div class="form-group">
+                     <label>Auxiliary Features Enabled:</label>
+                     <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="250"><label for="sentry">Sentry Mode</label></div>
+                     <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
+                     <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
+                     <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
+                     <div class="checkbox-group"><input type="checkbox" id="overheat-ac" name="drain-feature" value="150"><label for="overheat-ac">Cabin Overheat Protection (A/C)</label></div>
+                     <div class="checkbox-group"><input type="checkbox" id="overheat-fan" name="drain-feature" value="50"><label for="overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+                 </div>
+                 <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
+                 <div id="drain-result" class="result-box"></div>
+             </div>
+        </div>
+
+        <!-- About Tab -->
+        <div id="About" class="tab-content">
+            <div class="info-container">
+                <h1>About Tesla Companion</h1>
+                <p>This application was created to provide a comprehensive, easy-to-use toolkit for Tesla owners. It combines several useful utilities into a single, responsive web interface that works on any device.</p>
+                
+                <h2>Credits & Acknowledgements</h2>
+                 <ul>
+                     <li>The core Camera Viewer functionality was originally created by <strong>Lythinari</strong>. You can find the original project on <a href="https://github.com/Lythinari/TeslaCamViewer" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
+                     <li>This version was further edited and refined by <strong>Joshua Leshnick</strong> to create a more sleek application with additional useful features.</li>
+                     <li>This app was built with HTML5, CSS3, and modern JavaScript.</li>
+                     <li>Icons provided by Feather Icons.</li>
+                     <li>Font by Google Fonts (Inter).</li>
+                 </ul>
+
+                 <h2>Disclaimer</h2>
+                <p>This is an unofficial, open-source community project and is not affiliated with Tesla, Inc. All calculations are estimates and should be used for informational purposes only.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Global State & DOM ---
+    const state = {
+        playbackRate: 1, carouselIndex: 0, eventClips: new Map(),
+        sortedEventKeys: [], currentEventData: {},
+    };
+
+    const dom = {
+        // Landing Page elements
+        landingPage: document.getElementById('landing-page'),
+        launchAppBtn: document.getElementById('launch-app-btn'),
+        appContainer: document.querySelector('.layout-container'),
+
+        // Original App elements
+        body: document.body,
+        videoGrid: document.querySelector("#video-grid"),
+        allVideos: document.querySelectorAll("video"), 
+        frontVideo: document.querySelector("video.front"),
+        fileBrowser: document.querySelector("#fileBrowser"),
+        dateSelector: document.querySelector("#date-select"),
+        nextButton: document.querySelector("button.next"),
+        previousButton: document.querySelector("button.previous"),
+        masterScrubber: document.querySelector("#master-scrubber"),
+        liveTimestamp: document.querySelector("#live-timestamp"),
+        durationDisplay: document.querySelector("#duration-display"),
+        playPauseButton: document.querySelector("#play-pause-button"),
+        playIcon: document.querySelector("#play-icon"), 
+        pauseIcon: document.querySelector("#pause-icon"),
+        statusDot: document.querySelector('.status-dot'),
+        eventMarker: document.querySelector("#event-marker"),
+        jumpToEventButton: document.querySelector("#jump-to-event"),
+        cameraToggles: document.querySelector("#camera-toggles"),
+        mapButton: document.querySelector('#map-button'),
+        selectAllCameras: document.querySelector('#select-all-cameras'),
+        themeToggle: document.querySelector('#theme-toggle'),
+        themeIconSun: document.querySelector('#theme-icon-sun'),
+        themeIconMoon: document.querySelector('#theme-icon-moon'),
+        skipForwardButton: document.querySelector('#skip-forward'),
+        skipRewindButton: document.querySelector('#skip-rewind'),
+        playbackSpeedSelector: document.querySelector('#playback-speed'),
+        toggleControlsBtn: document.querySelector('#toggle-controls-btn'),
+        collapsibleControls: document.querySelector('#collapsible-controls'),
+        chevronDown: document.querySelector('#chevron-down'),
+        chevronUp: document.querySelector('#chevron-up'),
+        titleFolderName: document.querySelector('.title-folder-name'),
+        eventReasonDisplay: document.querySelector('#event-reason-display'),
+        screenshotBtn: document.querySelector('#screenshot-btn'),
+        cameraControlsContainer: document.getElementById('camera-controls-container'),
+    };
+    
+    // --- Landing Page Logic ---
+    dom.launchAppBtn.addEventListener('click', () => {
+        dom.landingPage.classList.add('hidden');
+        dom.appContainer.classList.remove('hidden');
+    });
+
+    // --- Tabs ---
+    function openTab(evt, tabName) {
+        let i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].classList.remove("active");
+        }
+        tablinks = document.getElementsByClassName("tab-button");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+        }
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.classList.add("active");
+
+        // Show camera controls only on the CameraViewer tab
+        dom.cameraControlsContainer.style.display = (tabName === 'CameraViewer') ? 'block' : 'none';
+    }
+
+
+    // --- Theme ---
+    function applyTheme(theme) {
+        if (theme === 'light') {
+            dom.body.classList.add('light-mode');
+            dom.themeIconSun.style.display = 'none';
+            dom.themeIconMoon.style.display = 'block';
+        } else {
+            dom.body.classList.remove('light-mode');
+            dom.themeIconSun.style.display = 'block';
+            dom.themeIconMoon.style.display = 'none';
+        }
+    }
+    
+    dom.themeToggle.addEventListener('click', () => {
+        const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    });
+    
+    // --- Charging Estimator ---
+    function toggleCustomParams() {
+        const chargerType = document.getElementById('charger-type').value;
+        document.getElementById('custom-params').style.display = (chargerType === 'custom') ? 'block' : 'none';
+    }
+
+    function calculateTime() {
+        const capacity = parseFloat(document.getElementById('battery-capacity').value);
+        const efficiency = parseFloat(document.getElementById('charger-efficiency').value) / 100;
+        const currentSOC = parseFloat(document.getElementById('current-soc').value);
+        const targetSOC = parseFloat(document.getElementById('target-soc').value);
+        const chargerType = document.getElementById('charger-type').value;
+        const resultDiv = document.getElementById('result');
+
+        if (isNaN(capacity) || isNaN(currentSOC) || isNaN(targetSOC) || currentSOC >= targetSOC) {
+            resultDiv.innerText = "Please enter valid capacity and battery percentages.";
+            return;
+        }
+
+        let chargerPower = 0;
+        if (chargerType === 'custom') {
+            const voltage = parseFloat(document.getElementById('voltage').value);
+            const amps = parseFloat(document.getElementById('amps').value);
+            if (isNaN(voltage) || isNaN(amps) || voltage <= 0 || amps <= 0) {
+                resultDiv.innerText = "Please enter valid Voltage and Amperage.";
+                return;
+            }
+            chargerPower = (voltage * amps) / 1000;
+        } else {
+            chargerPower = parseFloat(chargerType);
+        }
+
+        const energyNeeded = (targetSOC - currentSOC) / 100 * capacity;
+        const timeHours = energyNeeded / (chargerPower * (chargerPower === 250 ? 1 : efficiency)); // Superchargers rated by output, others by input
+        const hours = Math.floor(timeHours);
+        const minutes = Math.round((timeHours - hours) * 60);
+
+        let resultText = `Estimated time to charge:<br><strong>`;
+          if (hours > 0) resultText += `${hours} hr `;
+        if (minutes > 0) resultText += `${minutes} min`;
+        if (hours === 0 && minutes === 0) resultText = "Charge time is less than a minute.";
+        resultDiv.innerHTML = resultText + `</strong>`;
+    }
+
+    // --- Phantom Drain Estimator ---
+    function calculateDrainTime() {
+        const originalCapacity = 75; // Using the value from the other calculator
+        const batteryHealth = parseFloat(document.getElementById('battery-health').value) / 100;
+        const currentSOC = parseFloat(document.getElementById('drain-current-soc').value);
+        const targetSOC = parseFloat(document.getElementById('drain-target-soc').value);
+        const outsideTempF = parseFloat(document.getElementById('outside-temp').value);
+        const resultDiv = document.getElementById('drain-result');
+
+        if (isNaN(batteryHealth) || isNaN(currentSOC) || isNaN(targetSOC) || isNaN(outsideTempF) || currentSOC <= targetSOC) {
+            resultDiv.innerText = "Please enter valid battery and temperature details (Current > Target).";
+            return;
+        }
+
+        let totalDrainWatts = 50; // Base phantom drain for computers, etc.
+        const features = document.getElementsByName('drain-feature');
+        features.forEach(feature => {
+            if (feature.checked) {
+                totalDrainWatts += parseFloat(feature.value);
+            }
+        });
+        
+        let tempMultiplier = 1.0;
+        if (outsideTempF > 90) tempMultiplier = 1.5;
+        else if (outsideTempF < 40) tempMultiplier = 2.0;
+
+        const actualDrain = totalDrainWatts * tempMultiplier;
+        const currentCapacity = originalCapacity * batteryHealth;
+        const energyToDrain = (currentSOC - targetSOC) / 100 * currentCapacity * 1000; // in Watt-hours
+        
+        const timeHours = energyToDrain / actualDrain;
+        const days = Math.floor(timeHours / 24);
+        const hours = Math.floor(timeHours % 24);
+
+        let resultText = `Estimated time to drain:<br><strong>`;
+        if (days > 0) resultText += `${days} days `;
+        if (hours > 0) resultText += `${hours} hours`;
+        if (days === 0 && hours === 0) resultText = "Drain time is very short.";
+        resultDiv.innerHTML = resultText + `</strong>`;
+    }
+
+    // --- Camera Viewer ---
+    const EVENT_TIME_CORRECTION_S = 5.0;
+    async function loadEvent(index) {
+        state.carouselIndex = index;
+        if (index < 0 || index >= state.sortedEventKeys.length) return;
+        pauseVideos();
+        dom.masterScrubber.value = 0;
+        dom.liveTimestamp.textContent = "00:00";
+        dom.durationDisplay.textContent = "00:00";
+        dom.eventMarker.style.display = "none";
+        dom.jumpToEventButton.style.display = "none";
+        dom.mapButton.style.display = 'none';
+        dom.eventReasonDisplay.style.display = 'none';
+        const eventKey = state.sortedEventKeys[index];
+        const eventData = state.eventClips.get(eventKey);
+        state.currentEventData = {
+            playlists: eventData.playlists, clipDurations: [],
+            totalDuration: 0, eventTriggerOffset: -1, firstClipTime: null,
+            playlistIndices: { front: 0, back: 0, left_repeater: 0, right_repeater: 0, left_pillar: 0, right_pillar: 0 }
+        };
+        dom.titleFolderName.textContent = eventKey;
+        dom.dateSelector.selectedIndex = index;
+        const masterPlaylist = state.currentEventData.playlists.front;
+        if (masterPlaylist.length === 0) return;
+        const firstClipNameMatch = masterPlaylist[0].name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+        if (firstClipNameMatch) {
+            const dateTimeString = firstClipNameMatch[1];
+            const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':');
+            state.currentEventData.firstClipTime = new Date(formattedDateTimeString);
+        } else {
+            state.currentEventData.firstClipTime = null;
+        }
+        state.currentEventData.clipDurations = await Promise.all(masterPlaylist.map(getVideoDuration));
+        state.currentEventData.totalDuration = state.currentEventData.clipDurations.reduce((a, b) => a + b, 0);
+        if (state.currentEventData.firstClipTime) {
+            updateLiveTimestamp(0);
+            const endClipTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.totalDuration * 1000));
+            dom.durationDisplay.textContent = formatLocalTime(endClipTime);
+        } else {
+            dom.liveTimestamp.textContent = formatTime(0);
+            dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
+        }
+        if(eventData.eventJson) {
+            try {
+                const jsonContent = await eventData.eventJson.text();
+                const jsonData = JSON.parse(jsonContent);
+                const eventTime = new Date(jsonData.timestamp);
+                if (state.currentEventData.firstClipTime) {
+                    let offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
+                    if (Math.abs(offset) > state.currentEventData.totalDuration) offset -= Math.round(offset / 3600) * 3600;
+                    const correctedOffset = offset - EVENT_TIME_CORRECTION_S;
+                    if (correctedOffset >= 0 && correctedOffset < state.currentEventData.totalDuration) {
+                        state.currentEventData.eventTriggerOffset = correctedOffset;
+                        const eventMarkerAbsoluteTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.eventTriggerOffset * 1000));
+                        dom.eventReasonDisplay.innerHTML = `Event: <strong>${jsonData.reason.replace(/_/g, ' ')}</strong> at ${formatLocalTime(eventMarkerAbsoluteTime)}`;
+                        dom.eventReasonDisplay.style.display = 'block';
+                        updateEventMarkerPosition();
+                        dom.eventMarker.style.display = "block";
+                        dom.jumpToEventButton.style.display = "inline-flex";
+                    }
+                }
+            } catch (error) { console.error("Error processing event.json:", error); }
+        }
+        dom.allVideos.forEach(video => {
+            const cameraType = video.className.split(' ')[0];
+            const playlist = state.currentEventData.playlists[cameraType];
+            loadVideo(video, playlist && playlist.length > 0 ? playlist[0] : null);
+        });
+    }
+    function loadVideo(videoElement, file) {
+        if (videoElement.src.startsWith('blob:')) URL.revokeObjectURL(videoElement.src);
+        videoElement.src = file ? URL.createObjectURL(file) : '';
+        videoElement.playbackRate = state.playbackRate;
+    }
+    function updatePlayButtonUI(isPlaying) {
+        dom.playIcon.style.display = isPlaying ? 'none' : 'block';
+        dom.pauseIcon.style.display = isPlaying ? 'block' : 'none';
+        if (isPlaying) {
+            dom.statusDot.classList.remove('ready');
+            dom.statusDot.classList.add('playing');
+        } else {
+            dom.statusDot.classList.remove('playing');
+            dom.statusDot.classList.add('ready');
+        }
+    }
+    function playVideos() {
+        updatePlayButtonUI(true);
+        dom.allVideos.forEach(v => { if (v.src && v.paused) v.play().catch(e => {}); });
+    }
+    function pauseVideos() { updatePlayButtonUI(false); dom.allVideos.forEach(v => v.pause()); }
+    function playPause() { dom.frontVideo.paused && dom.frontVideo.src ? playVideos() : pauseVideos(); }
+    function skipTo(seconds) { seekAllVideos(getCurrentTime() + seconds); }
+    function setPlaybackSpeed(rate) {
+        state.playbackRate = parseFloat(rate);
+        dom.allVideos.forEach(video => { video.playbackRate = state.playbackRate; });
+    }
+    function seekAllVideos(targetTime) {
+        if (isNaN(targetTime)) targetTime = 0;
+        targetTime = Math.max(0, Math.min(targetTime, state.currentEventData.totalDuration));
+        let timeIntoPlaylist = 0;
+        let targetClipIndex = -1;
+        for (let i = 0; i < state.currentEventData.clipDurations.length; i++) {
+            if (targetTime <= timeIntoPlaylist + state.currentEventData.clipDurations[i] + 0.1) {
+                targetClipIndex = i; break;
+            }
+            timeIntoPlaylist += state.currentEventData.clipDurations[i];
+        }
+        if (targetClipIndex === -1) targetClipIndex = state.currentEventData.clipDurations.length - 1;
+        const timeInTargetClip = targetTime - timeIntoPlaylist;
+        const wasPlaying = !dom.frontVideo.paused;
+        dom.allVideos.forEach(video => {
+            const camera = video.className.split(' ')[0];
+            state.currentEventData.playlistIndices[camera] = targetClipIndex;
+            const playlist = state.currentEventData.playlists[camera];
+            if (playlist && playlist[targetClipIndex]) {
+                if (!video.src.endsWith(playlist[targetClipIndex].name)) loadVideo(video, playlist[targetClipIndex]);
+                video.currentTime = timeInTargetClip;
+            }
+        });
+        if (wasPlaying) playVideos();
+    }
+    function getCurrentTime() {
+        if(!state.currentEventData?.clipDurations?.length) return 0;
+        let elapsed = 0;
+        for (let i = 0; i < state.currentEventData.playlistIndices.front; i++) {
+            elapsed += (state.currentEventData.clipDurations[i] || 0);
+        }
+        return elapsed + dom.frontVideo.currentTime;
+    }
+    function updateLiveTimestamp(currentTimeOverride) {
+        const currentTime = currentTimeOverride !== undefined ? currentTimeOverride : getCurrentTime();
+        if (!state.currentEventData.firstClipTime) {
+            dom.liveTimestamp.textContent = formatTime(currentTime);
+            return;
+        }
+        const liveTime = new Date(state.currentEventData.firstClipTime.getTime() + (currentTime * 1000));
+        dom.liveTimestamp.textContent = formatLocalTime(liveTime);
+    }
+    dom.toggleControlsBtn.addEventListener('click', () => {
+        const isVisible = dom.collapsibleControls.classList.toggle('visible');
+        dom.chevronDown.style.display = isVisible ? 'none' : 'inline-block';
+        dom.chevronUp.style.display = isVisible ? 'inline-block' : 'none';
+    });
+    
+    // --- Enhanced Screenshot Function ---
+    dom.screenshotBtn.addEventListener('click', () => {
+        const visibleContainers = [...dom.videoGrid.querySelectorAll('.video-container:not(.hidden)')];
+        
+        if (visibleContainers.length === 0) return;
+        
+        const firstVideo = visibleContainers[0].querySelector('video');
+        if (!firstVideo.src || firstVideo.videoWidth === 0) return;
+
+        const videoWidth = firstVideo.videoWidth;
+        const videoHeight = firstVideo.videoHeight;
+
+        const gridMapping = {
+            left_pillar: { col: 0, row: 0 }, front: { col: 1, row: 0 }, right_pillar: { col: 2, row: 0 },
+            left_repeater: { col: 0, row: 1 }, back: { col: 1, row: 1 }, right_repeater: { col: 2, row: 1 },
+        };
+
+        const canvas = document.createElement('canvas');
+        canvas.width = videoWidth * 3;
+        canvas.height = videoHeight * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-color');
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        visibleContainers.forEach(container => {
+            const video = container.querySelector('video');
+            const cameraType = [...container.classList].find(c => gridMapping[c]);
+            
+            if (cameraType && video.videoWidth > 0) {
+                const { col, row } = gridMapping[cameraType];
+                const dx = col * videoWidth;
+                const dy = row * videoHeight;
+                ctx.drawImage(video, dx, dy, videoWidth, videoHeight);
+            }
+        });
+        
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        link.download = `Tesla-Companion-Screenshot-${timestamp}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.9);
+        link.click();
+    });
+
+    dom.playPauseButton.addEventListener('click', playPause);
+    dom.dateSelector.addEventListener("change", (e) => loadEvent(parseInt(e.target.value)));
+    dom.nextButton.addEventListener("click", () => { if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); });
+    dom.previousButton.addEventListener("click", () => { if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); });
+    dom.jumpToEventButton.addEventListener("click", () => seekAllVideos(state.currentEventData.eventTriggerOffset));
+    dom.skipForwardButton.addEventListener('click', () => skipTo(5));
+    dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
+    dom.playbackSpeedSelector.addEventListener('change', (e) => setPlaybackSpeed(e.target.value));
+    dom.selectAllCameras.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const individualCheckboxes = dom.cameraToggles.querySelectorAll('input[data-camera]');
+        individualCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked; 
+            document.querySelector(`.video-container.${checkbox.dataset.camera}`)?.classList.toggle('hidden', !isChecked);
+        });
+        dom.videoGrid.classList.toggle('single-view-mode', individualCheckboxes.filter(cb => cb.checked).length === 1);
+    });
+    dom.cameraToggles.addEventListener("change", (e) => {
+        if (e.target.dataset.camera) { 
+            document.querySelector(`.video-container.${e.target.dataset.camera}`)?.classList.toggle('hidden', !e.target.checked);
+            const individualCheckboxes = Array.from(dom.cameraToggles.querySelectorAll('input[data-camera]'));
+            const checkedCount = individualCheckboxes.filter(cb => cb.checked).length;
+            dom.videoGrid.classList.toggle('single-view-mode', checkedCount === 1);
+            dom.selectAllCameras.checked = (checkedCount === individualCheckboxes.length);
+        }
+    });
+    dom.masterScrubber.addEventListener("input", () => { if (state.currentEventData.totalDuration) updateLiveTimestamp((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
+    dom.masterScrubber.addEventListener("change", () => { if (state.currentEventData.totalDuration) seekAllVideos((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
+    
+    // Play video when a new event is loaded
+    dom.frontVideo.addEventListener("loadedmetadata", () => { 
+        if (dom.frontVideo.src && dom.frontVideo.paused) playVideos(); 
+    });
+
+    dom.allVideos.forEach(video => {
+        video.addEventListener("ended", (e) => {
+            const camera = e.target.className.split(' ')[0];
+            const currentIdx = ++state.currentEventData.playlistIndices[camera];
+            const playlist = state.currentEventData.playlists[camera];
+            if (currentIdx < playlist.length) {
+                loadVideo(e.target, playlist[currentIdx]);
+            } else if (camera === 'front') {
+                // When the main (front) video playlist ends, pause everything.
+                pauseVideos();
+            }
+        });
+    });
+    dom.fileBrowser.addEventListener("change", function(e) {
+        state.eventClips.clear(); 
+        state.sortedEventKeys = []; 
+        dom.dateSelector.innerHTML = '<option>Select Event</option>';
+        dom.titleFolderName.textContent = 'No Clips Selected';
+        for (const file of e.target.files) {
+            const pathParts = file.webkitRelativePath.split('/');
+            if (pathParts.length < 2) continue;
+            const eventId = pathParts[pathParts.length - 2];
+            if (!state.eventClips.has(eventId)) state.eventClips.set(eventId, { playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, eventJson: null, fullPath: file.webkitRelativePath });
+            const group = state.eventClips.get(eventId);
+            const videoMatch = file.name.match(/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})-(.+?)\.mp4$/);
+            if (videoMatch && group.playlists[videoMatch[2]]) group.playlists[videoMatch[2]].push(file);
+            if (file.name === "event.json") group.eventJson = file;
+        }
+        for (const [_, data] of state.eventClips.entries()) { for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name)); }
+        state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
+        if (state.sortedEventKeys.length === 0) { dom.titleFolderName.textContent = 'No Clips Found'; dom.dateSelector.innerHTML = '<option>No Events Found</option>'; return; }
+        dom.dateSelector.innerHTML = '';
+        state.sortedEventKeys.forEach((key, index) => { const option = document.createElement("option"); option.innerText = key; option.value = index; dom.dateSelector.appendChild(option); });
+        loadEvent(0);
+    });
+    function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
+    window.addEventListener('resize', updateEventMarkerPosition);
+    function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
+    function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return '--:--:--'; return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+    function getVideoDuration(file) { return new Promise(resolve => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); }); }
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        switch(e.key) {
+            case ' ': e.preventDefault(); playPause(); break;
+            case 'ArrowLeft': e.preventDefault(); skipTo(-5); break;
+            case 'ArrowRight': e.preventDefault(); skipTo(5); break;
+            case 'ArrowUp': e.preventDefault(); if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); break;
+            case 'ArrowDown': e.preventDefault(); if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); break;
+        }
+    });
+
+    // --- Initial Load ---
+    document.addEventListener('DOMContentLoaded', () => {
+        applyTheme(localStorage.getItem('theme') || 'dark');
+        // Start with the main app hidden and landing page visible
+        dom.appContainer.classList.add('hidden');
+        dom.appContainer.style.display = 'flex'; // Set its natural display property
+        dom.landingPage.classList.remove('hidden');
+
+        // By default, the How To tab is active, so camera controls should be hidden
+        dom.cameraControlsContainer.style.display = 'none'; 
+    });
+
+</script>
+
+</body>
+</html>
