@@ -1,4 +1,8 @@
-![Tesla Companion Screenshot](assets/screenshot-dark.png)
+![Tesla Companion Screenshot](assets/CameraViewSelector.png)
+![Tesla Companion Screenshot](assets/ChargeTimeEstimator.png)
+![Tesla Companion Screenshot](assets/PhantomDrainEstimator.png)
+![Tesla Companion Screenshot](assetsCamViewer_Single.png)
+![Tesla Companion Screenshot](assets/CamViewer_Grid.png)
 
 Tesla Companion
 ===============
@@ -84,3 +88,27 @@ _(Note: To set this up for your own repository, go to Settings > Pages, and unde
 ----------
 
 This project is licensed under the MIT License. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+
+
+🖼️ Gallery
+Full Camera Grid
+
+Expanded Single-Camera View
+
+<img src="assets/CamViewer_Grid.png" alt="Full six-camera grid view" style="border-radius: 16px;">
+
+<img src="assets/CamViewer_Single.png" alt="Expanded view of a single camera" style="border-radius: 16px;">
+
+Charging Time Estimator
+
+Phantom Drain Estimator
+
+<img src="assets/ChargeTimeEstimator.png" alt="Charging Time Estimator Tool" style="border-radius: 16px;">
+
+<img src="assets/PhantomDrainEstimator.png" alt="Phantom Drain Estimator Tool" style="border-radius: 16px;">
+
+Camera Angle Selector
+
+
+
+<img src="assets/CameraViewSelector.png" alt="Toggles to select which cameras to display" style="border-radius: 16px;">
