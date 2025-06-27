@@ -264,6 +264,7 @@
             padding: 0.75rem;
             box-shadow: var(--shadow-md);
         }
+
         .time-display {
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
             font-size: 0.85rem;
@@ -295,7 +296,7 @@
         .btn:hover { background: var(--control-bg-hover); border-color: var(--border-hover-color); transform: translateY(-1px); box-shadow: var(--shadow-md); }
         .btn:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
         .btn svg { width: 18px; height: 18px; transition: var(--transition-fast); flex-shrink: 0; }
-        #theme-toggle svg { width: 24px; height: 24px; }
+        #theme-toggle svg, #github-link svg { width: 24px; height: 24px; }
         .main-playback-controls .btn { width: 42px; height: 42px; padding: 0; flex-shrink: 0; border-radius: 50%; }
         #play-pause-button { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; border-color: var(--primary-color); width: 48px; height: 48px; box-shadow: var(--shadow-md); }
         #play-pause-button:hover { background: linear-gradient(135deg, var(--primary-hover-color), var(--primary-color)); transform: scale(1.05); box-shadow: var(--shadow-lg); }
@@ -309,7 +310,17 @@
         .video-grid { display: grid; height: 100%; width: 100%; gap: 0.5rem; grid-template-areas: "left-pillar front right-pillar" "left-repeater back right-repeater"; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
         .video-container.hidden { display: none; }
         .video-grid.single-view-mode .video-container:not(.hidden) { grid-area: initial; grid-column: 1 / -1; grid-row: 1 / -1; }
-        .video-container { position: relative; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 2px solid var(--border-color); border-radius: var(--border-radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); box-shadow: var(--shadow-md); }
+        
+        /* New styles for expanded view */
+        .video-grid.expanded-view .video-container {
+            display: none;
+        }
+        .video-grid.expanded-view .video-container.expanded {
+            display: flex;
+            grid-area: 1 / 1 / -1 / -1;
+        }
+
+        .video-container { position: relative; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 2px solid var(--border-color); border-radius: var(--border-radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); box-shadow: var(--shadow-md); cursor: pointer; }
         .video-container:hover { border-color: var(--primary-color); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
         .video-label { position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.9)); color: white; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; border-radius: var(--border-radius-md); pointer-events: none; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 1; }
         video { width: 100%; height: 100%; object-fit: contain; border-radius: calc(var(--border-radius-lg) - 2px); }
@@ -417,6 +428,9 @@
             <button class="tab-button" onclick="openTab(event, 'About')">About</button>
         </div>
         <div class="top-right-controls">
+              <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" class="btn icon-btn" id="github-link" title="View on GitHub">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 24px; height: 24px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+              </a>
               <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
                   <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                   <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -478,11 +492,11 @@
                                    <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
                                </div>
                                <div class="top-right-controls">
-                                   <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
-                                   <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
-                                   <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
-                                   <select id="date-select" class="styled-input" style="max-width: 160px;"><option>Select Event</option></select>
-                                   <button class="btn" id="toggle-controls-btn" title="Select Camera Angles">Select Camera Angles <svg id="chevron-down" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"></path></svg><svg id="chevron-up" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display:none;"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"></path></svg></button>
+                                    <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
+                                    <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                                    <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
+                                    <select id="date-select" class="styled-input" style="max-width: 160px;"><option>Select Event</option></select>
+                                    <button class="btn" id="toggle-controls-btn" title="Select Camera Angles">Select Camera Angles <svg id="chevron-down" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"></path></svg><svg id="chevron-up" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display:none;"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"></path></svg></button>
                                </div>
                          </div>
                          <div class="header-row progress-container">
@@ -574,7 +588,7 @@
                 <h2>Credits & Acknowledgements</h2>
                   <ul>
                         <li>The core Camera Viewer functionality was originally created by <strong>Lythinari</strong>. You can find the original project on <a href="https://github.com/Lythinari/TeslaCamViewer" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
-                        <li>This version was further edited and refined by <strong>Joshua Leshnick</strong> to create a more sleek application with additional useful features.</li>
+                        <li>This version was further edited and refined by <strong>Joshua Leshnick</strong>. You can find the project on <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
                         <li>This app was built with HTML5, CSS3, and modern JavaScript.</li>
                         <li>Icons provided by Feather Icons.</li>
                         <li>Font by Google Fonts (Inter).</li>
@@ -635,12 +649,6 @@
         screenshotBtn: document.querySelector('#screenshot-btn'),
         cameraControlsContainer: document.getElementById('camera-controls-container'),
     };
-    
-    // --- Landing Page Logic ---
-    dom.launchAppBtn.addEventListener('click', () => {
-        dom.landingPage.classList.add('hidden');
-        dom.appContainer.classList.remove('hidden');
-    });
     
     // --- Tabs ---
     function openTab(evt, tabName) {
@@ -1021,6 +1029,23 @@
         });
     });
 
+    document.querySelectorAll('.video-container').forEach(container => {
+        container.addEventListener('dblclick', (e) => {
+            const grid = dom.videoGrid;
+            const clickedContainer = e.currentTarget;
+
+            if (grid.classList.contains('expanded-view')) {
+                if (clickedContainer.classList.contains('expanded')) {
+                    grid.classList.remove('expanded-view');
+                    clickedContainer.classList.remove('expanded');
+                }
+            } else {
+                grid.classList.add('expanded-view');
+                clickedContainer.classList.add('expanded');
+            }
+        });
+    });
+
     dom.fileBrowser.addEventListener("change", function(e) {
         state.eventClips.clear(); 
         state.sortedEventKeys = []; 
@@ -1062,6 +1087,12 @@
 
     // --- Initial Load ---
     document.addEventListener('DOMContentLoaded', () => {
+        // Landing Page Logic
+        dom.launchAppBtn.addEventListener('click', () => {
+            dom.landingPage.classList.add('hidden');
+            dom.appContainer.classList.remove('hidden');
+        });
+
         // Set the theme based on user's preference or default to dark.
         applyTheme(localStorage.getItem('theme') || 'dark');
         
