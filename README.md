@@ -9,6 +9,7 @@ Your all-in-one web-based toolkit for viewing TeslaCam clips, estimating chargin
 - **Interactive Playback:** Full playback controls including play/pause, a master scrubber, 5-second skips, and variable playback speed.
 - **Single-View Zoom:** Double-click any camera feed to expand it to full view. Double-click again to return to the grid layout.
 - **Jump to Event:** If a Sentry or Dashcam event is detected, a button appears to jump directly to the moment of the trigger.
+- **In-App Map Viewer:** If an event contains GPS data, click the "Event Map" button to see the location on a map without leaving the page.
 - **Enhanced Screenshots:** Capture a high-quality composite image of all visible camera feeds with a single click.
 - **Charging Time Estimator:** Calculate how long a charging session will take based on battery capacity, SoC, and charger type (including custom inputs).
 - **Phantom Drain Estimator:** Estimate how long your battery will last while parked, based on active features like Sentry Mode and outside temperature.

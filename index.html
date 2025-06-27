@@ -297,8 +297,8 @@
         .btn:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
         .btn svg { width: 18px; height: 18px; transition: var(--transition-fast); flex-shrink: 0; }
         #theme-toggle svg, #github-link svg { width: 24px; height: 24px; }
-        .main-playback-controls .btn { width: 42px; height: 42px; padding: 0; flex-shrink: 0; border-radius: 50%; }
-        #play-pause-button { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; border-color: var(--primary-color); width: 48px; height: 48px; box-shadow: var(--shadow-md); }
+        .main-playback-controls .icon-btn { width: 42px; height: 42px; padding: 0; flex-shrink: 0; border-radius: 50%; }
+        #play-pause-button { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; border-color: var(--primary-color); width: 48px; height: 48px; }
         #play-pause-button:hover { background: linear-gradient(135deg, var(--primary-hover-color), var(--primary-color)); transform: scale(1.05); box-shadow: var(--shadow-lg); }
         
         .content-container { flex-grow: 1; overflow: hidden; background: var(--bg-color); display: flex; flex-direction: column;}
@@ -380,6 +380,43 @@
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .header { animation: slideIn 0.5s ease-out; }
 
+        /* --- Map Overlay Styles --- */
+        #map-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none; /* Initially hidden */
+            align-items: center;
+            justify-content: center;
+            z-index: 110; /* Higher than header */
+            animation: fadeIn 0.3s ease;
+        }
+
+        #map-iframe {
+            width: 90vw;
+            height: 90vh;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+        }
+
+        #map-close-button {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 3rem;
+            color: #fff;
+            cursor: pointer;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        #map-close-button:hover {
+            transform: scale(1.2) rotate(90deg);
+        }
+
         /* Responsive Design */
         @media (max-width: 1200px) {
             .header { flex-direction: column; align-items: stretch; gap: 1rem; }
@@ -389,7 +426,7 @@
             .header { padding: 0.75rem 1rem; }
             .title { font-size: 1.25rem; }
             .main-playback-controls { gap: 0.5rem; padding: 0.5rem; }
-            .main-playback-controls .btn { width: 38px; height: 38px; }
+            .main-playback-controls .icon-btn { width: 38px; height: 38px; }
             #play-pause-button { width: 44px; height: 44px; }
             #CameraViewer .video-grid-container { padding: 0.5rem; }
             .video-grid { gap: 0.5rem; }
@@ -451,6 +488,7 @@
                     <li><strong>Navigate Events:</strong> Use the dropdown menu to select a specific event date and time. You can also use the Previous/Next arrow buttons or your keyboard's Up/Down arrows to cycle through events.</li>
                     <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
                     <li><strong>Jump to Event:</strong> If an event was triggered (e.g., by Sentry Mode), an "Event" button will appear. Click it to jump directly to the moment of the trigger.</li>
+                    <li><strong>View Location:</strong> If the event contains GPS data, a "Map" button will appear. Click it to view the location on Google Maps.</li>
                     <li><strong>Grid Screenshots:</strong> Use the "Screenshot" button in the top controls to download a single, high-quality image stitching all visible camera feeds together.</li>
                 </ul>
 
@@ -482,7 +520,8 @@
                                    </div>
                                </div>
                                <div class="main-playback-controls">
-                                   <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Event</button>
+                                   <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Jump to Event</button>
+                                   <button class="btn" id="map-button" style="display: none;" title="View on Map">Event Map</button>
                                    <button class="btn icon-btn previous" title="Previous Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"></path></svg></button>
                                    <button class="btn" id="skip-rewind" title="Rewind 5s">-5s</button>
                                    <button class="btn icon-btn" id="play-pause-button"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M8 5v14l11-7z"></path></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
@@ -601,6 +640,11 @@
     </div>
 </div>
 
+<div id="map-container">
+    <div id="map-close-button">&times;</div>
+    <iframe id="map-iframe" src="" frameborder="0" allowfullscreen></iframe>
+</div>
+
 <script>
     // --- Global State & DOM ---
     const state = {
@@ -632,6 +676,10 @@
         statusDot: document.querySelector('.status-dot'),
         eventMarker: document.querySelector("#event-marker"),
         jumpToEventButton: document.querySelector("#jump-to-event"),
+        mapButton: document.getElementById('map-button'),
+        mapContainer: document.getElementById('map-container'),
+        mapIframe: document.getElementById('map-iframe'),
+        mapCloseButton: document.getElementById('map-close-button'),
         cameraToggles: document.querySelector("#camera-toggles"),
         selectAllCameras: document.querySelector('#select-all-cameras'),
         themeToggle: document.querySelector('#theme-toggle'),
@@ -784,6 +832,7 @@
         dom.durationDisplay.textContent = "00:00";
         dom.eventMarker.style.display = "none";
         dom.jumpToEventButton.style.display = "none";
+        dom.mapButton.style.display = 'none';
         dom.eventReasonDisplay.style.display = 'none';
         const eventKey = state.sortedEventKeys[index];
         const eventData = state.eventClips.get(eventKey);
@@ -819,6 +868,15 @@
                 const jsonContent = await eventData.eventJson.text();
                 const jsonData = JSON.parse(jsonContent);
                 const eventTime = new Date(jsonData.timestamp);
+
+                if (jsonData.est_lat && jsonData.est_lon) {
+                    state.currentEventData.location = {
+                        lat: jsonData.est_lat,
+                        lon: jsonData.est_lon
+                    };
+                    dom.mapButton.style.display = 'inline-flex';
+                }
+
                 if (state.currentEventData.firstClipTime) {
                     let offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
                     if (Math.abs(offset) > state.currentEventData.totalDuration) offset -= Math.round(offset / 3600) * 3600;
@@ -1084,6 +1142,31 @@
             case 'ArrowDown': e.preventDefault(); if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); break;
         }
     });
+
+    // --- Map Logic ---
+    dom.mapButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (state.currentEventData.location) {
+            const { lat, lon } = state.currentEventData.location;
+            const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=es;z=14&output=embed`;
+            dom.mapIframe.src = mapUrl;
+            dom.mapContainer.style.display = 'flex';
+        }
+    });
+
+    function closeMap() {
+        dom.mapContainer.style.display = 'none';
+        dom.mapIframe.src = ''; // Clear src to stop loading and prevent resource usage
+    }
+
+    dom.mapCloseButton.addEventListener('click', closeMap);
+    dom.mapContainer.addEventListener('click', (e) => {
+        // Close if the background overlay is clicked
+        if (e.target === dom.mapContainer) {
+            closeMap();
+        }
+    });
+
 
     // --- Initial Load ---
     document.addEventListener('DOMContentLoaded', () => {
