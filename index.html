@@ -200,17 +200,17 @@
             z-index: 20;
             padding: 0.75rem 1.5rem;
             transition: var(--transition-normal);
-            display: grid;
-            grid-template-columns: auto 1fr auto;
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            gap: 0.75rem;
         }
         
-        .header .title-area {
-            justify-self: start;
-        }
-
-        .header .top-right-controls {
-            justify-self: end;
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
         }
 
         .title-area { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
@@ -286,11 +286,16 @@
             border-bottom: 1px solid var(--border-color);
         }
         .header-row { display: flex; width: 100%; align-items: center; flex-wrap: wrap; }
-        .top-ribbon { justify-content: space-between; gap: 1rem; min-height: 48px; }
+        .top-ribbon {
+            display: grid;
+            gap: 1rem;
+            width: 100%;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+        }
         
         .main-playback-controls {
             display: flex;
-            flex-grow: 1;
             justify-content: center;
             align-items: center;
             gap: 0.75rem;
@@ -298,6 +303,10 @@
             border-radius: var(--border-radius-xl);
             padding: 0.5rem;
             box-shadow: var(--shadow-md);
+        }
+        
+        .file-select-stack {
+            flex-shrink: 0;
         }
 
         .time-display {
@@ -489,29 +498,36 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 1200px) {
-            .header { 
-                grid-template-columns: 1fr;
+        @media (max-width: 1250px) {
+            .top-ribbon {
+                display: grid;
+                grid-template-areas:
+                    "playback playback"
+                    "details files";
+                grid-template-columns: 1fr auto;
                 gap: 1rem;
             }
-            .header .title-area, .header .top-right-controls {
-                justify-self: center;
-            }
+            .main-playback-controls { grid-area: playback; }
+            .title-area { grid-area: details; justify-self: start; align-self: center; }
+            .file-select-stack { grid-area: files; justify-self: end; align-self: center; }
         }
-        
-        @media (max-width: 1300px) {
-            .header-row.top-ribbon {
-                justify-content: center;
-                align-items: center;
-                flex-wrap: wrap;
-            }
-        }
-
 
         @media (max-width: 768px) {
             .header { padding: 0.75rem 1rem; }
+            .header-top { flex-direction: column; gap: 0.75rem; }
             .title { font-size: 1.25rem; }
-            .main-playback-controls { gap: 0.5rem; padding: 0.5rem; flex-wrap: wrap;}
+
+            .top-ribbon {
+                grid-template-areas:
+                    "playback"
+                    "details"
+                    "files";
+                grid-template-columns: 1fr;
+                justify-items: center;
+            }
+            .title-area, .file-select-stack { justify-self: center; }
+
+            .main-playback-controls { gap: 0.5rem; padding: 0.5rem; flex-wrap: wrap; }
             .main-playback-controls .icon-btn { width: 38px; height: 38px; }
             #play-pause-button { width: 44px; height: 44px; }
             #CameraViewer .video-grid-container { padding: 0.5rem; }
@@ -538,8 +554,19 @@
 
 <div class="layout-container hidden"> 
     <header class="header">
-        <div class="title-area">
-              <div class="title">Tesla Companion</div>
+        <div class="header-top">
+            <div class="title-area">
+                <div class="title">Tesla Companion</div>
+            </div>
+            <div class="top-right-controls">
+                <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
+                    <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+                <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" class="btn icon-btn" id="github-link" title="View on GitHub">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 24px; height: 24px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                </a>
+            </div>
         </div>
         <div class="main-tabs">
             <button class="tab-button active" onclick="openTab(event, 'HowTo')">How To</button>
@@ -547,15 +574,6 @@
             <button class="tab-button" onclick="openTab(event, 'ChargingEstimator')">Charging Time Estimator</button>
             <button class="tab-button" onclick="openTab(event, 'PhantomDrain')">Phantom Drain Estimator</button>
             <button class="tab-button" onclick="openTab(event, 'About')">About</button>
-        </div>
-        <div class="top-right-controls">
-            <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
-                <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            </button>
-            <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" class="btn icon-btn" id="github-link" title="View on GitHub">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 24px; height: 24px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-            </a>
         </div>
     </header>
 
@@ -567,7 +585,7 @@
                 
                 <h2>Camera Viewer</h2>
                 <ul>
-                    <li><strong>Load Clips:</strong> Click the "Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
+                    <li><strong>Load Clips:</strong> Click the "Select Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
                     <li><strong>Navigate Events:</strong> Use the dropdown or navigation buttons to move between events.</li>
                     <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
                     <li><strong>Jump to Event:</strong> If an event was triggered, a "Jump to Event" button will appear.</li>
@@ -644,11 +662,6 @@
                                     <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
                                     <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
                                     <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
-                                    <div class="file-select-stack">
-                                        <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Directory</label>
-                                        <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
-                                        <select id="date-select" class="styled-input"><option>Select Event</option></select>
-                                    </div>
                                     <div class="utility-btn-stack">
                                         <button class="btn icon-btn" id="screenshot-btn" title="Screenshot"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
                                         <button class="btn icon-btn" id="fullscreen-toggle" title="Toggle Fullscreen">
@@ -656,6 +669,11 @@
                                             <svg id="minimize-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
                                         </button>
                                     </div>
+                                </div>
+                                <div class="file-select-stack">
+                                    <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
+                                    <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                                    <select id="date-select" class="styled-input"><option>Select Event</option></select>
                                 </div>
                           </div>
                           <div class="header-row progress-container">
