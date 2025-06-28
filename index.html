@@ -229,7 +229,7 @@
             background-color: var(--surface-elevated);
             padding: 0.5rem;
             border-radius: var(--border-radius-lg);
-            justify-self: center; /* Changed from flex-grow */
+            justify-self: center;
         }
         .tab-button {
             padding: 0.5rem 1rem;
@@ -249,17 +249,19 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .top-right-controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        .top-right-controls { display: flex; align-items: center; gap: 0.75rem; }
         
-        .file-select-stack, .event-action-stack {
+        .file-select-stack, .event-action-stack, .utility-btn-stack {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
             align-items: stretch;
         }
-
-        .file-select-stack #date-select {
-            max-width: none;
+        
+        .utility-btn-stack .btn {
+            padding: 0.25rem;
+            width: 38px;
+            height: 38px;
         }
 
         .clip-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.4; gap: 0.25rem; }
@@ -284,7 +286,7 @@
             border-bottom: 1px solid var(--border-color);
         }
         .header-row { display: flex; width: 100%; align-items: center; flex-wrap: wrap; }
-        .top-ribbon { justify-content: space-between; gap: 1.5rem; min-height: 48px; }
+        .top-ribbon { justify-content: space-between; gap: 1rem; min-height: 48px; }
         
         .main-playback-controls {
             display: flex;
@@ -294,7 +296,7 @@
             gap: 0.75rem;
             background: var(--surface-elevated);
             border-radius: var(--border-radius-xl);
-            padding: 0.75rem;
+            padding: 0.5rem;
             box-shadow: var(--shadow-md);
         }
 
@@ -304,7 +306,7 @@
             font-weight: 500;
             white-space: nowrap;
             color: var(--text-muted-color);
-            margin-left: 1rem;
+            margin: 0 0.5rem;
             background: var(--control-bg-color);
             padding: 0.5rem 0.75rem;
             border-radius: var(--border-radius-md);
@@ -497,13 +499,11 @@
             }
         }
         
-        @media (max-width: 1150px) {
+        @media (max-width: 1300px) {
             .header-row.top-ribbon {
                 justify-content: center;
                 align-items: center;
-            }
-            .top-ribbon .top-right-controls {
-                justify-content: center;
+                flex-wrap: wrap;
             }
         }
 
@@ -511,7 +511,7 @@
         @media (max-width: 768px) {
             .header { padding: 0.75rem 1rem; }
             .title { font-size: 1.25rem; }
-            .main-playback-controls { gap: 0.5rem; padding: 0.5rem; }
+            .main-playback-controls { gap: 0.5rem; padding: 0.5rem; flex-wrap: wrap;}
             .main-playback-controls .icon-btn { width: 38px; height: 38px; }
             #play-pause-button { width: 44px; height: 44px; }
             #CameraViewer .video-grid-container { padding: 0.5rem; }
@@ -567,7 +567,7 @@
                 
                 <h2>Camera Viewer</h2>
                 <ul>
-                    <li><strong>Load Clips:</strong> Click the "Select Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
+                    <li><strong>Load Clips:</strong> Click the "Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
                     <li><strong>Navigate Events:</strong> Use the dropdown or navigation buttons to move between events.</li>
                     <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
                     <li><strong>Jump to Event:</strong> If an event was triggered, a "Jump to Event" button will appear.</li>
@@ -644,18 +644,18 @@
                                     <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
                                     <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
                                     <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
-                                </div>
-                                <div class="top-right-controls">
                                     <div class="file-select-stack">
-                                        <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
+                                        <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Directory</label>
                                         <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
                                         <select id="date-select" class="styled-input"><option>Select Event</option></select>
                                     </div>
-                                    <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
-                                    <button class="btn icon-btn" id="fullscreen-toggle" title="Toggle Fullscreen">
-                                        <svg id="maximize-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                                        <svg id="minimize-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
-                                    </button>
+                                    <div class="utility-btn-stack">
+                                        <button class="btn icon-btn" id="screenshot-btn" title="Screenshot"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
+                                        <button class="btn icon-btn" id="fullscreen-toggle" title="Toggle Fullscreen">
+                                            <svg id="maximize-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                                            <svg id="minimize-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
+                                        </button>
+                                    </div>
                                 </div>
                           </div>
                           <div class="header-row progress-container">
@@ -805,10 +805,7 @@
             skipForwardButton: document.querySelector('#skip-forward'),
             skipRewindButton: document.querySelector('#skip-rewind'),
             playbackSpeedSelector: document.querySelector('#playback-speed'),
-            toggleControlsBtn: document.querySelector('#toggle-controls-btn'),
             collapsibleControls: document.querySelector('#collapsible-controls'),
-            chevronDown: document.querySelector('#chevron-down'),
-            chevronUp: document.querySelector('#chevron-up'),
             titleFolderName: document.querySelector('.title-folder-name'),
             eventDetailsContainer: document.getElementById('event-details-container'),
             eventReasonDisplay: document.getElementById('event-reason-display'),
@@ -819,8 +816,13 @@
             cameraControlsContainer: document.getElementById('camera-controls-container'),
         };
 
-        // --- Function Definitions ---
-        // (All functions are defined inside DOMContentLoaded to ensure they have access to `dom` and `state`)
+        const friendlyEventReasons = {
+            'sentry_aware_object_detection': 'Sentry: Object Detected',
+            'user_interaction_dashcam_icon_tapped': 'Dashcam Saved (Manual)',
+            'user_interaction_honk': 'Dashcam Saved (Honk)',
+            'sentry_locked_handle_pulled': 'Sentry: Handle Pulled',
+            'user_interaction_dashcam_multifunction_selected': 'Dashcam Saved (Manual)',
+        };
 
         window.openTab = (evt, tabName) => {
             let i, tabcontent, tablinks;
@@ -926,7 +928,6 @@
             resultDiv.innerHTML = resultText + `</strong>`;
         }
 
-        const EVENT_TIME_CORRECTION_S = 5.0;
         async function loadEvent(index) {
             state.carouselIndex = index;
             if (index < 0 || index >= state.sortedEventKeys.length) return;
@@ -968,7 +969,8 @@
             const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
             if (firstClipNameMatch) {
                 const dateTimeString = firstClipNameMatch[1];
-                const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':') + 'Z';
+                // Create Date object assuming the filename is in local time, without forcing UTC.
+                const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':');
                 state.currentEventData.firstClipTime = new Date(formattedDateTimeString);
             } else {
                 state.currentEventData.firstClipTime = null;
@@ -986,7 +988,7 @@
             if (state.currentEventData.firstClipTime) {
                 updateLiveTimestamp(0);
                 const endClipTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.totalDuration * 1000));
-                dom.durationDisplay.textContent = formatUTCTime(endClipTime);
+                dom.durationDisplay.textContent = formatLocalTime(endClipTime);
             } else {
                 dom.liveTimestamp.textContent = formatTime(0);
                 dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
@@ -995,16 +997,18 @@
                 try {
                     const jsonContent = await eventData.eventJson.text();
                     const jsonData = JSON.parse(jsonContent);
-                    const eventTime = new Date(jsonData.timestamp + 'Z');
+                    // Treat the timestamp from JSON as local, matching the folder/file names.
+                    const eventTime = new Date(jsonData.timestamp);
 
                     dom.eventDetailsContainer.style.display = 'block';
 
-                    // Reason
-                    const reason = jsonData.reason.replace(/_/g, ' ');
-                    dom.eventReasonDisplay.innerHTML = `Event: <strong>${reason.charAt(0).toUpperCase() + reason.slice(1)}</strong>`;
-
+                    // Reason (Friendly Name)
+                    const rawReason = jsonData.reason;
+                    const friendlyReason = friendlyEventReasons[rawReason] || rawReason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    dom.eventReasonDisplay.innerHTML = `Event: <strong>${friendlyReason}</strong>`;
+                    
                     // Time
-                    dom.eventTimeDisplay.innerHTML = `Event Time: <strong>${formatUTCTime(eventTime)} UTC</strong>`;
+                    dom.eventTimeDisplay.innerHTML = `Event Time: <strong>${formatLocalTime(eventTime)}</strong>`;
 
                     if (jsonData.est_lat && jsonData.est_lon) {
                         state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
@@ -1019,22 +1023,15 @@
                     const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
                     if (triggerCameraName) {
                         const displayName = triggerCameraName.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
-                        dom.eventTriggerDisplay.innerHTML = `Trigger Camera: <strong>${displayName.charAt(0).toUpperCase() + displayName.slice(1)}</strong>`;
+                        dom.eventTriggerDisplay.innerHTML = `Trigger: <strong>${displayName.charAt(0).toUpperCase() + displayName.slice(1)}</strong>`;
                         const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
                         if(triggerContainer) triggerContainer.classList.add('triggered');
                     }
 
                     if (state.currentEventData.firstClipTime) {
                         const offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
-                        
-                        // The event timestamp from JSON seems to be the exact moment of the trigger.
-                        // The video files might start a few seconds before that. We use this offset
-                        // to place the marker on the scrubber and allow jumping to it.
-                        // No complex timezone correction is needed here if all times are handled as UTC.
-                        const correctedOffset = offset;
-
-                        if (correctedOffset >= 0 && correctedOffset < state.currentEventData.totalDuration) {
-                            state.currentEventData.eventTriggerOffset = correctedOffset;
+                        if (offset >= 0 && offset < state.currentEventData.totalDuration) {
+                            state.currentEventData.eventTriggerOffset = offset;
                             updateEventMarkerPosition();
                             dom.eventMarker.style.display = "block";
                             dom.jumpToEventButton.style.display = "inline-flex";
@@ -1115,17 +1112,14 @@
                 return;
             }
             const liveTime = new Date(state.currentEventData.firstClipTime.getTime() + (currentTime * 1000));
-            dom.liveTimestamp.textContent = formatUTCTime(liveTime);
+            dom.liveTimestamp.textContent = formatLocalTime(liveTime);
         }
         function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
         function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
         
-        function formatUTCTime(date) {
-            if (!date || isNaN(date.getTime())) return '--:--:--';
-            const hours = date.getUTCHours().toString().padStart(2, '0');
-            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-            const seconds = date.getUTCSeconds().toString().padStart(2, '0');
-            return `${hours}:${minutes}:${seconds}`;
+        function formatLocalTime(date) { 
+            if (!date || isNaN(date.getTime())) return '--:--:--'; 
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); 
         }
 
         function getVideoDuration(file) { return new Promise(resolve => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); }); }
