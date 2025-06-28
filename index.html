@@ -698,319 +698,13 @@
 </div>
 
 <script>
-    let dom; 
-
-    const state = {
-        playbackRate: 1, carouselIndex: 0, eventClips: new Map(),
-        sortedEventKeys: [], currentEventData: {},
-    };
-
-    // All functions are defined here... (shortened for brevity)
-    function openTab(evt, tabName) {
-        let i, tabcontent, tablinks;
-        tabcontent = document.getElementsByClassName("tab-content");
-        for (i = 0; i < tabcontent.length; i++) tabcontent[i].classList.remove("active");
-        tablinks = document.getElementsByClassName("tab-button");
-        for (i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("active");
-        document.getElementById(tabName).classList.add("active");
-        evt.currentTarget.classList.add("active");
-        dom.cameraControlsContainer.style.display = (tabName === 'CameraViewer') ? 'block' : 'none';
-    }
-
-    function applyTheme(theme) {
-        if (theme === 'light') {
-            dom.body.classList.add('light-mode');
-            dom.themeIconSun.style.display = 'none';
-            dom.themeIconMoon.style.display = 'block';
-        } else {
-            dom.body.classList.remove('light-mode');
-            dom.themeIconSun.style.display = 'block';
-            dom.themeIconMoon.style.display = 'none';
-        }
-    }
-    
-    function toggleCustomParams() {
-        document.getElementById('custom-params').style.display = (document.getElementById('charger-type').value === 'custom') ? 'block' : 'none';
-    }
-
-    function calculateTime() {
-        const capacity = parseFloat(document.getElementById('battery-capacity').value);
-        const efficiency = parseFloat(document.getElementById('charger-efficiency').value) / 100;
-        const currentSOC = parseFloat(document.getElementById('current-soc').value);
-        const targetSOC = parseFloat(document.getElementById('target-soc').value);
-        const chargerType = document.getElementById('charger-type').value;
-        const resultDiv = document.getElementById('result');
-
-        if (isNaN(capacity) || isNaN(currentSOC) || isNaN(targetSOC) || currentSOC >= targetSOC) {
-            resultDiv.innerText = "Please enter valid capacity and battery percentages.";
-            return;
-        }
-
-        let chargerPower = 0;
-        if (chargerType === 'custom') {
-            const voltage = parseFloat(document.getElementById('voltage').value);
-            const amps = parseFloat(document.getElementById('amps').value);
-            if (isNaN(voltage) || isNaN(amps) || voltage <= 0 || amps <= 0) {
-                resultDiv.innerText = "Please enter valid Voltage and Amperage.";
-                return;
-            }
-            chargerPower = (voltage * amps) / 1000;
-        } else {
-            chargerPower = parseFloat(chargerType);
-        }
-
-        const energyNeeded = (targetSOC - currentSOC) / 100 * capacity;
-        const timeHours = energyNeeded / (chargerPower * (chargerPower === 250 ? 1 : efficiency));
-        const hours = Math.floor(timeHours);
-        const minutes = Math.round((timeHours - hours) * 60);
-
-        let resultText = `Estimated time to charge:<br><strong>`;
-          if (hours > 0) resultText += `${hours} hr `;
-        if (minutes > 0) resultText += `${minutes} min`;
-        if (hours === 0 && minutes === 0) resultText = "Charge time is less than a minute.";
-        resultDiv.innerHTML = resultText + `</strong>`;
-    }
-
-    function calculateDrainTime() {
-        const originalCapacity = 75;
-        const batteryHealth = parseFloat(document.getElementById('battery-health').value) / 100;
-        const currentSOC = parseFloat(document.getElementById('drain-current-soc').value);
-        const targetSOC = parseFloat(document.getElementById('drain-target-soc').value);
-        const outsideTempF = parseFloat(document.getElementById('outside-temp').value);
-        const resultDiv = document.getElementById('drain-result');
-
-        if (isNaN(batteryHealth) || isNaN(currentSOC) || isNaN(targetSOC) || isNaN(outsideTempF) || currentSOC <= targetSOC) {
-            resultDiv.innerText = "Please enter valid battery and temperature details (Current > Target).";
-            return;
-        }
-
-        let totalDrainWatts = 50;
-        document.getElementsByName('drain-feature').forEach(feature => {
-            if (feature.checked) {
-                totalDrainWatts += parseFloat(feature.value);
-            }
-        });
-        
-        let tempMultiplier = 1.0;
-        if (outsideTempF > 90) tempMultiplier = 1.5;
-        else if (outsideTempF < 40) tempMultiplier = 2.0;
-
-        const actualDrain = totalDrainWatts * tempMultiplier;
-        const currentCapacity = originalCapacity * batteryHealth;
-        const energyToDrain = (currentSOC - targetSOC) / 100 * currentCapacity * 1000;
-        
-        const timeHours = energyToDrain / actualDrain;
-        const days = Math.floor(timeHours / 24);
-        const hours = Math.floor(timeHours % 24);
-
-        let resultText = `Estimated time to drain:<br><strong>`;
-        if (days > 0) resultText += `${days} days `;
-        if (hours > 0) resultText += `${hours} hours`;
-        if (days === 0 && hours === 0) resultText = "Drain time is very short.";
-        resultDiv.innerHTML = resultText + `</strong>`;
-    }
-
-    const EVENT_TIME_CORRECTION_S = 5.0;
-    async function loadEvent(index) {
-        state.carouselIndex = index;
-        if (index < 0 || index >= state.sortedEventKeys.length) return;
-        pauseVideos();
-        dom.masterScrubber.value = 0;
-        dom.liveTimestamp.textContent = "00:00";
-        dom.durationDisplay.textContent = "00:00";
-        dom.eventMarker.style.display = "none";
-        dom.jumpToEventButton.style.display = "none";
-        dom.mapButton.style.display = 'none';
-        dom.eventReasonDisplay.style.display = 'none';
-        dom.eventCityDisplay.style.display = 'none';
-        document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
-
-        const eventKey = state.sortedEventKeys[index];
-        const eventData = state.eventClips.get(eventKey);
-        state.currentEventData = {
-            playlists: eventData.playlists, clipDurations: [],
-            totalDuration: 0, eventTriggerOffset: -1, firstClipTime: null,
-            playlistIndices: { front: 0, back: 0, left_repeater: 0, right_repeater: 0, left_pillar: 0, right_pillar: 0 }
-        };
-        dom.titleFolderName.textContent = eventKey;
-        dom.dateSelector.selectedIndex = index;
-
-        let earliestFile = null;
-        for (const camera in eventData.playlists) {
-            if (eventData.playlists[camera].length > 0) {
-                if (!earliestFile || eventData.playlists[camera][0].name < earliestFile.name) {
-                    earliestFile = eventData.playlists[camera][0];
-                }
-            }
-        }
-
-        if (!earliestFile) return;
-
-        const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
-        if (firstClipNameMatch) {
-            const dateTimeString = firstClipNameMatch[1];
-            const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':') + 'Z';
-            state.currentEventData.firstClipTime = new Date(formattedDateTimeString);
-        } else {
-            state.currentEventData.firstClipTime = null;
-        }
-
-        const masterPlaylist = state.currentEventData.playlists.front;
-        if(masterPlaylist.length > 0) {
-            state.currentEventData.clipDurations = await Promise.all(masterPlaylist.map(getVideoDuration));
-            state.currentEventData.totalDuration = state.currentEventData.clipDurations.reduce((a, b) => a + b, 0);
-        } else {
-            state.currentEventData.clipDurations = [];
-            state.currentEventData.totalDuration = 0;
-        }
-
-        if (state.currentEventData.firstClipTime) {
-            updateLiveTimestamp(0);
-            const endClipTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.totalDuration * 1000));
-            dom.durationDisplay.textContent = formatLocalTime(endClipTime);
-        } else {
-            dom.liveTimestamp.textContent = formatTime(0);
-            dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
-        }
-        if(eventData.eventJson) {
-            try {
-                const jsonContent = await eventData.eventJson.text();
-                const jsonData = JSON.parse(jsonContent);
-                const eventTime = new Date(jsonData.timestamp + 'Z');
-
-                if (jsonData.est_lat && jsonData.est_lon) {
-                    state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
-                    dom.mapButton.style.display = 'inline-flex';
-                }
-                if (jsonData.city) {
-                    dom.eventCityDisplay.innerHTML = `Event City: <strong>${jsonData.city}</strong>`;
-                    dom.eventCityDisplay.style.display = 'block';
-                }
-
-                if (state.currentEventData.firstClipTime) {
-                    const offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
-                    const correctedOffset = offset - EVENT_TIME_CORRECTION_S;
-
-                    if (correctedOffset >= 0 && correctedOffset < state.currentEventData.totalDuration) {
-                        state.currentEventData.eventTriggerOffset = correctedOffset;
-                        const eventMarkerAbsoluteTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.eventTriggerOffset * 1000));
-                        
-                        const cameraIndexMap = { 0: 'front', 1: 'fisheye', 2: 'narrow', 3: 'left_repeater', 4: 'right_repeater', 5: 'left_pillar', 6: 'right_pillar', 7: 'back', 8: 'cabin' };
-                        const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
-                        
-                        let reasonText = `Event: <strong>${jsonData.reason.replace(/_/g, ' ')}</strong> at ${formatLocalTime(eventMarkerAbsoluteTime)}`;
-                        
-                        if (triggerCameraName) {
-                            const displayName = triggerCameraName.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
-                            reasonText += ` (Trigger: ${displayName.charAt(0).toUpperCase() + displayName.slice(1)})`;
-                            const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
-                            if(triggerContainer) triggerContainer.classList.add('triggered');
-                        }
-                        
-                        dom.eventReasonDisplay.innerHTML = reasonText;
-                        dom.eventReasonDisplay.style.display = 'block';
-                        updateEventMarkerPosition();
-                        dom.eventMarker.style.display = "block";
-                        dom.jumpToEventButton.style.display = "inline-flex";
-                    }
-                }
-            } catch (error) { console.error("Error processing event.json:", error); }
-        }
-        dom.allVideos.forEach(video => {
-            const cameraType = video.className.split(' ')[0];
-            const playlist = state.currentEventData.playlists[cameraType];
-            loadVideo(video, playlist && playlist.length > 0 ? playlist[0] : null);
-        });
-    }
-
-    function loadVideo(videoElement, file) {
-        if (videoElement.src.startsWith('blob:')) URL.revokeObjectURL(videoElement.src);
-        videoElement.src = file ? URL.createObjectURL(file) : '';
-        videoElement.playbackRate = state.playbackRate;
-    }
-    function updatePlayButtonUI(isPlaying) {
-        dom.playIcon.style.display = isPlaying ? 'none' : 'block';
-        dom.pauseIcon.style.display = isPlaying ? 'block' : 'none';
-        dom.statusDot.classList.toggle('ready', !isPlaying);
-        dom.statusDot.classList.toggle('playing', isPlaying);
-    }
-    function playVideos() {
-        updatePlayButtonUI(true);
-        dom.allVideos.forEach(v => { 
-            if (v.src && v.paused) {
-                v.play().catch(error => console.error(`Play failed for ${v.className}:`, error));
-            }
-        });
-    }
-    function pauseVideos() { updatePlayButtonUI(false); dom.allVideos.forEach(v => v.pause()); }
-    function playPause() { dom.frontVideo.paused && dom.frontVideo.src ? playVideos() : pauseVideos(); }
-    function skipTo(seconds) { seekAllVideos(getCurrentTime() + seconds); }
-    function setPlaybackSpeed(rate) {
-        state.playbackRate = parseFloat(rate);
-        dom.allVideos.forEach(video => { video.playbackRate = state.playbackRate; });
-    }
-    function seekAllVideos(targetTime) {
-        if (isNaN(targetTime)) targetTime = 0;
-        targetTime = Math.max(0, Math.min(targetTime, state.currentEventData.totalDuration));
-        let timeIntoPlaylist = 0;
-        let targetClipIndex = -1;
-        for (let i = 0; i < state.currentEventData.clipDurations.length; i++) {
-            if (targetTime <= timeIntoPlaylist + state.currentEventData.clipDurations[i] + 0.1) {
-                targetClipIndex = i; break;
-            }
-            timeIntoPlaylist += state.currentEventData.clipDurations[i];
-        }
-        if (targetClipIndex === -1) targetClipIndex = state.currentEventData.clipDurations.length - 1;
-        const timeInTargetClip = targetTime - timeIntoPlaylist;
-        const wasPlaying = !dom.frontVideo.paused;
-        dom.allVideos.forEach(video => {
-            const camera = video.className.split(' ')[0];
-            state.currentEventData.playlistIndices[camera] = targetClipIndex;
-            const playlist = state.currentEventData.playlists[camera];
-            if (playlist && playlist[targetClipIndex]) {
-                if (!video.src.endsWith(playlist[targetClipIndex].name)) loadVideo(video, playlist[targetClipIndex]);
-                video.currentTime = timeInTargetClip;
-            }
-        });
-        if (wasPlaying) playVideos();
-    }
-    function getCurrentTime() {
-        if(!state.currentEventData?.clipDurations?.length) return 0;
-        let elapsed = 0;
-        for (let i = 0; i < state.currentEventData.playlistIndices.front; i++) {
-            elapsed += (state.currentEventData.clipDurations[i] || 0);
-        }
-        return elapsed + dom.frontVideo.currentTime;
-    }
-    function updateLiveTimestamp(currentTimeOverride) {
-        const currentTime = currentTimeOverride !== undefined ? currentTimeOverride : getCurrentTime();
-        if (!state.currentEventData.firstClipTime) {
-            dom.liveTimestamp.textContent = formatTime(currentTime);
-            return;
-        }
-        const liveTime = new Date(state.currentEventData.firstClipTime.getTime() + (currentTime * 1000));
-        dom.liveTimestamp.textContent = formatLocalTime(liveTime);
-    }
-    function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
-    function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
-    function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return '--:--:--'; return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
-    function getVideoDuration(file) { return new Promise(resolve => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); }); }
-    
-    function toggleFullscreen() {
-        dom.body.classList.toggle('fullscreen-active');
-        const isFullscreen = dom.body.classList.contains('fullscreen-active');
-        dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block';
-        dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none';
-    }
-
-    function closeMap() {
-        dom.mapContainer.style.display = 'none';
-        dom.mapIframe.src = '';
-    }
-
-    // --- Main Initializer (runs after DOM is loaded) ---
     document.addEventListener('DOMContentLoaded', () => {
-        dom = {
+        const state = {
+            playbackRate: 1, carouselIndex: 0, eventClips: new Map(),
+            sortedEventKeys: [], currentEventData: {},
+        };
+
+        const dom = {
             landingPage: document.getElementById('landing-page'),
             launchAppBtn: document.getElementById('launch-app-btn'),
             appContainer: document.querySelector('.layout-container'),
@@ -1057,6 +751,315 @@
             cameraControlsContainer: document.getElementById('camera-controls-container'),
         };
 
+        // --- Function Definitions ---
+        // (All functions are defined inside DOMContentLoaded to ensure they have access to `dom` and `state`)
+
+        window.openTab = (evt, tabName) => {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) tabcontent[i].classList.remove("active");
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("active");
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+            dom.cameraControlsContainer.style.display = (tabName === 'CameraViewer') ? 'block' : 'none';
+        }
+
+        const applyTheme = (theme) => {
+            if (theme === 'light') {
+                dom.body.classList.add('light-mode');
+                dom.themeIconSun.style.display = 'none';
+                dom.themeIconMoon.style.display = 'block';
+            } else {
+                dom.body.classList.remove('light-mode');
+                dom.themeIconSun.style.display = 'block';
+                dom.themeIconMoon.style.display = 'none';
+            }
+        }
+        
+        window.toggleCustomParams = () => {
+            document.getElementById('custom-params').style.display = (document.getElementById('charger-type').value === 'custom') ? 'block' : 'none';
+        }
+
+        window.calculateTime = () => {
+            const capacity = parseFloat(document.getElementById('battery-capacity').value);
+            const efficiency = parseFloat(document.getElementById('charger-efficiency').value) / 100;
+            const currentSOC = parseFloat(document.getElementById('current-soc').value);
+            const targetSOC = parseFloat(document.getElementById('target-soc').value);
+            const chargerType = document.getElementById('charger-type').value;
+            const resultDiv = document.getElementById('result');
+
+            if (isNaN(capacity) || isNaN(currentSOC) || isNaN(targetSOC) || currentSOC >= targetSOC) {
+                resultDiv.innerText = "Please enter valid capacity and battery percentages.";
+                return;
+            }
+
+            let chargerPower = 0;
+            if (chargerType === 'custom') {
+                const voltage = parseFloat(document.getElementById('voltage').value);
+                const amps = parseFloat(document.getElementById('amps').value);
+                if (isNaN(voltage) || isNaN(amps) || voltage <= 0 || amps <= 0) {
+                    resultDiv.innerText = "Please enter valid Voltage and Amperage.";
+                    return;
+                }
+                chargerPower = (voltage * amps) / 1000;
+            } else {
+                chargerPower = parseFloat(chargerType);
+            }
+
+            const energyNeeded = (targetSOC - currentSOC) / 100 * capacity;
+            const timeHours = energyNeeded / (chargerPower * (chargerPower === 250 ? 1 : efficiency));
+            const hours = Math.floor(timeHours);
+            const minutes = Math.round((timeHours - hours) * 60);
+
+            let resultText = `Estimated time to charge:<br><strong>`;
+              if (hours > 0) resultText += `${hours} hr `;
+            if (minutes > 0) resultText += `${minutes} min`;
+            if (hours === 0 && minutes === 0) resultText = "Charge time is less than a minute.";
+            resultDiv.innerHTML = resultText + `</strong>`;
+        }
+
+        window.calculateDrainTime = () => {
+            const originalCapacity = 75;
+            const batteryHealth = parseFloat(document.getElementById('battery-health').value) / 100;
+            const currentSOC = parseFloat(document.getElementById('drain-current-soc').value);
+            const targetSOC = parseFloat(document.getElementById('drain-target-soc').value);
+            const outsideTempF = parseFloat(document.getElementById('outside-temp').value);
+            const resultDiv = document.getElementById('drain-result');
+
+            if (isNaN(batteryHealth) || isNaN(currentSOC) || isNaN(targetSOC) || isNaN(outsideTempF) || currentSOC <= targetSOC) {
+                resultDiv.innerText = "Please enter valid battery and temperature details (Current > Target).";
+                return;
+            }
+
+            let totalDrainWatts = 50;
+            document.getElementsByName('drain-feature').forEach(feature => {
+                if (feature.checked) {
+                    totalDrainWatts += parseFloat(feature.value);
+                }
+            });
+            
+            let tempMultiplier = 1.0;
+            if (outsideTempF > 90) tempMultiplier = 1.5;
+            else if (outsideTempF < 40) tempMultiplier = 2.0;
+
+            const actualDrain = totalDrainWatts * tempMultiplier;
+            const currentCapacity = originalCapacity * batteryHealth;
+            const energyToDrain = (currentSOC - targetSOC) / 100 * currentCapacity * 1000;
+            
+            const timeHours = energyToDrain / actualDrain;
+            const days = Math.floor(timeHours / 24);
+            const hours = Math.floor(timeHours % 24);
+
+            let resultText = `Estimated time to drain:<br><strong>`;
+            if (days > 0) resultText += `${days} days `;
+            if (hours > 0) resultText += `${hours} hours`;
+            if (days === 0 && hours === 0) resultText = "Drain time is very short.";
+            resultDiv.innerHTML = resultText + `</strong>`;
+        }
+
+        const EVENT_TIME_CORRECTION_S = 5.0;
+        async function loadEvent(index) {
+            state.carouselIndex = index;
+            if (index < 0 || index >= state.sortedEventKeys.length) return;
+            pauseVideos();
+            dom.masterScrubber.value = 0;
+            dom.liveTimestamp.textContent = "00:00";
+            dom.durationDisplay.textContent = "00:00";
+            dom.eventMarker.style.display = "none";
+            dom.jumpToEventButton.style.display = "none";
+            dom.mapButton.style.display = 'none';
+            dom.eventReasonDisplay.style.display = 'none';
+            dom.eventCityDisplay.style.display = 'none';
+            document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
+
+            const eventKey = state.sortedEventKeys[index];
+            const eventData = state.eventClips.get(eventKey);
+            state.currentEventData = {
+                playlists: eventData.playlists, clipDurations: [],
+                totalDuration: 0, eventTriggerOffset: -1, firstClipTime: null,
+                playlistIndices: { front: 0, back: 0, left_repeater: 0, right_repeater: 0, left_pillar: 0, right_pillar: 0 }
+            };
+            dom.titleFolderName.textContent = eventKey;
+            dom.dateSelector.selectedIndex = index;
+
+            let earliestFile = null;
+            for (const camera in eventData.playlists) {
+                if (eventData.playlists[camera].length > 0) {
+                    if (!earliestFile || eventData.playlists[camera][0].name < earliestFile.name) {
+                        earliestFile = eventData.playlists[camera][0];
+                    }
+                }
+            }
+
+            if (!earliestFile) return;
+
+            const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+            if (firstClipNameMatch) {
+                const dateTimeString = firstClipNameMatch[1];
+                const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':') + 'Z';
+                state.currentEventData.firstClipTime = new Date(formattedDateTimeString);
+            } else {
+                state.currentEventData.firstClipTime = null;
+            }
+
+            const masterPlaylist = state.currentEventData.playlists.front;
+            if(masterPlaylist.length > 0) {
+                state.currentEventData.clipDurations = await Promise.all(masterPlaylist.map(getVideoDuration));
+                state.currentEventData.totalDuration = state.currentEventData.clipDurations.reduce((a, b) => a + b, 0);
+            } else {
+                state.currentEventData.clipDurations = [];
+                state.currentEventData.totalDuration = 0;
+            }
+
+            if (state.currentEventData.firstClipTime) {
+                updateLiveTimestamp(0);
+                const endClipTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.totalDuration * 1000));
+                dom.durationDisplay.textContent = formatLocalTime(endClipTime);
+            } else {
+                dom.liveTimestamp.textContent = formatTime(0);
+                dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
+            }
+            if(eventData.eventJson) {
+                try {
+                    const jsonContent = await eventData.eventJson.text();
+                    const jsonData = JSON.parse(jsonContent);
+                    const eventTime = new Date(jsonData.timestamp + 'Z');
+
+                    if (jsonData.est_lat && jsonData.est_lon) {
+                        state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
+                        dom.mapButton.style.display = 'inline-flex';
+                    }
+                    if (jsonData.city) {
+                        dom.eventCityDisplay.innerHTML = `Event City: <strong>${jsonData.city}</strong>`;
+                        dom.eventCityDisplay.style.display = 'block';
+                    }
+
+                    if (state.currentEventData.firstClipTime) {
+                        const offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
+                        const correctedOffset = offset - EVENT_TIME_CORRECTION_S;
+
+                        if (correctedOffset >= 0 && correctedOffset < state.currentEventData.totalDuration) {
+                            state.currentEventData.eventTriggerOffset = correctedOffset;
+                            const eventMarkerAbsoluteTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.eventTriggerOffset * 1000));
+                            
+                            const cameraIndexMap = {
+                                0: 'front', 3: 'left_pillar', 4: 'right_pillar',
+                                5: 'left_repeater', 6: 'right_repeater', 7: 'back'
+                            };
+                            const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
+                            
+                            let reasonText = `Event: <strong>${jsonData.reason.replace(/_/g, ' ')}</strong> at ${formatLocalTime(eventMarkerAbsoluteTime)}`;
+                            
+                            if (triggerCameraName) {
+                                const displayName = triggerCameraName.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
+                                reasonText += ` (Trigger: ${displayName.charAt(0).toUpperCase() + displayName.slice(1)})`;
+                                const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
+                                if(triggerContainer) triggerContainer.classList.add('triggered');
+                            }
+                            
+                            dom.eventReasonDisplay.innerHTML = reasonText;
+                            dom.eventReasonDisplay.style.display = 'block';
+                            updateEventMarkerPosition();
+                            dom.eventMarker.style.display = "block";
+                            dom.jumpToEventButton.style.display = "inline-flex";
+                        }
+                    }
+                } catch (error) { console.error("Error processing event.json:", error); }
+            }
+            dom.allVideos.forEach(video => {
+                const cameraType = video.className.split(' ')[0];
+                const playlist = state.currentEventData.playlists[cameraType];
+                loadVideo(video, playlist && playlist.length > 0 ? playlist[0] : null);
+            });
+        }
+
+        function loadVideo(videoElement, file) {
+            if (videoElement.src.startsWith('blob:')) URL.revokeObjectURL(videoElement.src);
+            videoElement.src = file ? URL.createObjectURL(file) : '';
+            videoElement.playbackRate = state.playbackRate;
+        }
+        function updatePlayButtonUI(isPlaying) {
+            dom.playIcon.style.display = isPlaying ? 'none' : 'block';
+            dom.pauseIcon.style.display = isPlaying ? 'block' : 'none';
+            dom.statusDot.classList.toggle('ready', !isPlaying);
+            dom.statusDot.classList.toggle('playing', isPlaying);
+        }
+        function playVideos() {
+            updatePlayButtonUI(true);
+            dom.allVideos.forEach(v => { 
+                if (v.src && v.paused) {
+                    v.play().catch(error => console.error(`Play failed for ${v.className}:`, error));
+                }
+            });
+        }
+        function pauseVideos() { updatePlayButtonUI(false); dom.allVideos.forEach(v => v.pause()); }
+        function playPause() { dom.frontVideo.paused && dom.frontVideo.src ? playVideos() : pauseVideos(); }
+        function skipTo(seconds) { seekAllVideos(getCurrentTime() + seconds); }
+        function setPlaybackSpeed(rate) {
+            state.playbackRate = parseFloat(rate);
+            dom.allVideos.forEach(video => { video.playbackRate = state.playbackRate; });
+        }
+        function seekAllVideos(targetTime) {
+            if (isNaN(targetTime)) targetTime = 0;
+            targetTime = Math.max(0, Math.min(targetTime, state.currentEventData.totalDuration));
+            let timeIntoPlaylist = 0;
+            let targetClipIndex = -1;
+            for (let i = 0; i < state.currentEventData.clipDurations.length; i++) {
+                if (targetTime <= timeIntoPlaylist + state.currentEventData.clipDurations[i] + 0.1) {
+                    targetClipIndex = i; break;
+                }
+                timeIntoPlaylist += state.currentEventData.clipDurations[i];
+            }
+            if (targetClipIndex === -1) targetClipIndex = state.currentEventData.clipDurations.length - 1;
+            const timeInTargetClip = targetTime - timeIntoPlaylist;
+            const wasPlaying = !dom.frontVideo.paused;
+            dom.allVideos.forEach(video => {
+                const camera = video.className.split(' ')[0];
+                state.currentEventData.playlistIndices[camera] = targetClipIndex;
+                const playlist = state.currentEventData.playlists[camera];
+                if (playlist && playlist[targetClipIndex]) {
+                    if (!video.src.endsWith(playlist[targetClipIndex].name)) loadVideo(video, playlist[targetClipIndex]);
+                    video.currentTime = timeInTargetClip;
+                }
+            });
+            if (wasPlaying) playVideos();
+        }
+        function getCurrentTime() {
+            if(!state.currentEventData?.clipDurations?.length) return 0;
+            let elapsed = 0;
+            for (let i = 0; i < state.currentEventData.playlistIndices.front; i++) {
+                elapsed += (state.currentEventData.clipDurations[i] || 0);
+            }
+            return elapsed + dom.frontVideo.currentTime;
+        }
+        function updateLiveTimestamp(currentTimeOverride) {
+            const currentTime = currentTimeOverride !== undefined ? currentTimeOverride : getCurrentTime();
+            if (!state.currentEventData.firstClipTime) {
+                dom.liveTimestamp.textContent = formatTime(currentTime);
+                return;
+            }
+            const liveTime = new Date(state.currentEventData.firstClipTime.getTime() + (currentTime * 1000));
+            dom.liveTimestamp.textContent = formatLocalTime(liveTime);
+        }
+        function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
+        function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
+        function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return '--:--:--'; return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+        function getVideoDuration(file) { return new Promise(resolve => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); }); }
+        
+        function toggleFullscreen() {
+            dom.body.classList.toggle('fullscreen-active');
+            const isFullscreen = dom.body.classList.contains('fullscreen-active');
+            dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block';
+            dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none';
+        }
+
+        function closeMap() {
+            dom.mapContainer.style.display = 'none';
+            dom.mapIframe.src = '';
+        }
+
+        // --- Attach Event Listeners ---
         dom.launchAppBtn.addEventListener('click', () => {
             dom.landingPage.classList.add('hidden');
             dom.appContainer.classList.remove('hidden');
@@ -1151,6 +1154,36 @@
             state.sortedEventKeys.forEach((key, index) => { const option = document.createElement("option"); option.innerText = key; option.value = index; dom.dateSelector.appendChild(option); });
             loadEvent(0);
         });
+        dom.screenshotBtn.addEventListener('click', () => {
+            const visibleContainers = [...dom.videoGrid.querySelectorAll('.video-container:not(.hidden)')];
+            if (visibleContainers.length === 0) return;
+            const firstVideo = visibleContainers[0].querySelector('video');
+            if (!firstVideo.src || firstVideo.videoWidth === 0) return;
+            const videoWidth = firstVideo.videoWidth;
+            const videoHeight = firstVideo.videoHeight;
+            const gridMapping = { left_pillar: { col: 0, row: 0 }, front: { col: 1, row: 0 }, right_pillar: { col: 2, row: 0 }, left_repeater: { col: 0, row: 1 }, back: { col: 1, row: 1 }, right_repeater: { col: 2, row: 1 }, };
+            const canvas = document.createElement('canvas');
+            canvas.width = videoWidth * 3;
+            canvas.height = videoHeight * 2;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-color');
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            visibleContainers.forEach(container => {
+                const video = container.querySelector('video');
+                const cameraType = [...container.classList].find(c => gridMapping[c]);
+                if (cameraType && video.videoWidth > 0) {
+                    const { col, row } = gridMapping[cameraType];
+                    const dx = col * videoWidth;
+                    const dy = row * videoHeight;
+                    ctx.drawImage(video, dx, dy, videoWidth, videoHeight);
+                }
+            });
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            link.download = `Tesla-Companion-Screenshot-${timestamp}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        });
         dom.fullscreenToggle.addEventListener('click', toggleFullscreen);
         dom.mapButton.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1175,6 +1208,7 @@
             }
         });
 
+        // --- Initial App State ---
         applyTheme(localStorage.getItem('theme') || 'dark');
         dom.cameraControlsContainer.style.display = 'none'; 
     });
