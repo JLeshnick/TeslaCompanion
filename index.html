@@ -705,6 +705,7 @@
         sortedEventKeys: [], currentEventData: {},
     };
 
+    // All functions are defined here... (shortened for brevity)
     function openTab(evt, tabName) {
         let i, tabcontent, tablinks;
         tabcontent = document.getElementsByClassName("tab-content");
@@ -764,7 +765,7 @@
         const minutes = Math.round((timeHours - hours) * 60);
 
         let resultText = `Estimated time to charge:<br><strong>`;
-        if (hours > 0) resultText += `${hours} hr `;
+          if (hours > 0) resultText += `${hours} hr `;
         if (minutes > 0) resultText += `${minutes} min`;
         if (hours === 0 && minutes === 0) resultText = "Charge time is less than a minute.";
         resultDiv.innerHTML = resultText + `</strong>`;
@@ -894,16 +895,14 @@
                         state.currentEventData.eventTriggerOffset = correctedOffset;
                         const eventMarkerAbsoluteTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.eventTriggerOffset * 1000));
                         
-                        const cameraIndexMap = {
-                            0: 'front', 1: 'fisheye', 2: 'narrow', 3: 'left_repeater', 4: 'right_repeater',
-                            5: 'left_pillar', 6: 'right_pillar', 7: 'back', 8: 'cabin'
-                        };
+                        const cameraIndexMap = { 0: 'front', 1: 'fisheye', 2: 'narrow', 3: 'left_repeater', 4: 'right_repeater', 5: 'left_pillar', 6: 'right_pillar', 7: 'back', 8: 'cabin' };
                         const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
                         
                         let reasonText = `Event: <strong>${jsonData.reason.replace(/_/g, ' ')}</strong> at ${formatLocalTime(eventMarkerAbsoluteTime)}`;
                         
                         if (triggerCameraName) {
-                            reasonText += ` (Trigger: ${triggerCameraName.replace('_', ' ')})`;
+                            const displayName = triggerCameraName.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
+                            reasonText += ` (Trigger: ${displayName.charAt(0).toUpperCase() + displayName.slice(1)})`;
                             const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
                             if(triggerContainer) triggerContainer.classList.add('triggered');
                         }
@@ -1176,7 +1175,6 @@
             }
         });
 
-        // Initial Setup
         applyTheme(localStorage.getItem('theme') || 'dark');
         dom.cameraControlsContainer.style.display = 'none'; 
     });
