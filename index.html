@@ -200,9 +200,17 @@
             z-index: 20;
             padding: 0.75rem 1.5rem;
             transition: var(--transition-normal);
-            display: flex;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
-            justify-content: space-between;
+        }
+        
+        .header .title-area {
+            justify-self: start;
+        }
+
+        .header .top-right-controls {
+            justify-self: end;
         }
 
         .title-area { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
@@ -221,6 +229,7 @@
             background-color: var(--surface-elevated);
             padding: 0.5rem;
             border-radius: var(--border-radius-lg);
+            justify-self: center; /* Changed from flex-grow */
         }
         .tab-button {
             padding: 0.5rem 1rem;
@@ -240,10 +249,34 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .top-right-controls { display: flex; align-items: center; gap: 0.75rem; }
-        .clip-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.3; }
+        .top-right-controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        
+        .file-select-stack, .event-action-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+
+        .file-select-stack #date-select {
+            max-width: none;
+        }
+
+        .clip-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.4; gap: 0.25rem; }
         .title-folder-name { color: var(--text-color); font-weight: 600; font-size: 0.9rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 250px; }
-        #event-reason-display, #event-city-display { font-size: 0.8rem; color: var(--text-muted-color); font-style: italic; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        
+        .event-detail-item {
+            font-size: 0.8rem;
+            color: var(--text-muted-color);
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        .event-detail-item strong {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
 
         #camera-controls-container {
             padding: 1rem 1.5rem;
@@ -301,6 +334,13 @@
         #play-pause-button { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; border-color: var(--primary-color); width: 48px; height: 48px; }
         #play-pause-button:hover { background: linear-gradient(135deg, var(--primary-hover-color), var(--primary-color)); transform: scale(1.05); box-shadow: var(--shadow-lg); }
         
+        .file-select-stack .btn,
+        .file-select-stack .styled-input,
+        .event-action-stack .btn {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+
         .content-container { flex-grow: 1; overflow: hidden; background: var(--bg-color); display: flex; flex-direction: column;}
         .tab-content { display: none; flex-grow: 1; flex-direction: column; overflow-y: auto; }
         .tab-content.active { display: flex; animation: fadeIn 0.5s; }
@@ -448,9 +488,26 @@
 
         /* Responsive Design */
         @media (max-width: 1200px) {
-            .header { flex-direction: column; align-items: stretch; gap: 1rem; }
-            .main-tabs { justify-content: center; }
+            .header { 
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .header .title-area, .header .top-right-controls {
+                justify-self: center;
+            }
         }
+        
+        @media (max-width: 1150px) {
+            .header-row.top-ribbon {
+                justify-content: center;
+                align-items: center;
+            }
+            .top-ribbon .top-right-controls {
+                justify-content: center;
+            }
+        }
+
+
         @media (max-width: 768px) {
             .header { padding: 0.75rem 1rem; }
             .title { font-size: 1.25rem; }
@@ -562,112 +619,120 @@
         
         <div id="CameraViewer" class="tab-content">
              <div id="camera-controls-container">
-                   <div class="header-main">
-                         <div class="header-row top-ribbon">
-                               <div class="title-area">
-                                   <div class="clip-info">
-                                       <span class="title-folder-name">No Clips Selected</span>
-                                       <div id="event-reason-display" style="display: none;"></div>
-                                       <div id="event-city-display" style="display: none;"></div>
-                                   </div>
-                               </div>
-                               <div class="main-playback-controls">
-                                   <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Jump to Event</button>
-                                   <button class="btn" id="map-button" style="display: none;" title="View on Map">Event Map</button>
-                                   <button class="btn icon-btn previous" title="Previous Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"></path></svg></button>
-                                   <button class="btn" id="skip-rewind" title="Rewind 5s">-5s</button>
-                                   <button class="btn icon-btn" id="play-pause-button"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M8 5v14l11-7z"></path></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
-                                   <button class="btn" id="skip-forward" title="Forward 5s">+5s</button>
-                                   <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
-                                   <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
-                                   <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
-                               </div>
-                               <div class="top-right-controls">
-                                    <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
-                                    <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
-                                    <select id="date-select" class="styled-input" style="max-width: 160px;"><option>Select Event</option></select>
+                    <div class="header-main">
+                          <div class="header-row top-ribbon">
+                                <div class="title-area">
+                                    <div class="clip-info">
+                                        <span class="title-folder-name">No Clips Selected</span>
+                                        <div id="event-details-container" style="display: none;">
+                                            <div id="event-reason-display" class="event-detail-item"></div>
+                                            <div id="event-time-display" class="event-detail-item"></div>
+                                            <div id="event-trigger-display" class="event-detail-item"></div>
+                                            <div id="event-city-display" class="event-detail-item"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="main-playback-controls">
+                                    <div class="event-action-stack">
+                                        <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Jump to Event</button>
+                                        <button class="btn" id="map-button" style="display: none;" title="View on Map">Event Map</button>
+                                    </div>
+                                    <button class="btn icon-btn previous" title="Previous Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"></path></svg></button>
+                                    <button class="btn" id="skip-rewind" title="Rewind 5s">-5s</button>
+                                    <button class="btn icon-btn" id="play-pause-button"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M8 5v14l11-7z"></path></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
+                                    <button class="btn" id="skip-forward" title="Forward 5s">+5s</button>
+                                    <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
+                                    <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
+                                    <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
+                                </div>
+                                <div class="top-right-controls">
+                                    <div class="file-select-stack">
+                                        <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
+                                        <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                                        <select id="date-select" class="styled-input"><option>Select Event</option></select>
+                                    </div>
                                     <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
                                     <button class="btn icon-btn" id="fullscreen-toggle" title="Toggle Fullscreen">
                                         <svg id="maximize-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
                                         <svg id="minimize-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
                                     </button>
-                               </div>
-                         </div>
-                         <div class="header-row progress-container">
-                               <div id="event-marker"></div>
-                               <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
-                         </div>
-                   </div>
-                   <div id="collapsible-controls" class="collapsible-panel">
-                         <div class="panel-section">
-                               <div class="camera-toggles" id="camera-toggles">
-                                   <label class="toggle-label" for="select-all-cameras">All Cameras<label class="switch"><input type="checkbox" id="select-all-cameras" checked><span class="slider"></span></label></label>
-                                   <div class="divider"></div>
-                                   <label class="toggle-label" for="cam-front">Front<label class="switch"><input type="checkbox" id="cam-front" data-camera="front" checked><span class="slider"></span></label></label>
-                                   <label class="toggle-label" for="cam-back">Back<label class="switch"><input type="checkbox" id="cam-back" data-camera="back" checked><span class="slider"></span></label></label>
-                                   <label class="toggle-label" for="cam-left-repeater">L Fender<label class="switch"><input type="checkbox" id="cam-left-repeater" data-camera="left_repeater" checked><span class="slider"></span></label></label>
-                                   <label class="toggle-label" for="cam-right-repeater">R Fender<label class="switch"><input type="checkbox" id="cam-right-repeater" data-camera="right_repeater" checked><span class="slider"></span></label></label>
-                                   <label class="toggle-label" for="cam-left-pillar">L Pillar<label class="switch"><input type="checkbox" id="cam-left-pillar" data-camera="left_pillar" checked><span class="slider"></span></label></label>
-                                   <label class="toggle-label" for="cam-right-pillar">R Pillar<label class="switch"><input type="checkbox" id="cam-right-pillar" data-camera="right_pillar" checked><span class="slider"></span></label></label>
-                               </div>
-                         </div>
-                   </div>
+                                </div>
+                          </div>
+                          <div class="header-row progress-container">
+                                <div id="event-marker"></div>
+                                <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
+                          </div>
+                    </div>
+                    <div id="collapsible-controls" class="collapsible-panel">
+                          <div class="panel-section">
+                                <div class="camera-toggles" id="camera-toggles">
+                                    <label class="toggle-label" for="select-all-cameras">All Cameras<label class="switch"><input type="checkbox" id="select-all-cameras" checked><span class="slider"></span></label></label>
+                                    <div class="divider"></div>
+                                    <label class="toggle-label" for="cam-front">Front<label class="switch"><input type="checkbox" id="cam-front" data-camera="front" checked><span class="slider"></span></label></label>
+                                    <label class="toggle-label" for="cam-back">Back<label class="switch"><input type="checkbox" id="cam-back" data-camera="back" checked><span class="slider"></span></label></label>
+                                    <label class="toggle-label" for="cam-left-repeater">L Fender<label class="switch"><input type="checkbox" id="cam-left-repeater" data-camera="left_repeater" checked><span class="slider"></span></label></label>
+                                    <label class="toggle-label" for="cam-right-repeater">R Fender<label class="switch"><input type="checkbox" id="cam-right-repeater" data-camera="right_repeater" checked><span class="slider"></span></label></label>
+                                    <label class="toggle-label" for="cam-left-pillar">L Pillar<label class="switch"><input type="checkbox" id="cam-left-pillar" data-camera="left_pillar" checked><span class="slider"></span></label></label>
+                                    <label class="toggle-label" for="cam-right-pillar">R Pillar<label class="switch"><input type="checkbox" id="cam-right-pillar" data-camera="right_pillar" checked><span class="slider"></span></label></label>
+                                </div>
+                          </div>
+                    </div>
              </div>
              <div class="video-grid-container">
-                   <div class="video-grid" id="video-grid">
-                         <div class="video-container front"><div class="video-label">Front</div><video class="front" muted playsinline></video></div>
-                         <div class="video-container back"><div class="video-label">Back</div><video class="back" muted playsinline></video></div>
-                         <div class="video-container left_repeater"><div class="video-label">Left Fender</div><video class="left_repeater" muted playsinline></video></div>
-                         <div class="video-container right_repeater"><div class="video-label">Right Fender</div><video class="right_repeater" muted playsinline></video></div>
-                         <div class="video-container left_pillar"><div class="video-label">Left Pillar</div><video class="left_pillar" muted playsinline></video></div>
-                         <div class="video-container right_pillar"><div class="video-label">Right Pillar</div><video class="right_pillar" muted playsinline></video></div>
-                   </div>
+                    <div class="video-grid" id="video-grid">
+                        <div class="video-container front"><div class="video-label">Front</div><video class="front" muted playsinline></video></div>
+                        <div class="video-container back"><div class="video-label">Back</div><video class="back" muted playsinline></video></div>
+                        <div class="video-container left_repeater"><div class="video-label">Left Fender</div><video class="left_repeater" muted playsinline></video></div>
+                        <div class="video-container right_repeater"><div class="video-label">Right Fender</div><video class="right_repeater" muted playsinline></video></div>
+                        <div class="video-container left_pillar"><div class="video-label">Left Pillar</div><video class="left_pillar" muted playsinline></video></div>
+                        <div class="video-container right_pillar"><div class="video-label">Right Pillar</div><video class="right_pillar" muted playsinline></video></div>
+                    </div>
              </div>
         </div>
         
         <div id="ChargingEstimator" class="tab-content">
              <div class="calculator-container">
-                   <h1>Charging Time Estimator</h1>
-                   <div class="grid">
-                         <div class="form-group"><label for="battery-capacity">Original Battery Capacity (kWh)</label><input type="number" id="battery-capacity" value="75"></div>
-                         <div class="form-group"><label for="charger-efficiency">Charger Efficiency (%)</label><input type="number" id="charger-efficiency" value="85"></div>
-                   </div>
-                   <div class="grid">
-                         <div class="form-group"><label for="current-soc">Current Battery (%)</label><input type="number" id="current-soc" placeholder="20" min="0" max="100"></div>
-                         <div class="form-group"><label for="target-soc">Target Battery (%)</label><input type="number" id="target-soc" placeholder="80" min="0" max="100"></div>
-                   </div>
-                   <div class="form-group">
-                         <label for="charger-type">Charger Type</label>
-                         <select id="charger-type" onchange="toggleCustomParams()"><option value="1.5">Mobile (15A / 120V)</option><option value="7.7">Mobile (50A / 240V)</option><option value="9.6" selected>Level 2 (Workplace/Home)</option><option value="250">Supercharger</option><option value="custom">Custom...</option></select>
-                   </div>
-                   <div id="custom-params" style="display:none;"><hr><div class="grid"><div class="form-group"><label for="voltage">Voltage (V)</label><input type="number" id="voltage" placeholder="240"></div><div class="form-group"><label for="amps">Amps (A)</label><input type="number" id="amps" placeholder="32"></div></div></div>
-                   <button class="primary-btn" onclick="calculateTime()">Calculate</button>
-                   <div id="result" class="result-box"></div>
+                    <h1>Charging Time Estimator</h1>
+                    <div class="grid">
+                        <div class="form-group"><label for="battery-capacity">Original Battery Capacity (kWh)</label><input type="number" id="battery-capacity" value="75"></div>
+                        <div class="form-group"><label for="charger-efficiency">Charger Efficiency (%)</label><input type="number" id="charger-efficiency" value="85"></div>
+                    </div>
+                    <div class="grid">
+                        <div class="form-group"><label for="current-soc">Current Battery (%)</label><input type="number" id="current-soc" placeholder="20" min="0" max="100"></div>
+                        <div class="form-group"><label for="target-soc">Target Battery (%)</label><input type="number" id="target-soc" placeholder="80" min="0" max="100"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="charger-type">Charger Type</label>
+                        <select id="charger-type" onchange="toggleCustomParams()"><option value="1.5">Mobile (15A / 120V)</option><option value="7.7">Mobile (50A / 240V)</option><option value="9.6" selected>Level 2 (Workplace/Home)</option><option value="250">Supercharger</option><option value="custom">Custom...</option></select>
+                    </div>
+                    <div id="custom-params" style="display:none;"><hr><div class="grid"><div class="form-group"><label for="voltage">Voltage (V)</label><input type="number" id="voltage" placeholder="240"></div><div class="form-group"><label for="amps">Amps (A)</label><input type="number" id="amps" placeholder="32"></div></div></div>
+                    <button class="primary-btn" onclick="calculateTime()">Calculate</button>
+                    <div id="result" class="result-box"></div>
              </div>
         </div>
 
         <div id="PhantomDrain" class="tab-content">
              <div class="calculator-container">
-                   <h1>Phantom Drain Estimator</h1>
-                   <div class="grid">
-                         <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
-                         <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
-                   </div>
-                   <div class="grid">
-                         <div class="form-group"><label for="battery-health">Current Battery Health (%)</label><input type="number" id="battery-health" value="100" min="50" max="100"></div>
-                         <div class="form-group"><label for="outside-temp">Outside Temperature (°F)</label><input type="number" id="outside-temp" value="70"></div>
-                   </div>
-                   <div class="form-group">
-                         <label>Auxiliary Features Enabled:</label>
-                         <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="250"><label for="sentry">Sentry Mode</label></div>
-                         <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
-                         <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
-                         <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
-                         <div class="checkbox-group"><input type="checkbox" id="overheat-ac" name="drain-feature" value="150"><label for="overheat-ac">Cabin Overheat Protection (A/C)</label></div>
-                         <div class="checkbox-group"><input type="checkbox" id="overheat-fan" name="drain-feature" value="50"><label for="overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
-                   </div>
-                   <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
-                   <div id="drain-result" class="result-box"></div>
+                    <h1>Phantom Drain Estimator</h1>
+                    <div class="grid">
+                        <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
+                        <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
+                    </div>
+                    <div class="grid">
+                        <div class="form-group"><label for="battery-health">Current Battery Health (%)</label><input type="number" id="battery-health" value="100" min="50" max="100"></div>
+                        <div class="form-group"><label for="outside-temp">Outside Temperature (°F)</label><input type="number" id="outside-temp" value="70"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Auxiliary Features Enabled:</label>
+                        <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="250"><label for="sentry">Sentry Mode</label></div>
+                        <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
+                        <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
+                        <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
+                        <div class="checkbox-group"><input type="checkbox" id="overheat-ac" name="drain-feature" value="150"><label for="overheat-ac">Cabin Overheat Protection (A/C)</label></div>
+                        <div class="checkbox-group"><input type="checkbox" id="overheat-fan" name="drain-feature" value="50"><label for="overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+                    </div>
+                    <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
+                    <div id="drain-result" class="result-box"></div>
              </div>
         </div>
 
@@ -745,7 +810,10 @@
             chevronDown: document.querySelector('#chevron-down'),
             chevronUp: document.querySelector('#chevron-up'),
             titleFolderName: document.querySelector('.title-folder-name'),
-            eventReasonDisplay: document.querySelector('#event-reason-display'),
+            eventDetailsContainer: document.getElementById('event-details-container'),
+            eventReasonDisplay: document.getElementById('event-reason-display'),
+            eventTimeDisplay: document.getElementById('event-time-display'),
+            eventTriggerDisplay: document.getElementById('event-trigger-display'),
             eventCityDisplay: document.getElementById('event-city-display'),
             screenshotBtn: document.querySelector('#screenshot-btn'),
             cameraControlsContainer: document.getElementById('camera-controls-container'),
@@ -869,8 +937,11 @@
             dom.eventMarker.style.display = "none";
             dom.jumpToEventButton.style.display = "none";
             dom.mapButton.style.display = 'none';
-            dom.eventReasonDisplay.style.display = 'none';
-            dom.eventCityDisplay.style.display = 'none';
+            dom.eventDetailsContainer.style.display = 'none';
+            dom.eventReasonDisplay.innerHTML = '';
+            dom.eventTimeDisplay.innerHTML = '';
+            dom.eventTriggerDisplay.innerHTML = '';
+            dom.eventCityDisplay.innerHTML = '';
             document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
 
             const eventKey = state.sortedEventKeys[index];
@@ -915,7 +986,7 @@
             if (state.currentEventData.firstClipTime) {
                 updateLiveTimestamp(0);
                 const endClipTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.totalDuration * 1000));
-                dom.durationDisplay.textContent = formatLocalTime(endClipTime);
+                dom.durationDisplay.textContent = formatUTCTime(endClipTime);
             } else {
                 dom.liveTimestamp.textContent = formatTime(0);
                 dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
@@ -926,40 +997,44 @@
                     const jsonData = JSON.parse(jsonContent);
                     const eventTime = new Date(jsonData.timestamp + 'Z');
 
+                    dom.eventDetailsContainer.style.display = 'block';
+
+                    // Reason
+                    const reason = jsonData.reason.replace(/_/g, ' ');
+                    dom.eventReasonDisplay.innerHTML = `Event: <strong>${reason.charAt(0).toUpperCase() + reason.slice(1)}</strong>`;
+
+                    // Time
+                    dom.eventTimeDisplay.innerHTML = `Event Time: <strong>${formatUTCTime(eventTime)} UTC</strong>`;
+
                     if (jsonData.est_lat && jsonData.est_lon) {
                         state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
                         dom.mapButton.style.display = 'inline-flex';
                     }
                     if (jsonData.city) {
                         dom.eventCityDisplay.innerHTML = `Event City: <strong>${jsonData.city}</strong>`;
-                        dom.eventCityDisplay.style.display = 'block';
+                    }
+
+                    // Trigger Camera
+                    const cameraIndexMap = { 0: 'front', 3: 'left_pillar', 4: 'right_pillar', 5: 'left_repeater', 6: 'right_repeater', 7: 'back' };
+                    const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
+                    if (triggerCameraName) {
+                        const displayName = triggerCameraName.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
+                        dom.eventTriggerDisplay.innerHTML = `Trigger Camera: <strong>${displayName.charAt(0).toUpperCase() + displayName.slice(1)}</strong>`;
+                        const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
+                        if(triggerContainer) triggerContainer.classList.add('triggered');
                     }
 
                     if (state.currentEventData.firstClipTime) {
                         const offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
-                        const correctedOffset = offset - EVENT_TIME_CORRECTION_S;
+                        
+                        // The event timestamp from JSON seems to be the exact moment of the trigger.
+                        // The video files might start a few seconds before that. We use this offset
+                        // to place the marker on the scrubber and allow jumping to it.
+                        // No complex timezone correction is needed here if all times are handled as UTC.
+                        const correctedOffset = offset;
 
                         if (correctedOffset >= 0 && correctedOffset < state.currentEventData.totalDuration) {
                             state.currentEventData.eventTriggerOffset = correctedOffset;
-                            const eventMarkerAbsoluteTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.eventTriggerOffset * 1000));
-                            
-                            const cameraIndexMap = {
-                                0: 'front', 3: 'left_pillar', 4: 'right_pillar',
-                                5: 'left_repeater', 6: 'right_repeater', 7: 'back'
-                            };
-                            const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
-                            
-                            let reasonText = `Event: <strong>${jsonData.reason.replace(/_/g, ' ')}</strong> at ${formatLocalTime(eventMarkerAbsoluteTime)}`;
-                            
-                            if (triggerCameraName) {
-                                const displayName = triggerCameraName.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
-                                reasonText += ` (Trigger: ${displayName.charAt(0).toUpperCase() + displayName.slice(1)})`;
-                                const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
-                                if(triggerContainer) triggerContainer.classList.add('triggered');
-                            }
-                            
-                            dom.eventReasonDisplay.innerHTML = reasonText;
-                            dom.eventReasonDisplay.style.display = 'block';
                             updateEventMarkerPosition();
                             dom.eventMarker.style.display = "block";
                             dom.jumpToEventButton.style.display = "inline-flex";
@@ -1040,11 +1115,19 @@
                 return;
             }
             const liveTime = new Date(state.currentEventData.firstClipTime.getTime() + (currentTime * 1000));
-            dom.liveTimestamp.textContent = formatLocalTime(liveTime);
+            dom.liveTimestamp.textContent = formatUTCTime(liveTime);
         }
         function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
         function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
-        function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return '--:--:--'; return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+        
+        function formatUTCTime(date) {
+            if (!date || isNaN(date.getTime())) return '--:--:--';
+            const hours = date.getUTCHours().toString().padStart(2, '0');
+            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
         function getVideoDuration(file) { return new Promise(resolve => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); }); }
         
         function toggleFullscreen() {
