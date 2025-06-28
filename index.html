@@ -296,7 +296,7 @@
         .btn:hover { background: var(--control-bg-hover); border-color: var(--border-hover-color); transform: translateY(-1px); box-shadow: var(--shadow-md); }
         .btn:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
         .btn svg { width: 18px; height: 18px; transition: var(--transition-fast); flex-shrink: 0; }
-        #theme-toggle svg, #github-link svg { width: 24px; height: 24px; }
+        #theme-toggle svg, #github-link svg, #fullscreen-toggle svg { width: 24px; height: 24px; }
         .main-playback-controls .icon-btn { width: 42px; height: 42px; padding: 0; flex-shrink: 0; border-radius: 50%; }
         #play-pause-button { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; border-color: var(--primary-color); width: 48px; height: 48px; }
         #play-pause-button:hover { background: linear-gradient(135deg, var(--primary-hover-color), var(--primary-color)); transform: scale(1.05); box-shadow: var(--shadow-lg); }
@@ -311,18 +311,14 @@
         .video-container.hidden { display: none; }
         .video-grid.single-view-mode .video-container:not(.hidden) { grid-area: initial; grid-column: 1 / -1; grid-row: 1 / -1; }
         
-        /* New styles for expanded view */
-        .video-grid.expanded-view .video-container {
-            display: none;
-        }
-        .video-grid.expanded-view .video-container.expanded {
-            display: flex;
-            grid-area: 1 / 1 / -1 / -1;
-        }
+        .video-grid.expanded-view .video-container { display: none; }
+        .video-grid.expanded-view .video-container.expanded { display: flex; grid-area: 1 / 1 / -1 / -1; }
 
         .video-container { position: relative; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 2px solid var(--border-color); border-radius: var(--border-radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); box-shadow: var(--shadow-md); cursor: pointer; }
         .video-container:hover { border-color: var(--primary-color); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
         .video-container.triggered { border-color: var(--accent-color); }
+        .video-container.triggered .video-label { background: linear-gradient(135deg, var(--accent-color), var(--primary-color)); color: white; border-color: rgba(255,255,255,0.3); }
+        
         .video-label { position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.9)); color: white; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; border-radius: var(--border-radius-md); pointer-events: none; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 1; }
         video { width: 100%; height: 100%; object-fit: contain; border-radius: calc(var(--border-radius-lg) - 2px); }
         .video-container.front { grid-area: front; } .video-container.back { grid-area: back; } .video-container.left_repeater { grid-area: left-repeater; } .video-container.right_repeater { grid-area: right-repeater; } .video-container.left_pillar { grid-area: left-pillar; } .video-container.right_pillar { grid-area: right-pillar; }
@@ -422,6 +418,33 @@
         #map-close-button:hover {
             transform: scale(1.2) rotate(90deg);
         }
+        
+        /* --- Fullscreen Styles --- */
+        body.fullscreen-active .header,
+        body.fullscreen-active #camera-controls-container {
+            display: none;
+        }
+        body.fullscreen-active .content-container {
+            padding: 0;
+            height: 100vh;
+        }
+        body.fullscreen-active #CameraViewer {
+            height: 100%;
+        }
+        body.fullscreen-active #CameraViewer .video-grid-container {
+            padding: 0;
+            max-height: 100vh;
+        }
+        body.fullscreen-active .video-grid {
+            gap: 1px;
+        }
+        body.fullscreen-active .video-container {
+            border-radius: 0;
+            border: 1px solid var(--bg-color);
+        }
+        body.fullscreen-active .video-container.triggered {
+             border-color: var(--accent-color);
+        }
 
         /* Responsive Design */
         @media (max-width: 1200px) {
@@ -469,13 +492,13 @@
             <button class="tab-button" onclick="openTab(event, 'About')">About</button>
         </div>
         <div class="top-right-controls">
-              <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" class="btn icon-btn" id="github-link" title="View on GitHub">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 24px; height: 24px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-              </a>
-              <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
-                  <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                  <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-              </button>
+            <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
+                <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" class="btn icon-btn" id="github-link" title="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 24px; height: 24px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+            </a>
         </div>
     </header>
 
@@ -488,10 +511,10 @@
                 <h2>Camera Viewer</h2>
                 <ul>
                     <li><strong>Load Clips:</strong> Click the "Select Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
-                    <li><strong>Navigate Events:</strong> Use the dropdown menu to select a specific event date and time. You can also use the Previous/Next arrow buttons or your keyboard's Up/Down arrows to cycle through events.</li>
+                    <li><strong>Navigate Events:</strong> Use the dropdown or navigation buttons to move between events.</li>
                     <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
-                    <li><strong>Jump to Event:</strong> If an event was triggered (e.g., by Sentry Mode), a "Event" button will appear. Click it to jump directly to the moment of the trigger.</li>
-                    <li><strong>View Location:</strong> If the event contains GPS data, a "Event Map" button will appear. Click it to view the location on Google Maps.</li>
+                    <li><strong>Jump to Event:</strong> If an event was triggered, a "Jump to Event" button will appear.</li>
+                    <li><strong>View Location:</strong> If the event contains GPS data, a "Event Map" button will appear.</li>
                     <li><strong>Grid Screenshots:</strong> Use the "Screenshot" button in the top controls to download a single, high-quality image stitching all visible camera feeds together.</li>
                 </ul>
 
@@ -516,10 +539,10 @@
                     <thead><tr><th>Index</th><th>Camera View</th></tr></thead>
                     <tbody>
                         <tr><td><code>0</code></td><td>Front</td></tr>
-                        <tr><td><code>3</code></td><td>Left Repeater</td></tr>
-                        <tr><td><code>4</code></td><td>Right Repeater</td></tr>
-                        <tr><td><code>5</code></td><td>Left Pillar</td></tr>
-                        <tr><td><code>6</code></td><td>Right Pillar</td></tr>
+                        <tr><td><code>3</code></td><td>Left Pillar</td></tr>
+                        <tr><td><code>4</code></td><td>Right Pillar</td></tr>
+                        <tr><td><code>5</code></td><td>Left Repeater</td></tr>
+                        <tr><td><code>6</code></td><td>Right Repeater</td></tr>
                         <tr><td><code>7</code></td><td>Back</td></tr>
                     </tbody>
                 </table>
@@ -564,7 +587,10 @@
                                     <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
                                     <select id="date-select" class="styled-input" style="max-width: 160px;"><option>Select Event</option></select>
                                     <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
-                                    <button class="btn" id="toggle-controls-btn" title="Select Camera Angles">Select Camera Angles <svg id="chevron-down" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"></path></svg><svg id="chevron-up" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display:none;"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"></path></svg></button>
+                                    <button class="btn icon-btn" id="fullscreen-toggle" title="Toggle Fullscreen">
+                                        <svg id="maximize-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                                        <svg id="minimize-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
+                                    </button>
                                </div>
                          </div>
                          <div class="header-row progress-container">
@@ -672,79 +698,24 @@
 </div>
 
 <script>
-    // --- Global State & DOM ---
+    let dom; 
+
     const state = {
         playbackRate: 1, carouselIndex: 0, eventClips: new Map(),
         sortedEventKeys: [], currentEventData: {},
     };
 
-    const dom = {
-        // Landing Page elements
-        landingPage: document.getElementById('landing-page'),
-        launchAppBtn: document.getElementById('launch-app-btn'),
-        appContainer: document.querySelector('.layout-container'),
-
-        // App elements
-        body: document.body,
-        videoGrid: document.querySelector("#video-grid"),
-        allVideos: document.querySelectorAll("video"), 
-        frontVideo: document.querySelector("video.front"),
-        fileBrowser: document.querySelector("#fileBrowser"),
-        dateSelector: document.querySelector("#date-select"),
-        nextButton: document.querySelector("button.next"),
-        previousButton: document.querySelector("button.previous"),
-        masterScrubber: document.querySelector("#master-scrubber"),
-        liveTimestamp: document.querySelector("#live-timestamp"),
-        durationDisplay: document.querySelector("#duration-display"),
-        playPauseButton: document.querySelector("#play-pause-button"),
-        playIcon: document.querySelector("#play-icon"), 
-        pauseIcon: document.querySelector("#pause-icon"),
-        statusDot: document.querySelector('.status-dot'),
-        eventMarker: document.querySelector("#event-marker"),
-        jumpToEventButton: document.querySelector("#jump-to-event"),
-        mapButton: document.getElementById('map-button'),
-        mapContainer: document.getElementById('map-container'),
-        mapIframe: document.getElementById('map-iframe'),
-        mapCloseButton: document.getElementById('map-close-button'),
-        cameraToggles: document.querySelector("#camera-toggles"),
-        selectAllCameras: document.querySelector('#select-all-cameras'),
-        themeToggle: document.querySelector('#theme-toggle'),
-        themeIconSun: document.querySelector('#theme-icon-sun'),
-        themeIconMoon: document.querySelector('#theme-icon-moon'),
-        skipForwardButton: document.querySelector('#skip-forward'),
-        skipRewindButton: document.querySelector('#skip-rewind'),
-        playbackSpeedSelector: document.querySelector('#playback-speed'),
-        toggleControlsBtn: document.querySelector('#toggle-controls-btn'),
-        collapsibleControls: document.querySelector('#collapsible-controls'),
-        chevronDown: document.querySelector('#chevron-down'),
-        chevronUp: document.querySelector('#chevron-up'),
-        titleFolderName: document.querySelector('.title-folder-name'),
-        eventReasonDisplay: document.querySelector('#event-reason-display'),
-        eventCityDisplay: document.getElementById('event-city-display'),
-        screenshotBtn: document.querySelector('#screenshot-btn'),
-        cameraControlsContainer: document.getElementById('camera-controls-container'),
-    };
-    
-    // --- Tabs ---
     function openTab(evt, tabName) {
         let i, tabcontent, tablinks;
         tabcontent = document.getElementsByClassName("tab-content");
-        for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].classList.remove("active");
-        }
+        for (i = 0; i < tabcontent.length; i++) tabcontent[i].classList.remove("active");
         tablinks = document.getElementsByClassName("tab-button");
-        for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].classList.remove("active");
-        }
+        for (i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("active");
         document.getElementById(tabName).classList.add("active");
         evt.currentTarget.classList.add("active");
-
-        // Show camera controls only on the CameraViewer tab
         dom.cameraControlsContainer.style.display = (tabName === 'CameraViewer') ? 'block' : 'none';
     }
 
-
-    // --- Theme ---
     function applyTheme(theme) {
         if (theme === 'light') {
             dom.body.classList.add('light-mode');
@@ -757,16 +728,8 @@
         }
     }
     
-    dom.themeToggle.addEventListener('click', () => {
-        const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
-        localStorage.setItem('theme', newTheme);
-        applyTheme(newTheme);
-    });
-    
-    // --- Charging Estimator ---
     function toggleCustomParams() {
-        const chargerType = document.getElementById('charger-type').value;
-        document.getElementById('custom-params').style.display = (chargerType === 'custom') ? 'block' : 'none';
+        document.getElementById('custom-params').style.display = (document.getElementById('charger-type').value === 'custom') ? 'block' : 'none';
     }
 
     function calculateTime() {
@@ -796,20 +759,19 @@
         }
 
         const energyNeeded = (targetSOC - currentSOC) / 100 * capacity;
-        const timeHours = energyNeeded / (chargerPower * (chargerPower === 250 ? 1 : efficiency)); // Superchargers rated by output, others by input
+        const timeHours = energyNeeded / (chargerPower * (chargerPower === 250 ? 1 : efficiency));
         const hours = Math.floor(timeHours);
         const minutes = Math.round((timeHours - hours) * 60);
 
         let resultText = `Estimated time to charge:<br><strong>`;
-          if (hours > 0) resultText += `${hours} hr `;
+        if (hours > 0) resultText += `${hours} hr `;
         if (minutes > 0) resultText += `${minutes} min`;
         if (hours === 0 && minutes === 0) resultText = "Charge time is less than a minute.";
         resultDiv.innerHTML = resultText + `</strong>`;
     }
 
-    // --- Phantom Drain Estimator ---
     function calculateDrainTime() {
-        const originalCapacity = 75; // Using the value from the other calculator
+        const originalCapacity = 75;
         const batteryHealth = parseFloat(document.getElementById('battery-health').value) / 100;
         const currentSOC = parseFloat(document.getElementById('drain-current-soc').value);
         const targetSOC = parseFloat(document.getElementById('drain-target-soc').value);
@@ -821,9 +783,8 @@
             return;
         }
 
-        let totalDrainWatts = 50; // Base phantom drain for computers, etc.
-        const features = document.getElementsByName('drain-feature');
-        features.forEach(feature => {
+        let totalDrainWatts = 50;
+        document.getElementsByName('drain-feature').forEach(feature => {
             if (feature.checked) {
                 totalDrainWatts += parseFloat(feature.value);
             }
@@ -835,7 +796,7 @@
 
         const actualDrain = totalDrainWatts * tempMultiplier;
         const currentCapacity = originalCapacity * batteryHealth;
-        const energyToDrain = (currentSOC - targetSOC) / 100 * currentCapacity * 1000; // in Watt-hours
+        const energyToDrain = (currentSOC - targetSOC) / 100 * currentCapacity * 1000;
         
         const timeHours = energyToDrain / actualDrain;
         const days = Math.floor(timeHours / 24);
@@ -848,7 +809,6 @@
         resultDiv.innerHTML = resultText + `</strong>`;
     }
 
-    // --- Camera Viewer ---
     const EVENT_TIME_CORRECTION_S = 5.0;
     async function loadEvent(index) {
         state.carouselIndex = index;
@@ -874,7 +834,6 @@
         dom.titleFolderName.textContent = eventKey;
         dom.dateSelector.selectedIndex = index;
 
-        // Find the earliest video clip across all cameras to set the true start time
         let earliestFile = null;
         for (const camera in eventData.playlists) {
             if (eventData.playlists[camera].length > 0) {
@@ -884,22 +843,25 @@
             }
         }
 
-        if (!earliestFile) return; // No clips found at all
+        if (!earliestFile) return;
 
         const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
         if (firstClipNameMatch) {
             const dateTimeString = firstClipNameMatch[1];
-            // Add 'Z' to treat the timestamp as UTC
             const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':') + 'Z';
             state.currentEventData.firstClipTime = new Date(formattedDateTimeString);
         } else {
             state.currentEventData.firstClipTime = null;
         }
 
-        // Use the front camera playlist for duration calculation as it's the most reliable
         const masterPlaylist = state.currentEventData.playlists.front;
-        state.currentEventData.clipDurations = await Promise.all(masterPlaylist.map(getVideoDuration));
-        state.currentEventData.totalDuration = state.currentEventData.clipDurations.reduce((a, b) => a + b, 0);
+        if(masterPlaylist.length > 0) {
+            state.currentEventData.clipDurations = await Promise.all(masterPlaylist.map(getVideoDuration));
+            state.currentEventData.totalDuration = state.currentEventData.clipDurations.reduce((a, b) => a + b, 0);
+        } else {
+            state.currentEventData.clipDurations = [];
+            state.currentEventData.totalDuration = 0;
+        }
 
         if (state.currentEventData.firstClipTime) {
             updateLiveTimestamp(0);
@@ -913,17 +875,12 @@
             try {
                 const jsonContent = await eventData.eventJson.text();
                 const jsonData = JSON.parse(jsonContent);
-                // Add 'Z' to treat the timestamp as UTC
                 const eventTime = new Date(jsonData.timestamp + 'Z');
 
                 if (jsonData.est_lat && jsonData.est_lon) {
-                    state.currentEventData.location = {
-                        lat: jsonData.est_lat,
-                        lon: jsonData.est_lon
-                    };
+                    state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
                     dom.mapButton.style.display = 'inline-flex';
                 }
-
                 if (jsonData.city) {
                     dom.eventCityDisplay.innerHTML = `Event City: <strong>${jsonData.city}</strong>`;
                     dom.eventCityDisplay.style.display = 'block';
@@ -938,20 +895,17 @@
                         const eventMarkerAbsoluteTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.eventTriggerOffset * 1000));
                         
                         const cameraIndexMap = {
-                            0: 'front', 3: 'left_repeater', 4: 'right_repeater',
-                            5: 'left_pillar', 6: 'right_pillar', 7: 'back'
+                            0: 'front', 1: 'fisheye', 2: 'narrow', 3: 'left_repeater', 4: 'right_repeater',
+                            5: 'left_pillar', 6: 'right_pillar', 7: 'back', 8: 'cabin'
                         };
-                        const triggerCameraIndex = parseInt(jsonData.camera, 10);
-                        const triggerCameraName = cameraIndexMap[triggerCameraIndex];
+                        const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
                         
                         let reasonText = `Event: <strong>${jsonData.reason.replace(/_/g, ' ')}</strong> at ${formatLocalTime(eventMarkerAbsoluteTime)}`;
                         
                         if (triggerCameraName) {
                             reasonText += ` (Trigger: ${triggerCameraName.replace('_', ' ')})`;
                             const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
-                            if(triggerContainer) {
-                                triggerContainer.classList.add('triggered');
-                            }
+                            if(triggerContainer) triggerContainer.classList.add('triggered');
                         }
                         
                         dom.eventReasonDisplay.innerHTML = reasonText;
@@ -969,6 +923,7 @@
             loadVideo(video, playlist && playlist.length > 0 ? playlist[0] : null);
         });
     }
+
     function loadVideo(videoElement, file) {
         if (videoElement.src.startsWith('blob:')) URL.revokeObjectURL(videoElement.src);
         videoElement.src = file ? URL.createObjectURL(file) : '';
@@ -977,24 +932,14 @@
     function updatePlayButtonUI(isPlaying) {
         dom.playIcon.style.display = isPlaying ? 'none' : 'block';
         dom.pauseIcon.style.display = isPlaying ? 'block' : 'none';
-        if (isPlaying) {
-            dom.statusDot.classList.remove('ready');
-            dom.statusDot.classList.add('playing');
-        } else {
-            dom.statusDot.classList.remove('playing');
-            dom.statusDot.classList.add('ready');
-        }
+        dom.statusDot.classList.toggle('ready', !isPlaying);
+        dom.statusDot.classList.toggle('playing', isPlaying);
     }
     function playVideos() {
         updatePlayButtonUI(true);
         dom.allVideos.forEach(v => { 
             if (v.src && v.paused) {
-                const playPromise = v.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.error(`Video play failed for ${v.className}:`, error);
-                    });
-                }
+                v.play().catch(error => console.error(`Play failed for ${v.className}:`, error));
             }
         });
     }
@@ -1047,207 +992,192 @@
         const liveTime = new Date(state.currentEventData.firstClipTime.getTime() + (currentTime * 1000));
         dom.liveTimestamp.textContent = formatLocalTime(liveTime);
     }
-    dom.toggleControlsBtn.addEventListener('click', () => {
-        const isVisible = dom.collapsibleControls.classList.toggle('visible');
-        dom.chevronDown.style.display = isVisible ? 'none' : 'inline-block';
-        dom.chevronUp.style.display = isVisible ? 'inline-block' : 'none';
-    });
-    
-    // --- Enhanced Screenshot Function ---
-    dom.screenshotBtn.addEventListener('click', () => {
-        const visibleContainers = [...dom.videoGrid.querySelectorAll('.video-container:not(.hidden)')];
-        
-        if (visibleContainers.length === 0) return;
-        
-        const firstVideo = visibleContainers[0].querySelector('video');
-        if (!firstVideo.src || firstVideo.videoWidth === 0) return;
-
-        const videoWidth = firstVideo.videoWidth;
-        const videoHeight = firstVideo.videoHeight;
-
-        const gridMapping = {
-            left_pillar: { col: 0, row: 0 }, front: { col: 1, row: 0 }, right_pillar: { col: 2, row: 0 },
-            left_repeater: { col: 0, row: 1 }, back: { col: 1, row: 1 }, right_repeater: { col: 2, row: 1 },
-        };
-
-        const canvas = document.createElement('canvas');
-        canvas.width = videoWidth * 3;
-        canvas.height = videoHeight * 2;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-color');
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        visibleContainers.forEach(container => {
-            const video = container.querySelector('video');
-            const cameraType = [...container.classList].find(c => gridMapping[c]);
-            
-            if (cameraType && video.videoWidth > 0) {
-                const { col, row } = gridMapping[cameraType];
-                const dx = col * videoWidth;
-                const dy = row * videoHeight;
-                ctx.drawImage(video, dx, dy, videoWidth, videoHeight);
-            }
-        });
-        
-        const link = document.createElement('a');
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        link.download = `Tesla-Companion-Screenshot-${timestamp}.jpg`;
-        link.href = canvas.toDataURL('image/jpeg', 0.9);
-        link.click();
-    });
-
-    dom.playPauseButton.addEventListener('click', playPause);
-    dom.dateSelector.addEventListener("change", (e) => loadEvent(parseInt(e.target.value)));
-    dom.nextButton.addEventListener("click", () => { if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); });
-    dom.previousButton.addEventListener("click", () => { if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); });
-    dom.jumpToEventButton.addEventListener("click", () => seekAllVideos(state.currentEventData.eventTriggerOffset));
-    dom.skipForwardButton.addEventListener('click', () => skipTo(5));
-    dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
-    dom.playbackSpeedSelector.addEventListener('change', (e) => setPlaybackSpeed(e.target.value));
-    dom.selectAllCameras.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        const individualCheckboxes = dom.cameraToggles.querySelectorAll('input[data-camera]');
-        individualCheckboxes.forEach(checkbox => {
-            checkbox.checked = isChecked; 
-            document.querySelector(`.video-container.${checkbox.dataset.camera}`)?.classList.toggle('hidden', !isChecked);
-        });
-        dom.videoGrid.classList.toggle('single-view-mode', individualCheckboxes.filter(cb => cb.checked).length === 1);
-    });
-    dom.cameraToggles.addEventListener("change", (e) => {
-        if (e.target.dataset.camera) { 
-            document.querySelector(`.video-container.${e.target.dataset.camera}`)?.classList.toggle('hidden', !e.target.checked);
-            const individualCheckboxes = Array.from(dom.cameraToggles.querySelectorAll('input[data-camera]'));
-            const checkedCount = individualCheckboxes.filter(cb => cb.checked).length;
-            dom.videoGrid.classList.toggle('single-view-mode', checkedCount === 1);
-            dom.selectAllCameras.checked = (checkedCount === individualCheckboxes.length);
-        }
-    });
-    dom.masterScrubber.addEventListener("input", () => { if (state.currentEventData.totalDuration) updateLiveTimestamp((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
-    dom.masterScrubber.addEventListener("change", () => { if (state.currentEventData.totalDuration) seekAllVideos((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
-    
-    // This listener is a reliable trigger for starting playback once the first clip is ready.
-    dom.frontVideo.addEventListener("loadedmetadata", () => { 
-        if (dom.frontVideo.paused) {
-            playVideos(); 
-        }
-    });
-    
-    dom.frontVideo.addEventListener("timeupdate", () => {
-        if (!state.currentEventData.totalDuration) return;
-        if (!dom.masterScrubber.matches(':active')) dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
-        updateLiveTimestamp();
-    });
-
-    dom.allVideos.forEach(video => {
-        video.addEventListener("ended", (e) => {
-            const camera = e.target.className.split(' ')[0];
-            const currentIdx = ++state.currentEventData.playlistIndices[camera];
-            const playlist = state.currentEventData.playlists[camera];
-            if (currentIdx < playlist.length) {
-                loadVideo(e.target, playlist[currentIdx]);
-            } else if (camera === 'front') {
-                if (document.querySelector("#autoplay")?.checked && state.carouselIndex < state.sortedEventKeys.length - 1) {
-                    loadEvent(++state.carouselIndex);
-                } else {
-                    pauseVideos();
-                }
-            }
-        });
-    });
-
-    document.querySelectorAll('.video-container').forEach(container => {
-        container.addEventListener('dblclick', (e) => {
-            const grid = dom.videoGrid;
-            const clickedContainer = e.currentTarget;
-
-            if (grid.classList.contains('expanded-view')) {
-                if (clickedContainer.classList.contains('expanded')) {
-                    grid.classList.remove('expanded-view');
-                    clickedContainer.classList.remove('expanded');
-                }
-            } else {
-                grid.classList.add('expanded-view');
-                clickedContainer.classList.add('expanded');
-            }
-        });
-    });
-
-    dom.fileBrowser.addEventListener("change", function(e) {
-        state.eventClips.clear(); 
-        state.sortedEventKeys = []; 
-        dom.dateSelector.innerHTML = '<option>Select Event</option>';
-        dom.titleFolderName.textContent = 'No Clips Selected';
-        for (const file of e.target.files) {
-            const pathParts = file.webkitRelativePath.split('/');
-            if (pathParts.length < 2) continue;
-            const eventId = pathParts[pathParts.length - 2];
-            if (!state.eventClips.has(eventId)) state.eventClips.set(eventId, { playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, eventJson: null, fullPath: file.webkitRelativePath });
-            const group = state.eventClips.get(eventId);
-            const videoMatch = file.name.match(/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})-(.+?)\.mp4$/);
-            if (videoMatch && group.playlists[videoMatch[2]]) group.playlists[videoMatch[2]].push(file);
-            if (file.name === "event.json") group.eventJson = file;
-        }
-        for (const [_, data] of state.eventClips.entries()) { for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name)); }
-        state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
-        if (state.sortedEventKeys.length === 0) { dom.titleFolderName.textContent = 'No Clips Found'; dom.dateSelector.innerHTML = '<option>No Events Found</option>'; return; }
-        dom.dateSelector.innerHTML = '';
-        state.sortedEventKeys.forEach((key, index) => { const option = document.createElement("option"); option.innerText = key; option.value = index; dom.dateSelector.appendChild(option); });
-        loadEvent(0);
-    });
-
     function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
-    window.addEventListener('resize', updateEventMarkerPosition);
     function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
     function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return '--:--:--'; return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
     function getVideoDuration(file) { return new Promise(resolve => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); }); }
-    document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-        switch(e.key) {
-            case ' ': e.preventDefault(); playPause(); break;
-            case 'ArrowLeft': e.preventDefault(); skipTo(-5); break;
-            case 'ArrowRight': e.preventDefault(); skipTo(5); break;
-            case 'ArrowUp': e.preventDefault(); if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); break;
-            case 'ArrowDown': e.preventDefault(); if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); break;
-        }
-    });
-
-    // --- Map Logic ---
-    dom.mapButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (state.currentEventData.location) {
-            const { lat, lon } = state.currentEventData.location;
-            const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=es;z=14&output=embed`;
-            dom.mapIframe.src = mapUrl;
-            dom.mapContainer.style.display = 'flex';
-        }
-    });
+    
+    function toggleFullscreen() {
+        dom.body.classList.toggle('fullscreen-active');
+        const isFullscreen = dom.body.classList.contains('fullscreen-active');
+        dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block';
+        dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none';
+    }
 
     function closeMap() {
         dom.mapContainer.style.display = 'none';
-        dom.mapIframe.src = ''; // Clear src to stop loading and prevent resource usage
+        dom.mapIframe.src = '';
     }
 
-    dom.mapCloseButton.addEventListener('click', closeMap);
-    dom.mapContainer.addEventListener('click', (e) => {
-        // Close if the background overlay is clicked
-        if (e.target === dom.mapContainer) {
-            closeMap();
-        }
-    });
-
-
-    // --- Initial Load ---
+    // --- Main Initializer (runs after DOM is loaded) ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Landing Page Logic
+        dom = {
+            landingPage: document.getElementById('landing-page'),
+            launchAppBtn: document.getElementById('launch-app-btn'),
+            appContainer: document.querySelector('.layout-container'),
+            body: document.body,
+            videoGrid: document.querySelector("#video-grid"),
+            allVideos: document.querySelectorAll("video"), 
+            frontVideo: document.querySelector("video.front"),
+            fileBrowser: document.querySelector("#fileBrowser"),
+            dateSelector: document.querySelector("#date-select"),
+            nextButton: document.querySelector("button.next"),
+            previousButton: document.querySelector("button.previous"),
+            masterScrubber: document.querySelector("#master-scrubber"),
+            liveTimestamp: document.querySelector("#live-timestamp"),
+            durationDisplay: document.querySelector("#duration-display"),
+            playPauseButton: document.querySelector("#play-pause-button"),
+            playIcon: document.querySelector("#play-icon"), 
+            pauseIcon: document.querySelector("#pause-icon"),
+            statusDot: document.querySelector('.status-dot'),
+            eventMarker: document.querySelector("#event-marker"),
+            jumpToEventButton: document.querySelector("#jump-to-event"),
+            mapButton: document.getElementById('map-button'),
+            mapContainer: document.getElementById('map-container'),
+            mapIframe: document.getElementById('map-iframe'),
+            mapCloseButton: document.getElementById('map-close-button'),
+            cameraToggles: document.querySelector("#camera-toggles"),
+            selectAllCameras: document.querySelector('#select-all-cameras'),
+            themeToggle: document.querySelector('#theme-toggle'),
+            themeIconSun: document.querySelector('#theme-icon-sun'),
+            themeIconMoon: document.querySelector('#theme-icon-moon'),
+            fullscreenToggle: document.getElementById('fullscreen-toggle'),
+            maximizeIcon: document.getElementById('maximize-icon'),
+            minimizeIcon: document.getElementById('minimize-icon'),
+            skipForwardButton: document.querySelector('#skip-forward'),
+            skipRewindButton: document.querySelector('#skip-rewind'),
+            playbackSpeedSelector: document.querySelector('#playback-speed'),
+            toggleControlsBtn: document.querySelector('#toggle-controls-btn'),
+            collapsibleControls: document.querySelector('#collapsible-controls'),
+            chevronDown: document.querySelector('#chevron-down'),
+            chevronUp: document.querySelector('#chevron-up'),
+            titleFolderName: document.querySelector('.title-folder-name'),
+            eventReasonDisplay: document.querySelector('#event-reason-display'),
+            eventCityDisplay: document.getElementById('event-city-display'),
+            screenshotBtn: document.querySelector('#screenshot-btn'),
+            cameraControlsContainer: document.getElementById('camera-controls-container'),
+        };
+
         dom.launchAppBtn.addEventListener('click', () => {
             dom.landingPage.classList.add('hidden');
             dom.appContainer.classList.remove('hidden');
         });
+        dom.themeToggle.addEventListener('click', () => {
+            const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+        dom.playPauseButton.addEventListener('click', playPause);
+        dom.dateSelector.addEventListener("change", (e) => loadEvent(parseInt(e.target.value)));
+        dom.nextButton.addEventListener("click", () => { if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); });
+        dom.previousButton.addEventListener("click", () => { if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); });
+        dom.jumpToEventButton.addEventListener("click", () => seekAllVideos(state.currentEventData.eventTriggerOffset));
+        dom.skipForwardButton.addEventListener('click', () => skipTo(5));
+        dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
+        dom.playbackSpeedSelector.addEventListener('change', (e) => setPlaybackSpeed(e.target.value));
+        dom.selectAllCameras.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            dom.cameraToggles.querySelectorAll('input[data-camera]').forEach(checkbox => {
+                checkbox.checked = isChecked; 
+                document.querySelector(`.video-container.${checkbox.dataset.camera}`)?.classList.toggle('hidden', !isChecked);
+            });
+            dom.videoGrid.classList.toggle('single-view-mode', Array.from(dom.cameraToggles.querySelectorAll('input[data-camera]')).filter(cb => cb.checked).length === 1);
+        });
+        dom.cameraToggles.addEventListener("change", (e) => {
+            if (e.target.dataset.camera) { 
+                document.querySelector(`.video-container.${e.target.dataset.camera}`)?.classList.toggle('hidden', !e.target.checked);
+                const individualCheckboxes = Array.from(dom.cameraToggles.querySelectorAll('input[data-camera]'));
+                const checkedCount = individualCheckboxes.filter(cb => cb.checked).length;
+                dom.videoGrid.classList.toggle('single-view-mode', checkedCount === 1);
+                dom.selectAllCameras.checked = (checkedCount === individualCheckboxes.length);
+            }
+        });
+        dom.masterScrubber.addEventListener("input", () => { if (state.currentEventData.totalDuration) updateLiveTimestamp((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
+        dom.masterScrubber.addEventListener("change", () => { if (state.currentEventData.totalDuration) seekAllVideos((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
+        dom.frontVideo.addEventListener("timeupdate", () => {
+            if (!state.currentEventData.totalDuration || dom.masterScrubber.matches(':active')) return;
+            dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
+            updateLiveTimestamp();
+        });
+        dom.allVideos.forEach(video => {
+            video.addEventListener("ended", (e) => {
+                const camera = e.target.className.split(' ')[0];
+                const currentIdx = ++state.currentEventData.playlistIndices[camera];
+                const playlist = state.currentEventData.playlists[camera];
+                if (currentIdx < playlist.length) {
+                    loadVideo(e.target, playlist[currentIdx]);
+                } else if (camera === 'front') {
+                    if (state.carouselIndex < state.sortedEventKeys.length - 1) {
+                        loadEvent(++state.carouselIndex);
+                    } else {
+                        pauseVideos();
+                    }
+                }
+            });
+        });
+        document.querySelectorAll('.video-container').forEach(container => {
+            container.addEventListener('dblclick', (e) => {
+                const grid = dom.videoGrid;
+                const clickedContainer = e.currentTarget;
+                if (grid.classList.contains('expanded-view')) {
+                    if (clickedContainer.classList.contains('expanded')) {
+                        grid.classList.remove('expanded-view');
+                        clickedContainer.classList.remove('expanded');
+                    }
+                } else {
+                    grid.classList.add('expanded-view');
+                    clickedContainer.classList.add('expanded');
+                }
+            });
+        });
+        dom.fileBrowser.addEventListener("change", function(e) {
+            state.eventClips.clear(); 
+            state.sortedEventKeys = []; 
+            dom.dateSelector.innerHTML = '<option>Select Event</option>';
+            dom.titleFolderName.textContent = 'No Clips Selected';
+            for (const file of e.target.files) {
+                const pathParts = file.webkitRelativePath.split('/');
+                if (pathParts.length < 2) continue;
+                const eventId = pathParts[pathParts.length - 2];
+                if (!state.eventClips.has(eventId)) state.eventClips.set(eventId, { playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, eventJson: null, fullPath: file.webkitRelativePath });
+                const group = state.eventClips.get(eventId);
+                const videoMatch = file.name.match(/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})-(.+?)\.mp4$/);
+                if (videoMatch && group.playlists[videoMatch[2]]) group.playlists[videoMatch[2]].push(file);
+                if (file.name === "event.json") group.eventJson = file;
+            }
+            for (const [_, data] of state.eventClips.entries()) { for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name)); }
+            state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
+            if (state.sortedEventKeys.length === 0) { dom.titleFolderName.textContent = 'No Clips Found'; dom.dateSelector.innerHTML = '<option>No Events Found</option>'; return; }
+            dom.dateSelector.innerHTML = '';
+            state.sortedEventKeys.forEach((key, index) => { const option = document.createElement("option"); option.innerText = key; option.value = index; dom.dateSelector.appendChild(option); });
+            loadEvent(0);
+        });
+        dom.fullscreenToggle.addEventListener('click', toggleFullscreen);
+        dom.mapButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (state.currentEventData.location) {
+                const { lat, lon } = state.currentEventData.location;
+                const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=es;z=14&output=embed`;
+                dom.mapIframe.src = mapUrl;
+                dom.mapContainer.style.display = 'flex';
+            }
+        });
+        dom.mapCloseButton.addEventListener('click', closeMap);
+        dom.mapContainer.addEventListener('click', (e) => { if (e.target === dom.mapContainer) closeMap(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            switch(e.key) {
+                case ' ': e.preventDefault(); playPause(); break;
+                case 'ArrowLeft': e.preventDefault(); skipTo(-5); break;
+                case 'ArrowRight': e.preventDefault(); skipTo(5); break;
+                case 'ArrowUp': e.preventDefault(); if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); break;
+                case 'ArrowDown': e.preventDefault(); if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); break;
+                case 'Escape': if (dom.body.classList.contains('fullscreen-active')) { toggleFullscreen(); } closeMap(); break;
+            }
+        });
 
-        // Set the theme based on user's preference or default to dark.
+        // Initial Setup
         applyTheme(localStorage.getItem('theme') || 'dark');
-        
-        // Hide camera controls initially since "How To" is the default tab
         dom.cameraControlsContainer.style.display = 'none'; 
     });
 
