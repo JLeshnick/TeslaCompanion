@@ -33,6 +33,33 @@ You can try a live version of the Tesla Companion hosted on GitHub Pages:
    - Choose the **TeslaCam** folder or a specific event folder (e.g., `2024-06-27_17-19-01`). Both work.
 4. **View Events:** Use the dropdown or navigation buttons to move between events.
 
+# 📚 Reference
+
+## Camera Indexes
+
+The `event.json` file references cameras by a number. Here is the mapping used by this application:
+
+| Index | Camera View     |
+|-------|-----------------|
+| 0     | Front           |
+| 3     | Left Pillar     |
+| 4     | Right Pillar    |
+| 5     | Left Repeater   |
+| 6     | Right Repeater  |
+| 7     | Back            |
+
+## Event Reasons
+
+The `reason` field in the event file indicates what triggered the recording. Here are some common reasons:
+
+| Reason Code                          | Description                                                             |
+|-------------------------------------|-------------------------------------------------------------------------|
+| sentry_aware_object_detection       | Sentry Mode detected an object or movement nearby.                      |
+| user_interaction_dashcam_icon_tapped| You manually triggered a Dashcam recording by tapping the icon on the screen. |
+| sentry_locked_handle_pulled         | Sentry Mode detected someone pulling on a door handle while the car was locked. |
+| user_interaction_honk               | You manually triggered a Dashcam recording by honking the horn.        |
+
+
 ## 🛠️ Technologies Used
 
 - **HTML5** – Core structure  

@@ -243,7 +243,7 @@
         .top-right-controls { display: flex; align-items: center; gap: 0.75rem; }
         .clip-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.3; }
         .title-folder-name { color: var(--text-color); font-weight: 600; font-size: 0.9rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 250px; }
-        #event-reason-display { font-size: 0.8rem; color: var(--text-muted-color); font-style: italic; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        #event-reason-display, #event-city-display { font-size: 0.8rem; color: var(--text-muted-color); font-style: italic; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 
         #camera-controls-container {
             padding: 1rem 1.5rem;
@@ -322,6 +322,7 @@
 
         .video-container { position: relative; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 2px solid var(--border-color); border-radius: var(--border-radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); box-shadow: var(--shadow-md); cursor: pointer; }
         .video-container:hover { border-color: var(--primary-color); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .video-container.triggered { border-color: var(--accent-color); }
         .video-label { position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.9)); color: white; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; border-radius: var(--border-radius-md); pointer-events: none; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 1; }
         video { width: 100%; height: 100%; object-fit: contain; border-radius: calc(var(--border-radius-lg) - 2px); }
         .video-container.front { grid-area: front; } .video-container.back { grid-area: back; } .video-container.left_repeater { grid-area: left-repeater; } .video-container.right_repeater { grid-area: right-repeater; } .video-container.left_pillar { grid-area: left-pillar; } .video-container.right_pillar { grid-area: right-pillar; }
@@ -329,10 +330,15 @@
         .info-container, .calculator-container { max-width: 800px; margin: 2rem auto; padding: 2rem 2rem 4rem 2rem; background-color: var(--surface-color); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg); width: 100%; }
         .info-container h1, .calculator-container h1 { text-align: center; font-size: 1.5rem; margin-top: 0; margin-bottom: 2rem; color: var(--text-color); }
         .info-container h2 { font-size: 1.25rem; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1rem; }
-        .info-container p { color: var(--text-muted-color); }
+        .info-container p, .info-container li { color: var(--text-muted-color); }
         .info-container ul { list-style-type: none; padding-left: 0; }
-        .info-container li { margin-bottom: 0.75rem; padding-left: 1.5rem; position: relative; color: var(--text-muted-color); }
+        .info-container li { margin-bottom: 0.75rem; padding-left: 1.5rem; position: relative; }
         .info-container li::before { content: '✓'; position: absolute; left: 0; color: var(--accent-color); font-weight: bold; }
+        .info-container table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .info-container th, .info-container td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border-color); }
+        .info-container th { font-weight: 600; color: var(--text-color); }
+        .info-container code { background-color: var(--control-bg-color); padding: 0.2rem 0.4rem; border-radius: var(--border-radius-sm); font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;}
+
         .form-group { margin-bottom: 1.25rem; }
         .calculator-container label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-muted-color); }
         .calculator-container input, .calculator-container select { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-sizing: border-box; font-size: 1rem; background-color: var(--control-bg-color); color: var(--text-color); transition: var(--transition-fast); }
@@ -437,7 +443,6 @@
 </head>
 <body>
 
-<!-- Landing Page -->
 <div id="landing-page">
     <div class="landing-content">
         <div class="landing-logo">Tesla Companion</div>
@@ -451,7 +456,6 @@
     </div>
 </div>
 
-<!-- Main Application Container (Initially Hidden) -->
 <div class="layout-container hidden"> 
     <header class="header">
         <div class="title-area">
@@ -476,7 +480,6 @@
     </header>
 
     <div class="content-container">
-        <!-- How To Tab -->
         <div id="HowTo" class="tab-content active">
             <div class="info-container">
                 <h1>How To Use Tesla Companion</h1>
@@ -487,8 +490,8 @@
                     <li><strong>Load Clips:</strong> Click the "Select Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
                     <li><strong>Navigate Events:</strong> Use the dropdown menu to select a specific event date and time. You can also use the Previous/Next arrow buttons or your keyboard's Up/Down arrows to cycle through events.</li>
                     <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
-                    <li><strong>Jump to Event:</strong> If an event was triggered (e.g., by Sentry Mode), an "Event" button will appear. Click it to jump directly to the moment of the trigger.</li>
-                    <li><strong>View Location:</strong> If the event contains GPS data, a "Map" button will appear. Click it to view the location on Google Maps.</li>
+                    <li><strong>Jump to Event:</strong> If an event was triggered (e.g., by Sentry Mode), a "Event" button will appear. Click it to jump directly to the moment of the trigger.</li>
+                    <li><strong>View Location:</strong> If the event contains GPS data, a "Event Map" button will appear. Click it to view the location on Google Maps.</li>
                     <li><strong>Grid Screenshots:</strong> Use the "Screenshot" button in the top controls to download a single, high-quality image stitching all visible camera feeds together.</li>
                 </ul>
 
@@ -505,10 +508,35 @@
                     <li><strong>Select Features:</strong> Check the boxes for any power-consuming features you plan to leave active (like Sentry Mode or Cabin Overheat Protection).</li>
                     <li><strong>Calculate:</strong> The tool will estimate how long your battery will last under the selected conditions.</li>
                 </ul>
+
+                <h2>Reference Information</h2>
+                <h3>Camera Indexes</h3>
+                <p>The <code>event.json</code> file references cameras by a number. Here is the mapping used by this application:</p>
+                <table>
+                    <thead><tr><th>Index</th><th>Camera View</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>0</code></td><td>Front</td></tr>
+                        <tr><td><code>3</code></td><td>Left Repeater</td></tr>
+                        <tr><td><code>4</code></td><td>Right Repeater</td></tr>
+                        <tr><td><code>5</code></td><td>Left Pillar</td></tr>
+                        <tr><td><code>6</code></td><td>Right Pillar</td></tr>
+                        <tr><td><code>7</code></td><td>Back</td></tr>
+                    </tbody>
+                </table>
+                <h3>Event Reasons</h3>
+                <p>The <code>reason</code> field in the event file indicates what triggered the recording. Here are some common reasons:</p>
+                 <table>
+                    <thead><tr><th>Reason Code</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>sentry_aware_object_detection</code></td><td>Sentry Mode detected an object or movement nearby.</td></tr>
+                        <tr><td><code>user_interaction_dashcam_icon_tapped</code></td><td>You manually triggered a Dashcam recording by tapping the icon on the screen.</td></tr>
+                        <tr><td><code>sentry_locked_handle_pulled</code></td><td>Sentry Mode detected someone pulling on a door handle while the car was locked.</td></tr>
+                        <tr><td><code>user_interaction_honk</code></td><td>You manually triggered a Dashcam recording by honking the horn.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         
-        <!-- Camera Viewer Tab -->
         <div id="CameraViewer" class="tab-content">
              <div id="camera-controls-container">
                    <div class="header-main">
@@ -517,6 +545,7 @@
                                    <div class="clip-info">
                                        <span class="title-folder-name">No Clips Selected</span>
                                        <div id="event-reason-display" style="display: none;"></div>
+                                       <div id="event-city-display" style="display: none;"></div>
                                    </div>
                                </div>
                                <div class="main-playback-controls">
@@ -533,8 +562,8 @@
                                <div class="top-right-controls">
                                     <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
                                     <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
-                                    <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
                                     <select id="date-select" class="styled-input" style="max-width: 160px;"><option>Select Event</option></select>
+                                    <button class="btn" id="screenshot-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Screenshot</button>
                                     <button class="btn" id="toggle-controls-btn" title="Select Camera Angles">Select Camera Angles <svg id="chevron-down" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"></path></svg><svg id="chevron-up" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display:none;"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"></path></svg></button>
                                </div>
                          </div>
@@ -570,7 +599,6 @@
              </div>
         </div>
         
-        <!-- Charging Estimator Tab -->
         <div id="ChargingEstimator" class="tab-content">
              <div class="calculator-container">
                    <h1>Charging Time Estimator</h1>
@@ -592,7 +620,6 @@
              </div>
         </div>
 
-        <!-- Phantom Drain Tab -->
         <div id="PhantomDrain" class="tab-content">
              <div class="calculator-container">
                    <h1>Phantom Drain Estimator</h1>
@@ -618,7 +645,6 @@
              </div>
         </div>
 
-        <!-- About Tab -->
         <div id="About" class="tab-content">
             <div class="info-container">
                 <h1>About Tesla Companion</h1>
@@ -641,7 +667,7 @@
 </div>
 
 <div id="map-container">
-    <div id="map-close-button">&times;</div>
+    <div id="map-close-button">×</div>
     <iframe id="map-iframe" src="" frameborder="0" allowfullscreen></iframe>
 </div>
 
@@ -694,6 +720,7 @@
         chevronUp: document.querySelector('#chevron-up'),
         titleFolderName: document.querySelector('.title-folder-name'),
         eventReasonDisplay: document.querySelector('#event-reason-display'),
+        eventCityDisplay: document.getElementById('event-city-display'),
         screenshotBtn: document.querySelector('#screenshot-btn'),
         cameraControlsContainer: document.getElementById('camera-controls-container'),
     };
@@ -834,6 +861,9 @@
         dom.jumpToEventButton.style.display = "none";
         dom.mapButton.style.display = 'none';
         dom.eventReasonDisplay.style.display = 'none';
+        dom.eventCityDisplay.style.display = 'none';
+        document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
+
         const eventKey = state.sortedEventKeys[index];
         const eventData = state.eventClips.get(eventKey);
         state.currentEventData = {
@@ -843,18 +873,34 @@
         };
         dom.titleFolderName.textContent = eventKey;
         dom.dateSelector.selectedIndex = index;
-        const masterPlaylist = state.currentEventData.playlists.front;
-        if (masterPlaylist.length === 0) return;
-        const firstClipNameMatch = masterPlaylist[0].name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+
+        // Find the earliest video clip across all cameras to set the true start time
+        let earliestFile = null;
+        for (const camera in eventData.playlists) {
+            if (eventData.playlists[camera].length > 0) {
+                if (!earliestFile || eventData.playlists[camera][0].name < earliestFile.name) {
+                    earliestFile = eventData.playlists[camera][0];
+                }
+            }
+        }
+
+        if (!earliestFile) return; // No clips found at all
+
+        const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
         if (firstClipNameMatch) {
             const dateTimeString = firstClipNameMatch[1];
-            const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':');
+            // Add 'Z' to treat the timestamp as UTC
+            const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':') + 'Z';
             state.currentEventData.firstClipTime = new Date(formattedDateTimeString);
         } else {
             state.currentEventData.firstClipTime = null;
         }
+
+        // Use the front camera playlist for duration calculation as it's the most reliable
+        const masterPlaylist = state.currentEventData.playlists.front;
         state.currentEventData.clipDurations = await Promise.all(masterPlaylist.map(getVideoDuration));
         state.currentEventData.totalDuration = state.currentEventData.clipDurations.reduce((a, b) => a + b, 0);
+
         if (state.currentEventData.firstClipTime) {
             updateLiveTimestamp(0);
             const endClipTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.totalDuration * 1000));
@@ -867,7 +913,8 @@
             try {
                 const jsonContent = await eventData.eventJson.text();
                 const jsonData = JSON.parse(jsonContent);
-                const eventTime = new Date(jsonData.timestamp);
+                // Add 'Z' to treat the timestamp as UTC
+                const eventTime = new Date(jsonData.timestamp + 'Z');
 
                 if (jsonData.est_lat && jsonData.est_lon) {
                     state.currentEventData.location = {
@@ -877,14 +924,37 @@
                     dom.mapButton.style.display = 'inline-flex';
                 }
 
+                if (jsonData.city) {
+                    dom.eventCityDisplay.innerHTML = `Event City: <strong>${jsonData.city}</strong>`;
+                    dom.eventCityDisplay.style.display = 'block';
+                }
+
                 if (state.currentEventData.firstClipTime) {
-                    let offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
-                    if (Math.abs(offset) > state.currentEventData.totalDuration) offset -= Math.round(offset / 3600) * 3600;
+                    const offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
                     const correctedOffset = offset - EVENT_TIME_CORRECTION_S;
+
                     if (correctedOffset >= 0 && correctedOffset < state.currentEventData.totalDuration) {
                         state.currentEventData.eventTriggerOffset = correctedOffset;
                         const eventMarkerAbsoluteTime = new Date(state.currentEventData.firstClipTime.getTime() + (state.currentEventData.eventTriggerOffset * 1000));
-                        dom.eventReasonDisplay.innerHTML = `Event: <strong>${jsonData.reason.replace(/_/g, ' ')}</strong> at ${formatLocalTime(eventMarkerAbsoluteTime)}`;
+                        
+                        const cameraIndexMap = {
+                            0: 'front', 3: 'left_repeater', 4: 'right_repeater',
+                            5: 'left_pillar', 6: 'right_pillar', 7: 'back'
+                        };
+                        const triggerCameraIndex = parseInt(jsonData.camera, 10);
+                        const triggerCameraName = cameraIndexMap[triggerCameraIndex];
+                        
+                        let reasonText = `Event: <strong>${jsonData.reason.replace(/_/g, ' ')}</strong> at ${formatLocalTime(eventMarkerAbsoluteTime)}`;
+                        
+                        if (triggerCameraName) {
+                            reasonText += ` (Trigger: ${triggerCameraName.replace('_', ' ')})`;
+                            const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
+                            if(triggerContainer) {
+                                triggerContainer.classList.add('triggered');
+                            }
+                        }
+                        
+                        dom.eventReasonDisplay.innerHTML = reasonText;
                         dom.eventReasonDisplay.style.display = 'block';
                         updateEventMarkerPosition();
                         dom.eventMarker.style.display = "block";
@@ -923,8 +993,6 @@
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
                         console.error(`Video play failed for ${v.className}:`, error);
-                        // We will not pause other videos, just log the error for the failing one.
-                        // This prevents one broken/corrupt video from stopping all playback.
                     });
                 }
             }
