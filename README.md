@@ -65,14 +65,19 @@ The `event.json` file references cameras by a number. Mapping:
 
 ### Event Reasons
 
-The `reason` field in the event file indicates what triggered the recording:
+The `reason` field in the `event.json` file indicates what triggered the recording. Here are common and community-reported reasons:
 
-| Reason Code                         | Description                                                 |
-|------------------------------------|-------------------------------------------------------------|
-| `sentry_aware_object_detection`    | Sentry Mode detected an object or movement nearby.          |
-| `user_interaction_dashcam_icon_tapped` | Manual Dashcam recording triggered via icon.          |
-| `sentry_locked_handle_pulled`      | Door handle pulled while the car was locked (Sentry Mode).  |
-| `user_interaction_honk`            | Manual Dashcam recording triggered by honking the horn.     |
+| Reason Code                             | Description                                                                 |
+|----------------------------------------|-----------------------------------------------------------------------------|
+| `sentry_aware_object_detection`        | Sentry Mode detected an object or movement nearby.                          |
+| `sentry_enter_aware_object_detection`  | Sentry Mode detected something entering the vicinity.                       |
+| `sentry_exit_aware_object_detection`   | Sentry Mode detected something leaving the vicinity.                        |
+| `sentry_locked_handle_pulled`          | Someone pulled a door handle while the car was locked (Sentry Mode).        |
+| `sentry_alert_raised`                  | Sentry escalated from monitoring to alert state.                            |
+| `sentry_lock_down`                     | Severe alert like a break-in or triggered alarm.                            |
+| `user_interaction_dashcam_icon_tapped`| Dashcam recording manually triggered by tapping the icon.                   |
+| `user_interaction_manual_save`        | Dashcam recording manually saved via user interaction (non-icon, e.g. screen). |
+| `user_interaction_honk`               | Dashcam recording triggered by honking the horn.                            |
 
 ## 🛠️ Technologies Used
 
