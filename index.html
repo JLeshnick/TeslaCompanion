@@ -825,7 +825,7 @@
                         </div>
                         <div class="form-group">
                             <label>Auxiliary Features Enabled:</label>
-                            <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="250"><label for="sentry">Sentry Mode</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="230"><label for="sentry">Sentry Mode</label></div>
                             <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
                             <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
                             <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
@@ -998,24 +998,34 @@
             resultDiv.innerHTML = resultText + `</strong>`;
         }
 
-        // --- Phantom Drain Calculator Logic ---
+        // --- Phantom Drain Calculator Logic (Updated) ---
 
         function getDrainParameters() {
             const originalCapacity = 75; // Base capacity in kWh
             const batteryHealth = parseFloat(document.getElementById('battery-health').value) / 100;
             const outsideTempF = parseFloat(document.getElementById('outside-temp').value);
 
-            let totalDrainWatts = 50; // Base idle drain in watts
+            let totalDrainWatts = 0;
+            let featuresActive = false;
             document.getElementsByName('drain-feature').forEach(feature => {
                 if (feature.checked) {
+                    featuresActive = true;
                     totalDrainWatts += parseFloat(feature.value);
                 }
             });
+
+            // If no specific features are active, assume a base idle drain for a sleeping car.
+            if (!featuresActive) {
+                totalDrainWatts = 50; 
+            }
             
-            // Adjust drain based on temperature
+            // Adjust drain based on temperature, as the battery management system may activate.
             let tempMultiplier = 1.0;
-            if (outsideTempF > 90) tempMultiplier = 1.5; // Higher drain in extreme heat
-            else if (outsideTempF < 40) tempMultiplier = 2.0; // Higher drain in extreme cold
+            if (outsideTempF > 90) { // Extreme heat can trigger battery cooling.
+                tempMultiplier = 1.5; 
+            } else if (outsideTempF < 40) { // Extreme cold can trigger battery heating.
+                tempMultiplier = 2.0; 
+            }
 
             const actualDrainWatts = totalDrainWatts * tempMultiplier;
             const currentCapacityKwh = originalCapacity * batteryHealth;
@@ -1241,9 +1251,9 @@
                             if (diffFromEnd > 1800) { // If it's off by more than 30 mins
                                 const hourDifference = Math.round(offset / 3600);
                                 if (hourDifference !== 0) {
-                                     // The real event happened near the end of the clip, regardless of timezone.
-                                     // We set the offset to a few seconds before the end.
-                                     offset = state.currentEventData.totalDuration - 5; 
+                                      // The real event happened near the end of the clip, regardless of timezone.
+                                      // We set the offset to a few seconds before the end.
+                                      offset = state.currentEventData.totalDuration - 5; 
                                 }
                             }
                         } else {
