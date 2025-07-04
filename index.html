@@ -402,7 +402,7 @@
         .checkbox-group input { width: auto; margin-right: 0.75rem; accent-color: var(--primary-color); }
         .checkbox-group label { margin-bottom: 0; font-weight: normal; color: var(--text-color); }
 
-        /* New styles for Phantom Drain Calculator */
+        /* --- Phantom Drain Calculator Styles --- */
         .calc-mode-switcher {
             display: flex;
             background-color: var(--surface-elevated);
@@ -429,12 +429,51 @@
             color: var(--text-color);
             box-shadow: var(--shadow-sm);
         }
-        .calc-mode-content {
-            display: none;
+        .calc-mode-content { display: none; }
+        .calc-mode-content.active { display: block; animation: fadeIn 0.5s; }
+
+        .options-container {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
         }
-        .calc-mode-content.active {
-            display: block;
-            animation: fadeIn 0.5s;
+        .options-toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted-color);
+            font-weight: 600;
+            cursor: pointer;
+            padding: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: color var(--transition-fast);
+        }
+        .options-toggle-btn:hover {
+            color: var(--primary-color);
+        }
+        .options-toggle-btn .chevron-icon {
+            width: 20px;
+            height: 20px;
+            transition: transform var(--transition-normal);
+            stroke: currentColor;
+        }
+        .options-container.is-open .chevron-icon {
+            transform: rotate(180deg);
+        }
+        .options-content {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.5s ease, opacity 0.5s ease, margin-top 0.5s ease;
+            margin-top: 0;
+        }
+        .options-container.is-open .options-content {
+            max-height: 600px;
+            opacity: 1;
+            margin-top: 0;
+            padding-bottom: 1rem;
         }
 
 
@@ -781,6 +820,29 @@
                             <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
                             <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
                         </div>
+                        
+                        <div class="options-container">
+                            <button type="button" class="options-toggle-btn">
+                                <span>Refine Calculation (Optional)</span>
+                                <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                            <div class="options-content">
+                                <div class="grid">
+                                    <div class="form-group"><label for="drain-time-battery-health">Current Battery Health (%)</label><input type="number" id="drain-time-battery-health" value="100" min="50" max="100"></div>
+                                    <div class="form-group"><label for="drain-time-outside-temp">Outside Temperature (°F)</label><input type="number" id="drain-time-outside-temp" value="70"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Auxiliary Features Enabled:</label>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-sentry" name="drain-time-feature" value="230"><label for="drain-time-sentry">Sentry Mode</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-summon" name="drain-time-feature" value="150"><label for="drain-time-summon">Summon Standby</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-accessory" name="drain-time-feature" value="100"><label for="drain-time-accessory">Keep Accessory Power On</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-climate" name="drain-time-feature" value="1000"><label for="drain-time-climate">Keep Climate On (A/C)</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-overheat-ac" name="drain-time-feature" value="150"><label for="drain-time-overheat-ac">Cabin Overheat Protection (A/C)</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-overheat-fan" name="drain-time-feature" value="50"><label for="drain-time-overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
                         <div id="drain-time-result" class="result-box"></div>
                     </div>
@@ -811,27 +873,31 @@
                                 <input type="time" id="drain-end-time">
                             </div>
                         </div>
+
+                        <div class="options-container">
+                            <button type="button" class="options-toggle-btn">
+                                <span>Refine Calculation (Optional)</span>
+                                <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                            <div class="options-content">
+                                <div class="grid">
+                                    <div class="form-group"><label for="drain-percent-battery-health">Current Battery Health (%)</label><input type="number" id="drain-percent-battery-health" value="100" min="50" max="100"></div>
+                                    <div class="form-group"><label for="drain-percent-outside-temp">Outside Temperature (°F)</label><input type="number" id="drain-percent-outside-temp" value="70"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Auxiliary Features Enabled:</label>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-sentry" name="drain-percent-feature" value="230"><label for="drain-percent-sentry">Sentry Mode</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-summon" name="drain-percent-feature" value="150"><label for="drain-percent-summon">Summon Standby</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-accessory" name="drain-percent-feature" value="100"><label for="drain-percent-accessory">Keep Accessory Power On</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-climate" name="drain-percent-feature" value="1000"><label for="drain-percent-climate">Keep Climate On (A/C)</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-overheat-ac" name="drain-percent-feature" value="150"><label for="drain-percent-overheat-ac">Cabin Overheat Protection (A/C)</label></div>
+                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-overheat-fan" name="drain-percent-feature" value="50"><label for="drain-percent-overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <button class="primary-btn" onclick="calculateDrainPercentage()">Calculate Percentage Lost</button>
                         <div id="drain-percent-result" class="result-box"></div>
-                    </div>
-                    
-                    <hr>
-
-                    <!-- ===== SHARED PARAMETERS ===== -->
-                    <div id="drain-shared-params">
-                        <div class="grid">
-                            <div class="form-group"><label for="battery-health">Current Battery Health (%)</label><input type="number" id="battery-health" value="100" min="50" max="100"></div>
-                            <div class="form-group"><label for="outside-temp">Outside Temperature (°F)</label><input type="number" id="outside-temp" value="70"></div>
-                        </div>
-                        <div class="form-group">
-                            <label>Auxiliary Features Enabled:</label>
-                            <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="230"><label for="sentry">Sentry Mode</label></div>
-                            <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
-                            <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
-                            <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
-                            <div class="checkbox-group"><input type="checkbox" id="overheat-ac" name="drain-feature" value="150"><label for="overheat-ac">Cabin Overheat Protection (A/C)</label></div>
-                            <div class="checkbox-group"><input type="checkbox" id="overheat-fan" name="drain-feature" value="50"><label for="overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
-                        </div>
                     </div>
              </div>
         </div>
@@ -1001,13 +1067,15 @@
         // --- Phantom Drain Calculator Logic (Updated) ---
 
         function getDrainParameters() {
+            const prefix = dom.drainTimeCalculator.classList.contains('active') ? 'drain-time-' : 'drain-percent-';
+            
             const originalCapacity = 75; // Base capacity in kWh
-            const batteryHealth = parseFloat(document.getElementById('battery-health').value) / 100;
-            const outsideTempF = parseFloat(document.getElementById('outside-temp').value);
+            const batteryHealth = parseFloat(document.getElementById(prefix + 'battery-health').value) / 100;
+            const outsideTempF = parseFloat(document.getElementById(prefix + 'outside-temp').value);
 
             let totalDrainWatts = 0;
             let featuresActive = false;
-            document.getElementsByName('drain-feature').forEach(feature => {
+            document.getElementsByName(prefix + 'feature').forEach(feature => {
                 if (feature.checked) {
                     featuresActive = true;
                     totalDrainWatts += parseFloat(feature.value);
@@ -1527,6 +1595,11 @@
         // Phantom Drain Listeners
         dom.modeDrainTimeBtn.addEventListener('click', () => switchDrainMode('time'));
         dom.modeDrainPercentBtn.addEventListener('click', () => switchDrainMode('percent'));
+        document.querySelectorAll('.options-toggle-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                button.closest('.options-container').classList.toggle('is-open');
+            });
+        });
 
         // --- Initial App State ---
         applyTheme(localStorage.getItem('theme') || 'dark');
