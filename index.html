@@ -713,7 +713,7 @@
         <div id="CameraViewer" class="tab-content">
              <div id="camera-controls-container">
                     <div class="header-main">
-                          <div class="header-row top-ribbon">
+                            <div class="header-row top-ribbon">
                                 <div class="title-area">
                                     <div class="clip-info">
                                         <span class="title-folder-name">No Clips Selected</span>
@@ -750,14 +750,14 @@
                                     <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
                                     <select id="date-select" class="styled-input"><option>Select Event</option></select>
                                 </div>
-                          </div>
-                          <div class="header-row progress-container">
+                            </div>
+                            <div class="header-row progress-container">
                                 <div id="event-marker"></div>
                                 <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
-                          </div>
+                            </div>
                     </div>
                     <div id="collapsible-controls" class="collapsible-panel">
-                          <div class="panel-section">
+                            <div class="panel-section">
                                 <div class="camera-toggles" id="camera-toggles">
                                     <label class="toggle-label" for="select-all-cameras">All Cameras<label class="switch"><input type="checkbox" id="select-all-cameras" checked><span class="slider"></span></label></label>
                                     <div class="divider"></div>
@@ -768,7 +768,7 @@
                                     <label class="toggle-label" for="cam-left-pillar">L Pillar<label class="switch"><input type="checkbox" id="cam-left-pillar" data-camera="left_pillar" checked><span class="slider"></span></label></label>
                                     <label class="toggle-label" for="cam-right-pillar">R Pillar<label class="switch"><input type="checkbox" id="cam-right-pillar" data-camera="right_pillar" checked><span class="slider"></span></label></label>
                                 </div>
-                          </div>
+                            </div>
                     </div>
              </div>
              <div class="video-grid-container">
@@ -1319,9 +1319,9 @@
                             if (diffFromEnd > 1800) { // If it's off by more than 30 mins
                                 const hourDifference = Math.round(offset / 3600);
                                 if (hourDifference !== 0) {
-                                      // The real event happened near the end of the clip, regardless of timezone.
-                                      // We set the offset to a few seconds before the end.
-                                      offset = state.currentEventData.totalDuration - 5; 
+                                    // The real event happened near the end of the clip, regardless of timezone.
+                                    // We set the offset to a few seconds before the end.
+                                    offset = state.currentEventData.totalDuration - 5; 
                                 }
                             }
                         } else {
@@ -1346,18 +1346,48 @@
                 } catch (error) { console.error("Error processing event.json:", error); }
             }
 
+            const loadPromises = [];
             dom.allVideos.forEach(video => {
                 const cameraType = video.className.split(' ')[0];
                 const playlist = state.currentEventData.playlists[cameraType];
-                loadVideo(video, playlist && playlist.length > 0 ? playlist[0] : null);
+                const fileToLoad = playlist && playlist.length > 0 ? playlist[0] : null;
+                loadPromises.push(loadVideo(video, fileToLoad));
             });
+            await Promise.all(loadPromises);
         }
 
         function loadVideo(videoElement, file) {
-            if (videoElement.src.startsWith('blob:')) URL.revokeObjectURL(videoElement.src);
-            videoElement.src = file ? URL.createObjectURL(file) : '';
-            videoElement.playbackRate = state.playbackRate;
+            // This function now returns a promise that resolves when the video is ready to play.
+            return new Promise((resolve) => {
+                if (videoElement.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(videoElement.src);
+                }
+                
+                videoElement.playbackRate = state.playbackRate;
+                
+                // If there's no file, resolve immediately.
+                if (!file) {
+                    videoElement.src = '';
+                    resolve();
+                    return;
+                }
+
+                // Set up a one-time listener for the 'canplay' event.
+                videoElement.addEventListener('canplay', function onCanPlay() {
+                    resolve();
+                }, { once: true });
+                
+                // Also handle errors
+                videoElement.addEventListener('error', function onError() {
+                    console.error(`Error loading video file: ${file.name}`);
+                    resolve(); // Resolve anyway to not block other videos
+                }, { once: true });
+
+                // Set the new source, which will trigger loading.
+                videoElement.src = URL.createObjectURL(file);
+            });
         }
+
         function updatePlayButtonUI(isPlaying) {
             dom.playIcon.style.display = isPlaying ? 'none' : 'block';
             dom.pauseIcon.style.display = isPlaying ? 'block' : 'none';
@@ -1485,22 +1515,42 @@
             dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
             updateLiveTimestamp();
         });
+
+        // This is the updated event listener for seamless playback
         dom.allVideos.forEach(video => {
-            video.addEventListener("ended", (e) => {
+            video.addEventListener("ended", async (e) => { // async handler
+                const wasPlaying = dom.playIcon.style.display === 'none';
                 const camera = e.target.className.split(' ')[0];
+
+                if (!state.currentEventData.playlists || !state.currentEventData.playlists[camera]) {
+                    return;
+                }
+
                 const currentIdx = ++state.currentEventData.playlistIndices[camera];
                 const playlist = state.currentEventData.playlists[camera];
-                if (currentIdx < playlist.length) {
-                    loadVideo(e.target, playlist[currentIdx]);
+
+                if (playlist && currentIdx < playlist.length) {
+                    // This handles transitions within the same event folder
+                    await loadVideo(e.target, playlist[currentIdx]); // wait for load
+                    if (wasPlaying) {
+                        e.target.play().catch(err => {
+                            if (err.name !== 'AbortError') console.error('Error playing next clip:', err);
+                        });
+                    }
                 } else if (camera === 'front') {
+                    // This handles transitions to the next event folder
                     if (state.carouselIndex < state.sortedEventKeys.length - 1) {
-                        loadEvent(++state.carouselIndex);
+                        await loadEvent(++state.carouselIndex); // wait for event to be fully ready
+                        if (wasPlaying) {
+                            playVideos();
+                        }
                     } else {
                         pauseVideos();
                     }
                 }
             });
         });
+
         document.querySelectorAll('.video-container').forEach(container => {
             container.addEventListener('dblclick', (e) => {
                 const grid = dom.videoGrid;
