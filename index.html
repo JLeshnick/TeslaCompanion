@@ -402,6 +402,42 @@
         .checkbox-group input { width: auto; margin-right: 0.75rem; accent-color: var(--primary-color); }
         .checkbox-group label { margin-bottom: 0; font-weight: normal; color: var(--text-color); }
 
+        /* New styles for Phantom Drain Calculator */
+        .calc-mode-switcher {
+            display: flex;
+            background-color: var(--surface-elevated);
+            border-radius: var(--border-radius-md);
+            padding: 0.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 0.75rem 0.5rem;
+            border: none;
+            background-color: transparent;
+            color: var(--text-muted-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: var(--border-radius-sm);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            text-align: center;
+        }
+        .mode-btn.active {
+            background-color: var(--control-bg-hover);
+            color: var(--text-color);
+            box-shadow: var(--shadow-sm);
+        }
+        .calc-mode-content {
+            display: none;
+        }
+        .calc-mode-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+
         .camera-toggles { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .camera-toggles .divider { border-left: 2px solid var(--border-color); height: 24px; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
@@ -494,7 +530,7 @@
             border: 1px solid var(--bg-color);
         }
         body.fullscreen-active .video-container.triggered {
-             border-color: var(--accent-color);
+            border-color: var(--accent-color);
         }
 
         /* Responsive Design */
@@ -594,7 +630,7 @@
                 </ul>
 
                 <h2>Charging Time Estimator</h2>
-                  <ul>
+                <ul>
                     <li><strong>Enter Details:</strong> Input your vehicle's original battery capacity, your current and target battery percentage, and the efficiency of your charger.</li>
                     <li><strong>Select Charger:</strong> Choose from common charger types (Mobile, Level 2, Supercharger) or select "Custom" to input specific voltage and amperage.</li>
                     <li><strong>Calculate:</strong> Click the button to get an estimate of how long your charging session will take.</li>
@@ -602,9 +638,9 @@
                 
                 <h2>Phantom Drain Estimator</h2>
                 <ul>
-                    <li><strong>Vehicle State:</strong> Enter your current battery percentage and the percentage you expect it to drain to. Add your battery's current health and the outside temperature for a more accurate calculation.</li>
-                    <li><strong>Select Features:</strong> Check the boxes for any power-consuming features you plan to leave active (like Sentry Mode or Cabin Overheat Protection).</li>
-                    <li><strong>Calculate:</strong> The tool will estimate how long your battery will last under the selected conditions.</li>
+                    <li><strong>Calculate Drain Time:</strong> Enter your current battery percentage and the percentage you expect it to drain to. The tool will estimate how long your battery will last under the selected conditions.</li>
+                    <li><strong>Calculate Percentage Lost:</strong> Enter your current battery percentage, a start time/date, and an end time/date. The tool will estimate how much battery percentage will be lost in that period.</li>
+                    <li><strong>Refine Calculation:</strong> For both modes, add your battery's current health, the outside temperature, and select any active features (like Sentry Mode) for a more accurate calculation.</li>
                 </ul>
 
                 <h2>Reference Information</h2>
@@ -623,7 +659,7 @@
                 </table>
                 <h3>Event Reasons</h3>
                 <p>The <code>reason</code> field in the event file indicates what triggered the recording. Here are some common reasons:</p>
-                 <table>
+                <table>
                     <thead><tr><th>Reason Code</th><th>Description</th></tr></thead>
                     <tbody>
                         <tr><td><code>sentry_aware_object_detection</code></td><td>Sentry Mode detected an object or movement nearby.</td></tr>
@@ -732,25 +768,71 @@
         <div id="PhantomDrain" class="tab-content">
              <div class="calculator-container">
                     <h1>Phantom Drain Estimator</h1>
-                    <div class="grid">
-                        <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
-                        <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
+                    
+                    <!-- Mode Switcher -->
+                    <div class="calc-mode-switcher">
+                        <button id="mode-drain-time-btn" class="mode-btn active">Calculate Time to Drain</button>
+                        <button id="mode-drain-percent-btn" class="mode-btn">Calculate % Lost Over Time</button>
                     </div>
-                    <div class="grid">
-                        <div class="form-group"><label for="battery-health">Current Battery Health (%)</label><input type="number" id="battery-health" value="100" min="50" max="100"></div>
-                        <div class="form-group"><label for="outside-temp">Outside Temperature (°F)</label><input type="number" id="outside-temp" value="70"></div>
+
+                    <!-- ===== CALCULATOR 1: TIME TO DRAIN ===== -->
+                    <div id="drainTimeCalculator" class="calc-mode-content active">
+                        <div class="grid">
+                            <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
+                            <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
+                        </div>
+                        <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
+                        <div id="drain-time-result" class="result-box"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Auxiliary Features Enabled:</label>
-                        <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="250"><label for="sentry">Sentry Mode</label></div>
-                        <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
-                        <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
-                        <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
-                        <div class="checkbox-group"><input type="checkbox" id="overheat-ac" name="drain-feature" value="150"><label for="overheat-ac">Cabin Overheat Protection (A/C)</label></div>
-                        <div class="checkbox-group"><input type="checkbox" id="overheat-fan" name="drain-feature" value="50"><label for="overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+
+                    <!-- ===== CALCULATOR 2: % LOST OVER TIME ===== -->
+                    <div id="drainPercentCalculator" class="calc-mode-content">
+                        <div class="form-group">
+                            <label for="drain-current-soc-percent">Current Battery (%)</label>
+                            <input type="number" id="drain-current-soc-percent" placeholder="80" min="0" max="100">
+                        </div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="drain-start-date">Start Date</label>
+                                <input type="date" id="drain-start-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="drain-start-time">Start Time</label>
+                                <input type="time" id="drain-start-time">
+                            </div>
+                        </div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="drain-end-date">End Date</label>
+                                <input type="date" id="drain-end-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="drain-end-time">End Time</label>
+                                <input type="time" id="drain-end-time">
+                            </div>
+                        </div>
+                        <button class="primary-btn" onclick="calculateDrainPercentage()">Calculate Percentage Lost</button>
+                        <div id="drain-percent-result" class="result-box"></div>
                     </div>
-                    <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
-                    <div id="drain-result" class="result-box"></div>
+                    
+                    <hr>
+
+                    <!-- ===== SHARED PARAMETERS ===== -->
+                    <div id="drain-shared-params">
+                        <div class="grid">
+                            <div class="form-group"><label for="battery-health">Current Battery Health (%)</label><input type="number" id="battery-health" value="100" min="50" max="100"></div>
+                            <div class="form-group"><label for="outside-temp">Outside Temperature (°F)</label><input type="number" id="outside-temp" value="70"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Auxiliary Features Enabled:</label>
+                            <div class="checkbox-group"><input type="checkbox" id="sentry" name="drain-feature" value="250"><label for="sentry">Sentry Mode</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="summon" name="drain-feature" value="150"><label for="summon">Summon Standby</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="accessory" name="drain-feature" value="100"><label for="accessory">Keep Accessory Power On</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="climate" name="drain-feature" value="1000"><label for="climate">Keep Climate On (A/C)</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="overheat-ac" name="drain-feature" value="150"><label for="overheat-ac">Cabin Overheat Protection (A/C)</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="overheat-fan" name="drain-feature" value="50"><label for="overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+                        </div>
+                    </div>
              </div>
         </div>
 
@@ -760,15 +842,15 @@
                 <p>This application was created to provide an easy-to-use toolkit for Tesla owners. It combines several useful utilities into a single, responsive web interface that works on any device.</p>
                 
                 <h2>Credits & Acknowledgements</h2>
-                  <ul>
-                        <li>The core Camera Viewer functionality was originally created by <strong>Lythinari</strong>. You can find the original project on <a href="https://github.com/Lythinari/TeslaCamViewer" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
-                        <li>This version was further edited and refined by <strong>Joshua Leshnick</strong>. You can find the project on <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
-                        <li>This app was built with HTML5, CSS3, and modern JavaScript.</li>
-                        <li>Icons provided by Feather Icons.</li>
-                        <li>Font by Google Fonts (Inter).</li>
-                  </ul>
+                <ul>
+                    <li>The core Camera Viewer functionality was originally created by <strong>Lythinari</strong>. You can find the original project on <a href="https://github.com/Lythinari/TeslaCamViewer" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
+                    <li>This version was further edited and refined by <strong>Joshua Leshnick</strong>. You can find the project on <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
+                    <li>This app was built with HTML5, CSS3, and modern JavaScript.</li>
+                    <li>Icons provided by Feather Icons.</li>
+                    <li>Font by Google Fonts (Inter).</li>
+                </ul>
 
-                  <h2>Disclaimer</h2>
+                <h2>Disclaimer</h2>
                 <p>This is an unofficial, open-source community project and is not affiliated with Tesla, Inc. All calculations are estimates and should be used for informational purposes only.</p>
             </div>
         </div>
@@ -832,6 +914,11 @@
             eventCityDisplay: document.getElementById('event-city-display'),
             screenshotBtn: document.querySelector('#screenshot-btn'),
             cameraControlsContainer: document.getElementById('camera-controls-container'),
+            // Phantom Drain Elements
+            modeDrainTimeBtn: document.getElementById('mode-drain-time-btn'),
+            modeDrainPercentBtn: document.getElementById('mode-drain-percent-btn'),
+            drainTimeCalculator: document.getElementById('drainTimeCalculator'),
+            drainPercentCalculator: document.getElementById('drainPercentCalculator'),
         };
 
         const friendlyEventReasons = {
@@ -851,6 +938,10 @@
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
             dom.cameraControlsContainer.style.display = (tabName === 'CameraViewer') ? 'block' : 'none';
+
+            if (tabName === 'PhantomDrain') {
+                setDefaultDrainTimes();
+            }
         }
 
         const applyTheme = (theme) => {
@@ -878,7 +969,7 @@
             const resultDiv = document.getElementById('result');
 
             if (isNaN(capacity) || isNaN(currentSOC) || isNaN(targetSOC) || currentSOC >= targetSOC) {
-                resultDiv.innerText = "Please enter valid capacity and battery percentages.";
+                resultDiv.innerHTML = "Please enter valid capacity and battery percentages.";
                 return;
             }
 
@@ -887,7 +978,7 @@
                 const voltage = parseFloat(document.getElementById('voltage').value);
                 const amps = parseFloat(document.getElementById('amps').value);
                 if (isNaN(voltage) || isNaN(amps) || voltage <= 0 || amps <= 0) {
-                    resultDiv.innerText = "Please enter valid Voltage and Amperage.";
+                    resultDiv.innerHTML = "Please enter valid Voltage and Amperage.";
                     return;
                 }
                 chargerPower = (voltage * amps) / 1000;
@@ -907,35 +998,54 @@
             resultDiv.innerHTML = resultText + `</strong>`;
         }
 
-        window.calculateDrainTime = () => {
-            const originalCapacity = 75;
+        // --- Phantom Drain Calculator Logic ---
+
+        function getDrainParameters() {
+            const originalCapacity = 75; // Base capacity in kWh
             const batteryHealth = parseFloat(document.getElementById('battery-health').value) / 100;
-            const currentSOC = parseFloat(document.getElementById('drain-current-soc').value);
-            const targetSOC = parseFloat(document.getElementById('drain-target-soc').value);
             const outsideTempF = parseFloat(document.getElementById('outside-temp').value);
-            const resultDiv = document.getElementById('drain-result');
 
-            if (isNaN(batteryHealth) || isNaN(currentSOC) || isNaN(targetSOC) || isNaN(outsideTempF) || currentSOC <= targetSOC) {
-                resultDiv.innerText = "Please enter valid battery and temperature details (Current > Target).";
-                return;
-            }
-
-            let totalDrainWatts = 50;
+            let totalDrainWatts = 50; // Base idle drain in watts
             document.getElementsByName('drain-feature').forEach(feature => {
                 if (feature.checked) {
                     totalDrainWatts += parseFloat(feature.value);
                 }
             });
             
+            // Adjust drain based on temperature
             let tempMultiplier = 1.0;
-            if (outsideTempF > 90) tempMultiplier = 1.5;
-            else if (outsideTempF < 40) tempMultiplier = 2.0;
+            if (outsideTempF > 90) tempMultiplier = 1.5; // Higher drain in extreme heat
+            else if (outsideTempF < 40) tempMultiplier = 2.0; // Higher drain in extreme cold
 
-            const actualDrain = totalDrainWatts * tempMultiplier;
-            const currentCapacity = originalCapacity * batteryHealth;
-            const energyToDrain = (currentSOC - targetSOC) / 100 * currentCapacity * 1000;
+            const actualDrainWatts = totalDrainWatts * tempMultiplier;
+            const currentCapacityKwh = originalCapacity * batteryHealth;
+
+            if (isNaN(batteryHealth) || isNaN(outsideTempF)) {
+                return null;
+            }
+
+            return { actualDrainWatts, currentCapacityKwh };
+        }
+
+        window.calculateDrainTime = () => {
+            const resultDiv = document.getElementById('drain-time-result');
+            const currentSOC = parseFloat(document.getElementById('drain-current-soc').value);
+            const targetSOC = parseFloat(document.getElementById('drain-target-soc').value);
             
-            const timeHours = energyToDrain / actualDrain;
+            if (isNaN(currentSOC) || isNaN(targetSOC) || currentSOC <= targetSOC) {
+                resultDiv.innerHTML = "Please enter valid battery percentages (Current > Target).";
+                return;
+            }
+
+            const params = getDrainParameters();
+            if (!params) {
+                resultDiv.innerHTML = "Please enter valid battery health and temperature.";
+                return;
+            }
+            
+            const energyToDrainWh = (currentSOC - targetSOC) / 100 * params.currentCapacityKwh * 1000;
+            const timeHours = energyToDrainWh / params.actualDrainWatts;
+            
             const days = Math.floor(timeHours / 24);
             const hours = Math.floor(timeHours % 24);
 
@@ -946,6 +1056,88 @@
             resultDiv.innerHTML = resultText + `</strong>`;
         }
 
+        window.calculateDrainPercentage = () => {
+            const resultDiv = document.getElementById('drain-percent-result');
+            const currentSOC = parseFloat(document.getElementById('drain-current-soc-percent').value);
+            
+            const startDateStr = document.getElementById('drain-start-date').value;
+            const startTimeStr = document.getElementById('drain-start-time').value;
+            const endDateStr = document.getElementById('drain-end-date').value;
+            const endTimeStr = document.getElementById('drain-end-time').value;
+
+            if (isNaN(currentSOC)) {
+                 resultDiv.innerHTML = "Please enter a valid current battery percentage.";
+                 return;
+            }
+
+            if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
+                resultDiv.innerHTML = "Please enter valid start and end dates/times.";
+                return;
+            }
+
+            const startTime = new Date(`${startDateStr}T${startTimeStr}`);
+            const endTime = new Date(`${endDateStr}T${endTimeStr}`);
+
+            if (endTime <= startTime) {
+                resultDiv.innerHTML = "End time must be after the start time.";
+                return;
+            }
+
+            const params = getDrainParameters();
+            if (!params) {
+                resultDiv.innerHTML = "Please enter valid battery health and temperature.";
+                return;
+            }
+
+            const durationMillis = endTime - startTime;
+            const durationHours = durationMillis / (1000 * 60 * 60);
+
+            const energyDrainedWh = params.actualDrainWatts * durationHours;
+            const energyDrainedKwh = energyDrainedWh / 1000;
+
+            const percentageLost = (energyDrainedKwh / params.currentCapacityKwh) * 100;
+            const finalSOC = currentSOC - percentageLost;
+
+            resultDiv.innerHTML = `Estimated drain: <strong>${percentageLost.toFixed(1)}%</strong><br>Final SOC will be ~<strong>${finalSOC.toFixed(1)}%</strong>`;
+        }
+
+        function setDefaultDrainTimes() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+
+            document.getElementById('drain-start-date').value = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('drain-start-time').value = `${hh}:${min}`;
+
+            // Default end date to tomorrow
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
+            const yyyy_t = tomorrow.getFullYear();
+            const mm_t = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const dd_t = String(tomorrow.getDate()).padStart(2, '0');
+            document.getElementById('drain-end-date').value = `${yyyy_t}-${mm_t}-${dd_t}`;
+            document.getElementById('drain-end-time').value = `${hh}:${min}`;
+        }
+
+        function switchDrainMode(mode) {
+            if (mode === 'time') {
+                dom.modeDrainTimeBtn.classList.add('active');
+                dom.modeDrainPercentBtn.classList.remove('active');
+                dom.drainTimeCalculator.classList.add('active');
+                dom.drainPercentCalculator.classList.remove('active');
+            } else { // mode === 'percent'
+                dom.modeDrainTimeBtn.classList.remove('active');
+                dom.modeDrainPercentBtn.classList.add('active');
+                dom.drainTimeCalculator.classList.remove('active');
+                dom.drainPercentCalculator.classList.add('active');
+                setDefaultDrainTimes(); // Set defaults when switching to this mode
+            }
+        }
+
+        // --- Camera Viewer Logic ---
         async function loadEvent(index) {
             state.carouselIndex = index;
             if (index < 0 || index >= state.sortedEventKeys.length) return;
@@ -987,7 +1179,6 @@
             const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
             if (firstClipNameMatch) {
                 const dateTimeString = firstClipNameMatch[1];
-                // Create Date object assuming the filename is in local time, without forcing UTC.
                 const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':');
                 state.currentEventData.firstClipTime = new Date(formattedDateTimeString);
             } else {
@@ -1011,32 +1202,26 @@
                 dom.liveTimestamp.textContent = formatTime(0);
                 dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
             }
+            
             if(eventData.eventJson) {
                 try {
                     const jsonContent = await eventData.eventJson.text();
                     const jsonData = JSON.parse(jsonContent);
-                    // Treat the timestamp from JSON as local, matching the folder/file names.
-                    const eventTime = new Date(jsonData.timestamp);
-
-                    dom.eventDetailsContainer.style.display = 'block';
-
-                    // Reason (Friendly Name)
+                    const eventTimeFromJSON = new Date(jsonData.timestamp);
                     const rawReason = jsonData.reason;
+                    const isManualSave = rawReason.startsWith('user_interaction');
+                    
+                    dom.eventDetailsContainer.style.display = 'block';
                     const friendlyReason = friendlyEventReasons[rawReason] || rawReason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     dom.eventReasonDisplay.innerHTML = `Event: <strong>${friendlyReason}</strong>`;
-                    
-                    // Time
-                    dom.eventTimeDisplay.innerHTML = `Event Time: <strong>${formatLocalTime(eventTime)}</strong>`;
-
-                    if (jsonData.est_lat && jsonData.est_lon) {
-                        state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
-                        dom.mapButton.style.display = 'inline-flex';
-                    }
+                    dom.eventTimeDisplay.innerHTML = `Event Time: <strong>${formatLocalTime(eventTimeFromJSON)}</strong>`;
                     if (jsonData.city) {
                         dom.eventCityDisplay.innerHTML = `Event City: <strong>${jsonData.city}</strong>`;
                     }
-
-                    // Trigger Camera
+                     if (jsonData.est_lat && jsonData.est_lon) {
+                        state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
+                        dom.mapButton.style.display = 'inline-flex';
+                    }
                     const cameraIndexMap = { 0: 'front', 3: 'left_pillar', 4: 'right_pillar', 5: 'left_repeater', 6: 'right_repeater', 7: 'back' };
                     const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
                     if (triggerCameraName) {
@@ -1046,10 +1231,35 @@
                         if(triggerContainer) triggerContainer.classList.add('triggered');
                     }
 
-                    if (state.currentEventData.firstClipTime) {
-                        const offset = (eventTime.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
-                        if (offset >= 0 && offset < state.currentEventData.totalDuration) {
-                            state.currentEventData.eventTriggerOffset = offset;
+                    if (state.currentEventData.firstClipTime && state.currentEventData.totalDuration > 0) {
+                        let offset = (eventTimeFromJSON.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
+
+                        if (isManualSave) {
+                            // For manual saves, the event time is at the END. The offset should be close to the total duration.
+                            // We check if the difference between the offset and duration is a round hour (timezone issue).
+                            const diffFromEnd = Math.abs(offset - state.currentEventData.totalDuration);
+                            if (diffFromEnd > 1800) { // If it's off by more than 30 mins
+                                const hourDifference = Math.round(offset / 3600);
+                                if (hourDifference !== 0) {
+                                     // The real event happened near the end of the clip, regardless of timezone.
+                                     // We set the offset to a few seconds before the end.
+                                     offset = state.currentEventData.totalDuration - 5; 
+                                }
+                            }
+                        } else {
+                            // For Sentry events, the event happens somewhere WITHIN the clip.
+                            // Check for timezone difference based on the raw offset.
+                             if (Math.abs(offset) > (state.currentEventData.totalDuration + 60)) {
+                                const hourDifference = Math.round(offset / 3600);
+                                if (hourDifference !== 0) {
+                                    offset -= hourDifference * 3600;
+                                }
+                            }
+                        }
+
+                        // Final check to ensure the calculated offset is valid.
+                        if (offset >= -10 && offset <= state.currentEventData.totalDuration + 10) { // Allow a small margin
+                            state.currentEventData.eventTriggerOffset = Math.max(0, Math.min(offset, state.currentEventData.totalDuration));
                             updateEventMarkerPosition();
                             dom.eventMarker.style.display = "block";
                             dom.jumpToEventButton.style.display = "inline-flex";
@@ -1057,6 +1267,7 @@
                     }
                 } catch (error) { console.error("Error processing event.json:", error); }
             }
+
             dom.allVideos.forEach(video => {
                 const cameraType = video.className.split(' ')[0];
                 const playlist = state.currentEventData.playlists[cameraType];
@@ -1302,6 +1513,10 @@
                 case 'Escape': if (dom.body.classList.contains('fullscreen-active')) { toggleFullscreen(); } closeMap(); break;
             }
         });
+
+        // Phantom Drain Listeners
+        dom.modeDrainTimeBtn.addEventListener('click', () => switchDrainMode('time'));
+        dom.modeDrainPercentBtn.addEventListener('click', () => switchDrainMode('percent'));
 
         // --- Initial App State ---
         applyTheme(localStorage.getItem('theme') || 'dark');
