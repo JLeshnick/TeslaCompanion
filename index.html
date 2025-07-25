@@ -417,7 +417,7 @@
         .checkbox-group input { width: auto; margin-right: 0.75rem; accent-color: var(--primary-color); }
         .checkbox-group label { margin-bottom: 0; font-weight: normal; color: var(--text-color); }
 
-        /* --- Phantom Drain Calculator Styles --- */
+        /* --- Phantom Drain & Charging Calculator Styles --- */
         .calc-mode-switcher {
             display: flex;
             background-color: var(--surface-elevated);
@@ -799,9 +799,9 @@
 
                 <h2>Charging Time Estimator</h2>
                 <ul>
-                    <li><strong>Enter Details:</strong> Input your vehicle's original battery capacity, your current and target battery percentage, and the efficiency of your charger.</li>
-                    <li><strong>Select Charger:</strong> Choose from common charger types (Mobile, Level 2, Supercharger) or select "Custom" to input specific voltage and amperage.</li>
-                    <li><strong>Calculate:</strong> Click the button to get an estimate of how long your charging session will take.</li>
+                    <li><strong>Calculate Time to Target %:</strong> Enter your vehicle's details, your current and target battery percentage, and select your charger type. The tool will estimate how long the charging session will take.</li>
+                    <li><strong>Calculate % Gained Over Time:</strong> Enter your current battery percentage, a start time/date, and an end time/date. The tool will estimate your battery's state of charge after that period.</li>
+                    <li><strong>Custom Chargers:</strong> For both modes, you can select "Custom" to input specific voltage and amperage for your charger.</li>
                 </ul>
                 
                 <h2>Phantom Drain Estimator</h2>
@@ -1015,21 +1015,65 @@
         <div id="ChargingEstimator" class="tab-content">
              <div class="calculator-container">
                     <h1>Charging Time Estimator</h1>
+
+                    <!-- Mode Switcher -->
+                    <div class="calc-mode-switcher">
+                        <button id="mode-charge-time-btn" class="mode-btn active">Calculate Time to Target %</button>
+                        <button id="mode-charge-gain-btn" class="mode-btn">Calculate % Gained Over Time</button>
+                    </div>
+
+                    <!-- Shared Inputs -->
                     <div class="grid">
                         <div class="form-group"><label for="battery-capacity">Original Battery Capacity (kWh)</label><input type="number" id="battery-capacity" value="75"></div>
                         <div class="form-group"><label for="charger-efficiency">Charger Efficiency (%)</label><input type="number" id="charger-efficiency" value="85"></div>
-                    </div>
-                    <div class="grid">
-                        <div class="form-group"><label for="current-soc">Current Battery (%)</label><input type="number" id="current-soc" placeholder="20" min="0" max="100"></div>
-                        <div class="form-group"><label for="target-soc">Target Battery (%)</label><input type="number" id="target-soc" placeholder="80" min="0" max="100"></div>
                     </div>
                     <div class="form-group">
                         <label for="charger-type">Charger Type</label>
                         <select id="charger-type" onchange="toggleCustomParams()"><option value="1.5">Mobile (15A / 120V)</option><option value="7.7">Mobile (50A / 240V)</option><option value="9.6" selected>Level 2 (Workplace/Home)</option><option value="250">Supercharger</option><option value="custom">Custom...</option></select>
                     </div>
                     <div id="custom-params" style="display:none;"><hr><div class="grid"><div class="form-group"><label for="voltage">Voltage (V)</label><input type="number" id="voltage" placeholder="240"></div><div class="form-group"><label for="amps">Amps (A)</label><input type="number" id="amps" placeholder="32"></div></div></div>
-                    <button class="primary-btn" onclick="calculateTime()">Calculate</button>
-                    <div id="result" class="result-box"></div>
+                    <hr>
+                    
+                    <!-- ===== CALCULATOR 1: TIME TO TARGET ===== -->
+                    <div id="chargeTimeToTargetCalculator" class="calc-mode-content active">
+                        <div class="grid">
+                            <div class="form-group"><label for="current-soc">Current Battery (%)</label><input type="number" id="current-soc" placeholder="20" min="0" max="100"></div>
+                            <div class="form-group"><label for="target-soc">Target Battery (%)</label><input type="number" id="target-soc" placeholder="80" min="0" max="100"></div>
+                        </div>
+                        <button class="primary-btn" onclick="calculateChargeToTarget()">Calculate Time</button>
+                    </div>
+
+                    <!-- ===== CALCULATOR 2: % GAINED OVER TIME ===== -->
+                    <div id="chargeGainOverTimeCalculator" class="calc-mode-content">
+                        <div class="form-group">
+                            <label for="charge-gain-current-soc">Current Battery (%)</label>
+                            <input type="number" id="charge-gain-current-soc" placeholder="20" min="0" max="100">
+                        </div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="charge-start-date">Start Date</label>
+                                <input type="date" id="charge-start-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="charge-start-time">Start Time</label>
+                                <input type="time" id="charge-start-time">
+                            </div>
+                        </div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="charge-end-date">End Date</label>
+                                <input type="date" id="charge-end-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="charge-end-time">End Time</label>
+                                <input type="time" id="charge-end-time">
+                            </div>
+                        </div>
+                        <button class="primary-btn" onclick="calculateChargeGain()">Calculate Battery Gain</button>
+                    </div>
+
+                    <!-- Result Box -->
+                    <div id="charging-result" class="result-box"></div>
              </div>
         </div>
 
@@ -1212,6 +1256,11 @@
             eventCityDisplay: document.getElementById('event-city-display'),
             screenshotBtn: document.querySelector('#screenshot-btn'),
             cameraControlsContainer: document.getElementById('camera-controls-container'),
+            // Charging Estimator Elements
+            modeChargeTimeBtn: document.getElementById('mode-charge-time-btn'),
+            modeChargeGainBtn: document.getElementById('mode-charge-gain-btn'),
+            chargeTimeToTargetCalculator: document.getElementById('chargeTimeToTargetCalculator'),
+            chargeGainOverTimeCalculator: document.getElementById('chargeGainOverTimeCalculator'),
             // Phantom Drain Elements
             modeDrainTimeBtn: document.getElementById('mode-drain-time-btn'),
             modeDrainPercentBtn: document.getElementById('mode-drain-percent-btn'),
@@ -1275,6 +1324,9 @@
             if (tabName === 'PhantomDrain') {
                 setDefaultDrainTimes();
             }
+            if (tabName === 'ChargingEstimator') {
+                setDefaultChargeTimes();
+            }
             if (tabName === 'TripRangeEstimator' && !state.tripMap) {
                 initTripPlannerMap();
             }
@@ -1298,33 +1350,58 @@
             document.getElementById('custom-params').style.display = (document.getElementById('charger-type').value === 'custom') ? 'block' : 'none';
         }
 
-        window.calculateTime = () => {
+        // --- Charging Estimator Logic ---
+
+        function getChargerPower() {
+            const chargerType = document.getElementById('charger-type').value;
+            let chargerPower = 0;
+            if (chargerType === 'custom') {
+                const voltage = parseFloat(document.getElementById('voltage').value);
+                const amps = parseFloat(document.getElementById('amps').value);
+                if (isNaN(voltage) || isNaN(amps) || voltage <= 0 || amps <= 0) {
+                    return { error: "Please enter valid Voltage and Amperage." };
+                }
+                chargerPower = (voltage * amps) / 1000;
+            } else {
+                chargerPower = parseFloat(chargerType);
+            }
+            return { power: chargerPower };
+        }
+
+        function formatDuration(timeHours) {
+            const days = Math.floor(timeHours / 24);
+            const hours = Math.floor(timeHours % 24);
+            const minutes = Math.round((timeHours - Math.floor(timeHours)) * 60);
+
+            let resultText = '';
+            if (days > 0) resultText += `${days}d `;
+            if (hours > 0) resultText += `${hours}h `;
+            if (minutes > 0) resultText += `${minutes}m`;
+            if (resultText === '') return "less than a minute";
+            return resultText.trim();
+        }
+
+        window.calculateChargeToTarget = () => {
             const capacity = parseFloat(document.getElementById('battery-capacity').value);
             const efficiency = parseFloat(document.getElementById('charger-efficiency').value) / 100;
             const currentSOC = parseFloat(document.getElementById('current-soc').value);
             const targetSOC = parseFloat(document.getElementById('target-soc').value);
-            const chargerType = document.getElementById('charger-type').value;
-            const resultDiv = document.getElementById('result');
+            const resultDiv = document.getElementById('charging-result');
 
             if (isNaN(capacity) || isNaN(currentSOC) || isNaN(targetSOC) || currentSOC >= targetSOC) {
                 resultDiv.innerHTML = "Please enter valid capacity and battery percentages.";
                 return;
             }
 
-            let chargerPower = 0;
-            if (chargerType === 'custom') {
-                const voltage = parseFloat(document.getElementById('voltage').value);
-                const amps = parseFloat(document.getElementById('amps').value);
-                if (isNaN(voltage) || isNaN(amps) || voltage <= 0 || amps <= 0) {
-                    resultDiv.innerHTML = "Please enter valid Voltage and Amperage.";
-                    return;
-                }
-                chargerPower = (voltage * amps) / 1000;
-            } else {
-                chargerPower = parseFloat(chargerType);
+            const powerResult = getChargerPower();
+            if (powerResult.error) {
+                resultDiv.innerHTML = powerResult.error;
+                return;
             }
+            const chargerPower = powerResult.power;
 
             const energyNeeded = (targetSOC - currentSOC) / 100 * capacity;
+            // Superchargers (DC) are not affected by the car's onboard charger efficiency
             const timeHours = energyNeeded / (chargerPower * (chargerPower === 250 ? 1 : efficiency));
             const hours = Math.floor(timeHours);
             const minutes = Math.round((timeHours - hours) * 60);
@@ -1335,6 +1412,98 @@
             if (hours === 0 && minutes === 0) resultText = "Charge time is less than a minute.";
             resultDiv.innerHTML = resultText + `</strong>`;
         }
+        
+        window.calculateChargeGain = () => {
+            const resultDiv = document.getElementById('charging-result');
+            const capacity = parseFloat(document.getElementById('battery-capacity').value);
+            const efficiency = parseFloat(document.getElementById('charger-efficiency').value) / 100;
+            const currentSOC = parseFloat(document.getElementById('charge-gain-current-soc').value);
+
+            const startDateStr = document.getElementById('charge-start-date').value;
+            const startTimeStr = document.getElementById('charge-start-time').value;
+            const endDateStr = document.getElementById('charge-end-date').value;
+            const endTimeStr = document.getElementById('charge-end-time').value;
+
+            if (isNaN(capacity) || isNaN(efficiency) || isNaN(currentSOC)) {
+                resultDiv.innerHTML = "Please enter valid capacity, efficiency, and current battery %.";
+                return;
+            }
+            if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
+                resultDiv.innerHTML = "Please enter valid start and end dates/times.";
+                return;
+            }
+
+            const startTime = new Date(`${startDateStr}T${startTimeStr}`);
+            const endTime = new Date(`${endDateStr}T${endTimeStr}`);
+
+            if (endTime <= startTime) {
+                resultDiv.innerHTML = "End time must be after the start time.";
+                return;
+            }
+
+            const powerResult = getChargerPower();
+            if (powerResult.error) {
+                resultDiv.innerHTML = powerResult.error;
+                return;
+            }
+            const chargerPower = powerResult.power;
+
+            const durationMillis = endTime - startTime;
+            const durationHours = durationMillis / (1000 * 60 * 60);
+
+            // Superchargers (DC) are not affected by the car's onboard charger efficiency
+            const energyAddedKwh = chargerPower * durationHours * (chargerPower === 250 ? 1 : efficiency); 
+            const percentageGained = (energyAddedKwh / capacity) * 100;
+            let finalSOC = currentSOC + percentageGained;
+
+            let capped = false;
+            if (finalSOC > 100) {
+                finalSOC = 100;
+                capped = true;
+            }
+
+            resultDiv.innerHTML = `Estimated battery at end time: <strong style="font-size: 1.5rem;">${finalSOC.toFixed(1)}%</strong><br>
+                <small>(Gained ~${percentageGained.toFixed(1)}% over ${formatDuration(durationHours)})${capped ? ' - Charge capped at 100%' : ''}</small>`;
+        }
+
+        function setDefaultChargeTimes() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+
+            document.getElementById('charge-start-date').value = `${year}-${mm}-${dd}`;
+            document.getElementById('charge-start-time').value = `${hh}:${min}`;
+
+            // Default end time to one hour from now
+            const later = new Date(now.getTime() + 60 * 60 * 1000);
+            const year_t = later.getFullYear();
+            const mm_t = String(later.getMonth() + 1).padStart(2, '0');
+            const dd_t = String(later.getDate()).padStart(2, '0');
+            const hh_t = String(later.getHours()).padStart(2, '0');
+            const min_t = String(later.getMinutes()).padStart(2, '0');
+
+            document.getElementById('charge-end-date').value = `${year_t}-${mm_t}-${dd_t}`;
+            document.getElementById('charge-end-time').value = `${hh_t}:${min_t}`;
+        }
+
+        function switchChargeMode(mode) {
+            if (mode === 'time') {
+                dom.modeChargeTimeBtn.classList.add('active');
+                dom.modeChargeGainBtn.classList.remove('active');
+                dom.chargeTimeToTargetCalculator.classList.add('active');
+                dom.chargeGainOverTimeCalculator.classList.remove('active');
+            } else { // mode === 'gain'
+                dom.modeChargeTimeBtn.classList.remove('active');
+                dom.modeChargeGainBtn.classList.add('active');
+                dom.chargeTimeToTargetCalculator.classList.remove('active');
+                dom.chargeGainOverTimeCalculator.classList.add('active');
+                setDefaultChargeTimes();
+            }
+        }
+
 
         // --- Phantom Drain Calculator Logic (Updated) ---
 
@@ -2165,6 +2334,10 @@
                 case 'Escape': if (dom.body.classList.contains('fullscreen-active')) { toggleFullscreen(); } closeMap(); break;
             }
         });
+
+        // Charging Estimator Listeners
+        dom.modeChargeTimeBtn.addEventListener('click', () => switchChargeMode('time'));
+        dom.modeChargeGainBtn.addEventListener('click', () => switchChargeMode('gain'));
 
         // Phantom Drain Listeners
         dom.modeDrainTimeBtn.addEventListener('click', () => switchDrainMode('time'));
