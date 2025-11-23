@@ -382,6 +382,24 @@
         #master-scrubber:hover::-webkit-slider-thumb { transform: scale(1.2); box-shadow: var(--shadow-lg); }
         #event-marker { position: absolute; top: 50%; width: 4px; height: 20px; background: linear-gradient(135deg, var(--accent-color), var(--secondary-color)); border-radius: var(--border-radius-sm); transform: translate(-50%, -50%); z-index: 2; display: none; pointer-events: none; box-shadow: var(--shadow-md); }
         
+        #scrubber-tooltip {
+            position: absolute;
+            top: -35px;
+            background: var(--surface-elevated);
+            color: var(--text-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.1s;
+            border: 1px solid var(--border-color);
+            white-space: nowrap;
+            transform: translateX(-50%);
+            box-shadow: var(--shadow-sm);
+        }
+
         .collapsible-panel { max-height: 0; overflow: hidden; transition: max-height var(--transition-slow), padding var(--transition-slow); padding: 0; display: flex; flex-direction: column; gap: 1.5rem; border-top: 1px solid transparent; }
         .collapsible-panel.visible { max-height: 600px; padding: 1.5rem 0 1rem; border-top: 1px solid var(--border-color); }
         .panel-section { display: flex; flex-wrap: wrap; align-items: center; gap: 2rem; background: var(--surface-elevated); padding: 1rem 1.5rem; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); }
@@ -907,7 +925,10 @@
                                     <button class="btn icon-btn" id="play-pause-button"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M8 5v14l11-7z"></path></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
                                     <button class="btn" id="skip-forward" title="Forward 5s">+5s</button>
                                     <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
-                                    <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
+                                    <div style="display:flex; align-items:center; position:relative;">
+                                        <input type="number" id="playback-speed" class="styled-input" title="Playback Speed" value="1" min="0.1" max="20" step="0.1" style="width: 60px; padding-right: 20px;">
+                                        <span style="position:absolute; right:8px; color:var(--text-muted-color); font-size:0.8rem; pointer-events:none;">x</span>
+                                    </div>
                                     <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
                                     <div class="utility-btn-stack">
                                         <button class="btn icon-btn" id="screenshot-btn" title="Screenshot"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
@@ -939,6 +960,7 @@
                             </div>
                             <div class="header-row progress-container">
                                 <div id="event-marker"></div>
+                                <div id="scrubber-tooltip">00:00</div>
                                 <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
                             </div>
                     </div>
@@ -1306,6 +1328,7 @@
             skipForwardButton: document.querySelector('#skip-forward'),
             skipRewindButton: document.querySelector('#skip-rewind'),
             playbackSpeedSelector: document.querySelector('#playback-speed'),
+            scrubberTooltip: document.getElementById('scrubber-tooltip'),
             collapsibleControls: document.querySelector('#collapsible-controls'),
             titleFolderName: document.querySelector('.title-folder-name'),
             eventDetailsContainer: document.getElementById('event-details-container'),
@@ -1516,10 +1539,10 @@
             
             const useProxy = state.piConfig.useProxy;
 
-            // Scan for SentryClips to count events per day
-            const sentryEvents = new Map(); // Date -> Count
+            // Scan for SentryClips AND SavedClips to count events per day
+            const eventsCountMap = new Map(); // Date -> Set of sequence names
             for (const line of lines) {
-                 if (line.startsWith('SentryClips')) {
+                 if (line.startsWith('SentryClips') || line.startsWith('SavedClips')) {
                      const parts = line.split('/');
                      if (parts.length >= 2) {
                          const sequenceName = parts[1]; // e.g. 2023-11-23_12-30-00
@@ -1527,12 +1550,8 @@
                          const dateMatch = sequenceName.match(/^(\d{4}-\d{2}-\d{2})/);
                          if (dateMatch) {
                              const date = dateMatch[1];
-                             // We only count unique sequences
-                             if (!sentryEvents.has(sequenceName)) { // Check if this specific sequence was counted already? No, map key should be date
-                                // We need a set of sequences for each date
-                                if (!sentryEvents.has(date)) sentryEvents.set(date, new Set());
-                                sentryEvents.get(date).add(sequenceName);
-                             }
+                             if (!eventsCountMap.has(date)) eventsCountMap.set(date, new Set());
+                             eventsCountMap.get(date).add(sequenceName);
                          }
                      }
                  }
@@ -1626,10 +1645,8 @@
                 const dateMatch = key.match(/^(\d{4}-\d{2}-\d{2})/);
                 if (dateMatch && key.length === 10) {
                      const dateStr = dateMatch[1];
-                     const dateObj = new Date(dateStr);
-                     const dayOfWeek = dateObj.toLocaleDateString(undefined, { weekday: 'long' });
-                     const eventCount = sentryEvents.has(dateStr) ? sentryEvents.get(dateStr).size : 0;
-                     option.innerText = `${key} (${dayOfWeek}, ${eventCount} events)`;
+                     const eventCount = eventsCountMap.has(dateStr) ? eventsCountMap.get(dateStr).size : 0;
+                     option.innerText = `${key} (${eventCount} events)`;
                 } else {
                     option.innerText = key;
                 }
@@ -2578,7 +2595,33 @@
         dom.jumpToEventButton.addEventListener("click", () => seekAllVideos(state.currentEventData.eventTriggerOffset));
         dom.skipForwardButton.addEventListener('click', () => skipTo(5));
         dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
-        dom.playbackSpeedSelector.addEventListener('change', (e) => setPlaybackSpeed(e.target.value));
+        dom.playbackSpeedSelector.addEventListener('input', (e) => setPlaybackSpeed(e.target.value));
+        
+        // Scrubber Hover Tooltip
+        dom.masterScrubber.addEventListener('mousemove', (e) => {
+            if (!state.currentEventData.totalDuration) return;
+            
+            const rect = dom.masterScrubber.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const width = rect.width;
+            const percentage = Math.max(0, Math.min(1, x / width));
+            const time = percentage * state.currentEventData.totalDuration;
+            
+            // Position tooltip
+            dom.scrubberTooltip.style.left = `${percentage * 100}%`;
+            dom.scrubberTooltip.style.opacity = '1';
+            
+            if (state.currentEventData.firstClipTime) {
+                 const hoverTime = new Date(state.currentEventData.firstClipTime.getTime() + (time * 1000));
+                 dom.scrubberTooltip.textContent = formatLocalTime(hoverTime);
+            } else {
+                 dom.scrubberTooltip.textContent = formatTime(time);
+            }
+        });
+        dom.masterScrubber.addEventListener('mouseout', () => {
+            dom.scrubberTooltip.style.opacity = '0';
+        });
+
         dom.selectAllCameras.addEventListener('change', (e) => {
             const isChecked = e.target.checked;
             dom.cameraToggles.querySelectorAll('input[data-camera]').forEach(checkbox => {
