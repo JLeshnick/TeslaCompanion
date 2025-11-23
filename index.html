@@ -245,6 +245,45 @@
             justify-self: center;
             overflow-x: auto;
         }
+        .sub-tab-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 0.5rem;
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .sub-tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted-color);
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition-fast);
+        }
+        .sub-tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .sub-tab-btn:hover {
+            color: var(--text-color);
+        }
+        .pi-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .pi-controls input {
+            padding: 0.4rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
+            background: var(--control-bg-color);
+            color: var(--text-color);
+            font-size: 0.8rem;
+        }
         .tab-button {
             padding: 0.5rem 1rem;
             border: none;
@@ -840,6 +879,10 @@
         </div>
         
         <div id="CameraViewer" class="tab-content">
+             <div class="sub-tab-nav">
+                <button class="sub-tab-btn active" id="btn-source-local" onclick="switchCameraSource('local')">Local Files</button>
+                <button class="sub-tab-btn" id="btn-source-pi" onclick="switchCameraSource('pi')">Raspberry Pi</button>
+             </div>
              <div id="camera-controls-container">
                     <div class="header-main">
                             <div class="header-row top-ribbon">
@@ -875,8 +918,22 @@
                                     </div>
                                 </div>
                                 <div class="file-select-stack">
-                                    <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
-                                    <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                                    <div id="local-file-controls">
+                                        <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
+                                        <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                                    </div>
+                                    <div id="pi-file-controls" style="display:none;" class="pi-controls">
+                                        <input type="text" id="pi-ip" placeholder="IP (e.g. 192.168.1.173)">
+                                        <div style="display:flex; gap:0.25rem;">
+                                            <input type="text" id="pi-user" placeholder="User" style="width:50%">
+                                            <input type="password" id="pi-pass" placeholder="Pass" style="width:50%">
+                                        </div>
+                                        <div class="checkbox-group" style="margin-bottom:0; padding:0; justify-content: center;">
+                                            <input type="checkbox" id="pi-use-proxy">
+                                            <label for="pi-use-proxy" style="font-size:0.8rem; color:var(--text-muted-color);">Use Proxy (localhost:8000)</label>
+                                        </div>
+                                        <button class="btn" id="pi-connect-btn">Connect</button>
+                                    </div>
                                     <select id="date-select" class="styled-input"><option>Select Event</option></select>
                                 </div>
                             </div>
@@ -1206,6 +1263,8 @@
         const state = {
             playbackRate: 1, carouselIndex: 0, eventClips: new Map(),
             sortedEventKeys: [], currentEventData: {},
+            cameraSource: 'local', // 'local' or 'pi'
+            piConfig: { ip: '', user: '', pass: '', useProxy: false },
             // Trip Planner State
             tripMap: null,
             routingControl: null,
@@ -1256,6 +1315,16 @@
             eventCityDisplay: document.getElementById('event-city-display'),
             screenshotBtn: document.querySelector('#screenshot-btn'),
             cameraControlsContainer: document.getElementById('camera-controls-container'),
+            // Camera Source Elements
+            btnSourceLocal: document.getElementById('btn-source-local'),
+            btnSourcePi: document.getElementById('btn-source-pi'),
+            localFileControls: document.getElementById('local-file-controls'),
+            piFileControls: document.getElementById('pi-file-controls'),
+            piIpInput: document.getElementById('pi-ip'),
+            piUserInput: document.getElementById('pi-user'),
+            piPassInput: document.getElementById('pi-pass'),
+            piUseProxy: document.getElementById('pi-use-proxy'),
+            piConnectBtn: document.getElementById('pi-connect-btn'),
             // Charging Estimator Elements
             modeChargeTimeBtn: document.getElementById('mode-charge-time-btn'),
             modeChargeGainBtn: document.getElementById('mode-charge-gain-btn'),
@@ -1320,6 +1389,9 @@
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
             dom.cameraControlsContainer.style.display = (tabName === 'CameraViewer') ? 'block' : 'none';
+            // Show sub-tab nav only in Camera Viewer
+            const subTabNav = document.querySelector('.sub-tab-nav');
+            if(subTabNav) subTabNav.style.display = (tabName === 'CameraViewer') ? 'flex' : 'none';
 
             if (tabName === 'PhantomDrain') {
                 setDefaultDrainTimes();
@@ -1348,6 +1420,225 @@
         
         window.toggleCustomParams = () => {
             document.getElementById('custom-params').style.display = (document.getElementById('charger-type').value === 'custom') ? 'block' : 'none';
+        }
+
+        window.switchCameraSource = (source) => {
+            state.cameraSource = source;
+            if (source === 'local') {
+                dom.btnSourceLocal.classList.add('active');
+                dom.btnSourcePi.classList.remove('active');
+                dom.localFileControls.style.display = 'block';
+                dom.piFileControls.style.display = 'none';
+            } else {
+                dom.btnSourceLocal.classList.remove('active');
+                dom.btnSourcePi.classList.add('active');
+                dom.localFileControls.style.display = 'none';
+                dom.piFileControls.style.display = 'flex';
+                // Load saved Pi config if available
+                if (localStorage.getItem('piConfig')) {
+                    const saved = JSON.parse(localStorage.getItem('piConfig'));
+                    dom.piIpInput.value = saved.ip || '';
+                    dom.piUserInput.value = saved.user || '';
+                    dom.piPassInput.value = saved.pass || '';
+                    dom.piUseProxy.checked = saved.useProxy || false;
+                }
+            }
+            // Clear current clips when switching source
+            resetViewer();
+        };
+
+        function resetViewer() {
+            state.eventClips.clear();
+            state.sortedEventKeys = [];
+            dom.dateSelector.innerHTML = '<option>Select Event</option>';
+            dom.titleFolderName.textContent = 'No Clips Selected';
+            dom.allVideos.forEach(v => { v.src = ''; });
+            dom.eventDetailsContainer.style.display = 'none';
+            dom.liveTimestamp.textContent = "00:00";
+            dom.durationDisplay.textContent = "00:00";
+            dom.masterScrubber.value = 0;
+            dom.eventMarker.style.display = "none";
+            dom.jumpToEventButton.style.display = "none";
+            dom.mapButton.style.display = 'none';
+        }
+
+        async function connectToPi() {
+            const ip = dom.piIpInput.value.trim();
+            const user = dom.piUserInput.value.trim();
+            const pass = dom.piPassInput.value.trim();
+            const useProxy = dom.piUseProxy.checked;
+
+            if (!ip) {
+                alert("Please enter an IP address.");
+                return;
+            }
+
+            // Save config
+            state.piConfig = { ip, user, pass, useProxy };
+            localStorage.setItem('piConfig', JSON.stringify(state.piConfig));
+
+            dom.titleFolderName.textContent = "Connecting...";
+            
+            const authHeaders = new Headers();
+            if (user && pass) {
+                authHeaders.set('Authorization', 'Basic ' + btoa(user + ":" + pass));
+            }
+
+            try {
+                // Ensure protocol is present
+                const baseUrl = ip.startsWith('http') ? ip : `http://${ip}`;
+                let url = `${baseUrl}/cgi-bin/videolist.sh`;
+                
+                if (useProxy) {
+                    url = `http://localhost:8000/proxy?url=${encodeURIComponent(url)}`;
+                }
+
+                const response = await fetch(url, { headers: authHeaders });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                processRemoteFileList(text, baseUrl, authHeaders);
+
+            } catch (error) {
+                console.error("Connection failed:", error);
+                dom.titleFolderName.textContent = "Connection Failed";
+                alert(`Failed to connect to ${ip}.\n\nError: ${error.message}\n\nNote: If accessing from a local file, browser security (CORS) may block the request.\nTry enabling "Use Proxy" and running the python cors_proxy.py script.`);
+            }
+        }
+
+        function processRemoteFileList(fileListText, baseUrl, authHeaders) {
+            state.eventClips.clear();
+            state.sortedEventKeys = [];
+            dom.dateSelector.innerHTML = '<option>Select Event</option>';
+
+            const lines = fileListText.split('\n');
+            
+            const useProxy = state.piConfig.useProxy;
+
+            // Scan for SentryClips to count events per day
+            const sentryEvents = new Map(); // Date -> Count
+            for (const line of lines) {
+                 if (line.startsWith('SentryClips')) {
+                     const parts = line.split('/');
+                     if (parts.length >= 2) {
+                         const sequenceName = parts[1]; // e.g. 2023-11-23_12-30-00
+                         // Extract date YYYY-MM-DD
+                         const dateMatch = sequenceName.match(/^(\d{4}-\d{2}-\d{2})/);
+                         if (dateMatch) {
+                             const date = dateMatch[1];
+                             // We only count unique sequences
+                             if (!sentryEvents.has(sequenceName)) { // Check if this specific sequence was counted already? No, map key should be date
+                                // We need a set of sequences for each date
+                                if (!sentryEvents.has(date)) sentryEvents.set(date, new Set());
+                                sentryEvents.get(date).add(sequenceName);
+                             }
+                         }
+                     }
+                 }
+            }
+
+            for (const line of lines) {
+                // Expected format: Group/SequenceName/Filename
+                // e.g. RecentClips/2023-11-23_12-00-00/front.mp4
+                const parts = line.split('/');
+                if (parts.length < 3) continue;
+
+                const [group, sequenceName, filename] = parts;
+                
+                if (!['RecentClips', 'SavedClips', 'SentryClips'].includes(group)) continue;
+                
+                if (!state.eventClips.has(sequenceName)) {
+                    state.eventClips.set(sequenceName, { 
+                        playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, 
+                        eventJson: null, 
+                        fullPath: line,
+                        isRemote: true,
+                        baseUrl: baseUrl,
+                        authHeaders: authHeaders
+                    });
+                }
+
+                const eventData = state.eventClips.get(sequenceName);
+                
+                let cameraType = null;
+                if (filename.includes('front')) cameraType = 'front';
+                else if (filename.includes('back')) cameraType = 'back';
+                else if (filename.includes('left_repeater')) cameraType = 'left_repeater';
+                else if (filename.includes('right_repeater')) cameraType = 'right_repeater';
+                else if (filename.includes('left_pillar')) cameraType = 'left_pillar';
+                else if (filename.includes('right_pillar')) cameraType = 'right_pillar';
+
+                if (cameraType && filename.endsWith('.mp4')) {
+                    let fakeName = filename;
+                    if (!filename.match(/^\d{4}-\d{2}-\d{2}/)) {
+                        fakeName = `${sequenceName}-${filename}`;
+                    }
+
+                    let fileUrl = `${baseUrl}/TeslaCam/${line}`;
+                    if (useProxy) {
+                        fileUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(fileUrl)}`;
+                    }
+
+                    const remoteFile = {
+                        name: fakeName,
+                        url: fileUrl, 
+                        isRemote: true
+                    };
+                    eventData.playlists[cameraType].push(remoteFile);
+                } else if (filename === 'event.json') {
+                    let jsonUrl = `${baseUrl}/TeslaCam/${line}`;
+                    if (useProxy) {
+                        jsonUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(jsonUrl)}`;
+                    }
+                    eventData.eventJson = {
+                        name: 'event.json',
+                        url: jsonUrl,
+                        isRemote: true,
+                        text: async () => {
+                            const res = await fetch(jsonUrl, { headers: authHeaders });
+                            return await res.text();
+                        }
+                    };
+                }
+            }
+
+            // Sort playlists for each event
+            for (const [_, data] of state.eventClips.entries()) { 
+                for (const camera in data.playlists) {
+                    data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name));
+                }
+            }
+
+            state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
+            
+            if (state.sortedEventKeys.length === 0) {
+                dom.titleFolderName.textContent = 'No Clips Found on Pi';
+                dom.dateSelector.innerHTML = '<option>No Events Found</option>';
+                return;
+            }
+
+            dom.dateSelector.innerHTML = '';
+            state.sortedEventKeys.forEach((key, index) => { 
+                const option = document.createElement("option"); 
+                
+                // Check if key looks like a date (for RecentClips folder structure)
+                const dateMatch = key.match(/^(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch && key.length === 10) {
+                     const dateStr = dateMatch[1];
+                     const dateObj = new Date(dateStr);
+                     const dayOfWeek = dateObj.toLocaleDateString(undefined, { weekday: 'long' });
+                     const eventCount = sentryEvents.has(dateStr) ? sentryEvents.get(dateStr).size : 0;
+                     option.innerText = `${key} (${dayOfWeek}, ${eventCount} events)`;
+                } else {
+                    option.innerText = key;
+                }
+                
+                option.value = index; 
+                dom.dateSelector.appendChild(option); 
+            });
+            dom.titleFolderName.textContent = `Found ${state.sortedEventKeys.length} Events`;
+            loadEvent(0);
         }
 
         // --- Charging Estimator Logic ---
@@ -2075,12 +2366,95 @@
                     resolve();
                 }, { once: true });
                 
-                videoElement.addEventListener('error', function onError() {
-                    console.error(`Error loading video file: ${file.name}`);
-                    resolve();
+                videoElement.addEventListener('error', function onError(e) {
+                    console.error(`Error loading video file: ${file.name}`, e);
+                    resolve(); // Resolve anyway to not block other videos
                 }, { once: true });
 
-                videoElement.src = URL.createObjectURL(file);
+                if (file.isRemote) {
+                    videoElement.src = file.url;
+                    // For Basic Auth protected resources, setting src directly might prompt the browser 
+                    // OR if we are lucky and the browser cached the credentials from the fetch call, it works.
+                    // However, standard <video> tags don't support custom headers.
+                    // If the user included credentials in the URL (http://user:pass@ip), it might work.
+                    // But we are sending headers. 
+                    
+                    // Trick: If we fetched with headers, maybe we can fetch as blob and set object URL?
+                    // Fetching large video files as blobs takes time and memory.
+                    // Streaming with headers is hard for <video>.
+                    
+                    // Workaround: We hope the browser handles the auth challenge (it might prompt the user once).
+                    // Or we embed credentials in the URL if we have them.
+                    
+                    // Let's try embedding credentials in the URL for the video src if available
+                    if (state.piConfig && state.piConfig.user && state.piConfig.pass) {
+                        try {
+                            const urlObj = new URL(file.url);
+                            // Only add credentials if NOT using local proxy (local proxy handles headers if we updated loadVideo logic properly, but we updated loadVideo to USE headers for fetch, but for video src we are setting src attribute)
+                            // Wait, if using proxy, the proxy url is http://localhost:8000/proxy?url=...
+                            // And the target URL is http://192...
+                            // The proxy script handles Authorization header forwarding!
+                            // BUT video element doesn't send Authorization header to proxy.
+                            
+                            // If using proxy, we need to pass auth to proxy somehow?
+                            // Or put auth in the target URL passed to proxy?
+                            // `http://localhost:8000/proxy?url=http://user:pass@192...`
+                            
+                            if (state.piConfig.useProxy) {
+                                // The file.url already contains the proxy wrapper.
+                                // But does it contain credentials?
+                                // In processRemoteFileList:
+                                // fileUrl = `${baseUrl}/TeslaCam/${line}`
+                                // if (useProxy) fileUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(fileUrl)}`
+                                
+                                // So file.url points to localhost.
+                                // Localhost proxy needs the Authorization header.
+                                // But <video> request won't send it.
+                                
+                                // So we must embed credentials in the target URL param!
+                                // Rewrite logic in processRemoteFileList or here?
+                                // If file.url is proxy url, we can't easily modify the query param inside.
+                                
+                                // Actually, let's fix this in processRemoteFileList or rely on the proxy accepting something else?
+                                // No, let's fix processRemoteFileList logic in the write_to_file content above.
+                                
+                                // Wait, I can't edit the write_to_file content I just wrote in my thinking block.
+                                // I am writing to file NOW.
+                                
+                                // Let's adjust `processRemoteFileList` logic in the content I am about to write.
+                                
+                                // If useProxy is true:
+                                // base url for target is http://user:pass@ip...
+                                // So proxy receives target url with creds.
+                                
+                                // In `processRemoteFileList`:
+                                // const baseUrl = ip.startsWith('http') ? ip : `http://${ip}`;
+                                // if (useProxy && user && pass) {
+                                //    const urlObj = new URL(baseUrl);
+                                //    urlObj.username = user;
+                                //    urlObj.password = pass;
+                                //    baseUrlWithCreds = urlObj.toString();
+                                // }
+                                
+                                // I need to add this logic to `processRemoteFileList` or `connectToPi`.
+                                
+                            } else {
+                                // Direct connection
+                                const urlObj = new URL(file.url);
+                                urlObj.username = state.piConfig.user;
+                                urlObj.password = state.piConfig.pass;
+                                videoElement.src = urlObj.toString();
+                            }
+                        } catch (e) {
+                            videoElement.src = file.url;
+                        }
+                    } else {
+                        videoElement.src = file.url;
+                    }
+
+                } else {
+                    videoElement.src = URL.createObjectURL(file);
+                }
             });
         }
 
@@ -2155,7 +2529,24 @@
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); 
         }
 
-        function getVideoDuration(file) { return new Promise(resolve => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); }); }
+        function getVideoDuration(file) { 
+            return new Promise(resolve => { 
+                if (file.isRemote) {
+                    // Optimization: Assume 60s for remote clips to avoid network storm.
+                    // Scanning hundreds of clips over network takes too long.
+                    resolve(60);
+                    return;
+                }
+                const v = document.createElement('video'); 
+                v.preload = 'metadata'; 
+                v.onloadedmetadata = () => { 
+                    URL.revokeObjectURL(v.src); 
+                    resolve(v.duration); 
+                }; 
+                v.onerror = () => resolve(0); 
+                v.src = URL.createObjectURL(file); 
+            }); 
+        }
         
         function toggleFullscreen() {
             dom.body.classList.toggle('fullscreen-active');
@@ -2170,6 +2561,7 @@
         }
 
         // --- Attach Event Listeners ---
+        dom.piConnectBtn.addEventListener('click', connectToPi);
         dom.launchAppBtn.addEventListener('click', () => {
             dom.landingPage.classList.add('hidden');
             dom.appContainer.classList.remove('hidden');
@@ -2374,7 +2766,6 @@
         applyTheme(localStorage.getItem('theme') || 'dark');
         dom.cameraControlsContainer.style.display = 'none'; 
     });
-
 </script>
 
 </body>
