@@ -17,9 +17,27 @@
             gap: 0.5rem;
             height: 38px; 
         }
-        /* Dual Player Styles */
         .video-container video { display: none; width: 100%; height: 100%; object-fit: contain; }
         .video-container video.active { display: block; }
+        
+        #loading-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            border-radius: var(--border-radius-xl);
+            backdrop-filter: blur(2px);
+        }
+        #loading-text {
+            background: var(--surface-color);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-md);
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+        }
     </style>
 </head>
 <body>
@@ -59,6 +77,7 @@
              </div>
              <div id="camera-controls-container">
                     <div class="header-main">
+                            <div id="loading-overlay"><div id="loading-text">Loading...</div></div>
                             <div class="header-row top-ribbon">
                                 <div class="title-area">
                                     <div class="clip-info">
@@ -85,7 +104,7 @@
                                     <!-- Playback Speed Slider -->
                                     <div class="playback-speed-control">
                                         <span id="speed-display" style="font-weight:600; min-width:3ch; text-align:right;">1.0x</span>
-                                        <input type="range" id="playback-speed" min="0" max="100" value="50" style="width: 80px; padding:0; margin:0; height:6px;">
+                                        <input type="range" id="playback-speed" min="0" max="30" value="10" style="width: 80px; padding:0; margin:0; height:6px;">
                                         <button class="btn" id="reset-speed" title="Reset to 1x" style="padding:0.2rem 0.5rem; height: 24px; font-size:0.7rem; min-width: auto;">1x</button>
                                     </div>
 
@@ -192,15 +211,13 @@
             eventsMap: new Map(), 
             dayEvents: [], 
             currentActiveEvent: null,
-            activePlayer: 'p1', // 'p1' or 'p2'
-            loadingBlob: false
+            activePlayer: 'p1',
+            isLoading: false
         };
 
         const dom = {
             body: document.body,
             videoGrid: document.querySelector("#video-grid"),
-            // Select ACTIVE videos for playback control
-            // We will manage this dynamically
             fileBrowser: document.querySelector("#fileBrowser"),
             dateSelector: document.querySelector("#date-select"),
             nextButton: document.querySelector("button.next"),
@@ -251,17 +268,25 @@
             piPassInput: document.getElementById('pi-pass'),
             piUseProxy: document.getElementById('pi-use-proxy'),
             piConnectBtn: document.getElementById('pi-connect-btn'),
+            loadingOverlay: document.getElementById('loading-overlay')
         };
         
-        // Helpers to get active videos
+        // Helpers
         function getActiveVideos() {
             return document.querySelectorAll(`video.${state.activePlayer}`);
         }
-        function getNextVideos() {
-            return document.querySelectorAll(`video.${state.activePlayer === 'p1' ? 'p2' : 'p1'}`);
-        }
         function getFrontVideo() {
             return document.querySelector(`video.front.${state.activePlayer}`);
+        }
+        function setLoading(loading) {
+            state.isLoading = loading;
+            dom.loadingOverlay.style.display = loading ? 'flex' : 'none';
+            // Disable controls
+            dom.playPauseButton.disabled = loading;
+            dom.masterScrubber.disabled = loading;
+            dom.dateSelector.disabled = loading;
+            dom.nextButton.disabled = loading;
+            dom.previousButton.disabled = loading;
         }
 
         const friendlyEventReasons = {
@@ -301,7 +326,6 @@
             state.eventsMap.clear();
             dom.dateSelector.innerHTML = '<option>Select Event</option>';
             dom.titleFolderName.textContent = 'No Clips Selected';
-            // Clear all videos
             document.querySelectorAll('video').forEach(v => v.src = '');
             dom.eventDetailsContainer.style.display = 'none';
             dom.liveTimestamp.textContent = "00:00";
@@ -356,22 +380,19 @@
             try {
                 const baseUrl = ip.startsWith('http') ? ip : `http://${ip}`;
                 let url = `${baseUrl}/cgi-bin/videolist.sh`;
-                
                 if (useProxy) {
                     url = `http://localhost:8000/proxy?url=${encodeURIComponent(url)}`;
                 }
 
                 const response = await fetch(url, { headers: authHeaders });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const text = await response.text();
                 processRemoteFileList(text, baseUrl, authHeaders);
 
             } catch (error) {
                 console.error("Connection failed:", error);
                 dom.titleFolderName.textContent = "Connection Failed";
-                alert(`Failed to connect to ${ip}.\n\nError: ${error.message}\n\nNote: If accessing from a local file, browser security (CORS) may block the request.\nTry enabling "Use Proxy" and running the python cors_proxy.py script.`);
+                alert(`Failed to connect: ${error.message}`);
             }
         }
 
@@ -379,34 +400,23 @@
             state.eventClips.clear();
             state.sortedEventKeys = [];
             dom.dateSelector.innerHTML = '<option>Select Event</option>';
-
             const lines = fileListText.split('\n');
             const useProxy = state.piConfig.useProxy;
-
-            const sequenceMetadata = new Map();
+            const sequenceMetadata = new Map(); 
 
             for (const lineRaw of lines) {
                  const line = lineRaw.trim();
                  if (!line) continue;
-                 
                  if (line.startsWith('SentryClips') || line.startsWith('SavedClips')) {
                      const parts = line.split('/');
                      if (parts.length >= 2) {
                          const group = parts[0];
                          const sequenceName = parts[1];
                          const filename = parts.length > 2 ? parts[parts.length - 1] : '';
-                         
                          if (!sequenceMetadata.has(sequenceName)) {
-                             sequenceMetadata.set(sequenceName, { 
-                                 minTime: null, 
-                                 maxTime: null, 
-                                 jsonPath: null, 
-                                 type: group === 'SentryClips' ? 'sentry' : 'saved' 
-                             });
+                             sequenceMetadata.set(sequenceName, { minTime: null, maxTime: null, jsonPath: null, type: group === 'SentryClips' ? 'sentry' : 'saved' });
                          }
-                         
                          const meta = sequenceMetadata.get(sequenceName);
-                         
                          if (filename === 'event.json') {
                              let jsonUrl = `${baseUrl}/TeslaCam/${line}`;
                              if (useProxy) jsonUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(jsonUrl)}`;
@@ -443,27 +453,17 @@
             for (const lineRaw of lines) {
                 const line = lineRaw.trim();
                 if (!line) continue;
-
                 const parts = line.split('/');
                 if (parts.length < 3) continue;
-
                 const [group, sequenceName, filename] = parts;
-                
                 if (!['RecentClips', 'SavedClips', 'SentryClips'].includes(group)) continue;
-                
                 if (!state.eventClips.has(sequenceName)) {
                     state.eventClips.set(sequenceName, { 
                         playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, 
-                        eventJson: null, 
-                        fullPath: line,
-                        isRemote: true,
-                        baseUrl: baseUrl,
-                        authHeaders: authHeaders
+                        eventJson: null, fullPath: line, isRemote: true, baseUrl: baseUrl, authHeaders: authHeaders
                     });
                 }
-
                 const eventData = state.eventClips.get(sequenceName);
-                
                 let cameraType = null;
                 if (filename.includes('front')) cameraType = 'front';
                 else if (filename.includes('back')) cameraType = 'back';
@@ -474,33 +474,19 @@
 
                 if (cameraType && filename.endsWith('.mp4')) {
                     let fakeName = filename;
-                    if (!filename.match(/^\d{4}-\d{2}-\d{2}/)) {
-                        fakeName = `${sequenceName}-${filename}`;
-                    }
-
+                    if (!filename.match(/^\d{4}-\d{2}-\d{2}/)) fakeName = `${sequenceName}-${filename}`;
                     let fileUrl = `${baseUrl}/TeslaCam/${line}`;
-                    if (useProxy) {
-                        fileUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(fileUrl)}`;
-                    }
-
-                    const remoteFile = {
-                        name: fakeName,
-                        url: fileUrl, 
-                        isRemote: true
-                    };
-                    eventData.playlists[cameraType].push(remoteFile);
+                    if (useProxy) fileUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(fileUrl)}`;
+                    eventData.playlists[cameraType].push({ name: fakeName, url: fileUrl, isRemote: true });
                 }
             }
 
             for (const [_, data] of state.eventClips.entries()) { 
-                for (const camera in data.playlists) {
-                    data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name));
-                }
+                for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name));
             }
 
             const allKeys = Array.from(state.eventClips.keys()).sort();
             state.sortedEventKeys = allKeys; 
-            
             const dateKeys = allKeys.filter(k => k.match(/^\d{4}-\d{2}-\d{2}$/));
             
             if (dateKeys.length === 0 && allKeys.length === 0) {
@@ -511,11 +497,9 @@
 
             dom.dateSelector.innerHTML = '';
             const keysToShow = dateKeys.length > 0 ? dateKeys : allKeys;
-            
             keysToShow.forEach((key) => { 
                 const index = state.sortedEventKeys.indexOf(key);
                 const option = document.createElement("option"); 
-                
                 const dateMatch = key.match(/^(\d{4}-\d{2}-\d{2})/);
                 if (dateMatch && key.length === 10) {
                      const dateStr = dateMatch[1];
@@ -525,7 +509,6 @@
                 } else {
                     option.innerText = key;
                 }
-                
                 option.value = index; 
                 dom.dateSelector.appendChild(option); 
             });
@@ -558,12 +541,8 @@
                 const friendlyReason = friendlyEventReasons[jsonData.reason] || jsonData.reason.replace(/_/g, ' ');
                 dom.eventReasonDisplay.innerHTML = `Event: <strong>${friendlyReason}</strong>`;
                 dom.eventTimeDisplay.innerHTML = `Time: <strong>${formatLocalTime(new Date(jsonData.timestamp))}</strong>`;
-                
-                if (jsonData.city) {
-                    dom.eventCityDisplay.innerHTML = `City: <strong>${jsonData.city}</strong>`;
-                } else {
-                    dom.eventCityDisplay.innerHTML = '';
-                }
+                if (jsonData.city) dom.eventCityDisplay.innerHTML = `City: <strong>${jsonData.city}</strong>`;
+                else dom.eventCityDisplay.innerHTML = '';
                 
                 if (jsonData.est_lat && jsonData.est_lon) {
                     state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
@@ -571,15 +550,43 @@
                 } else {
                     dom.mapButton.style.display = 'none';
                 }
-
             } catch (e) {
                 console.error("Error fetching event json", e);
+            }
+        }
+
+        function preloadNextClip(camera, index) {
+            const playlist = state.currentEventData.playlists[camera];
+            if (playlist && index + 1 < playlist.length) {
+                // Simply loading into a video element that is muted and not playing is a good way to buffer
+                const nextFile = playlist[index + 1];
+                const v = document.createElement('video');
+                v.preload = 'auto';
+                v.muted = true;
+                // Revert to direct src logic
+                if (nextFile.isRemote) {
+                     let url = nextFile.url;
+                     if (state.piConfig && state.piConfig.user && state.piConfig.pass && !state.piConfig.useProxy) {
+                        try {
+                            const urlObj = new URL(url);
+                            urlObj.username = state.piConfig.user;
+                            urlObj.password = state.piConfig.pass;
+                            url = urlObj.toString();
+                        } catch (e) {}
+                    }
+                    v.src = url;
+                } else {
+                    v.src = URL.createObjectURL(nextFile);
+                }
             }
         }
 
         async function loadEvent(index) {
             state.carouselIndex = index;
             if (index < 0 || index >= state.sortedEventKeys.length) return;
+            
+            setLoading(true);
+            
             pauseVideos();
             dom.masterScrubber.value = 0;
             dom.liveTimestamp.textContent = "00:00";
@@ -613,8 +620,7 @@
                     }
                 }
             }
-
-            if (!earliestFile) return;
+            if (!earliestFile) { setLoading(false); return; }
 
             const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
             if (firstClipNameMatch) {
@@ -625,9 +631,7 @@
                 state.currentEventData.firstClipTime = null;
             }
             
-            if (eventData.isRemote) {
-                dom.titleFolderName.textContent = `${eventKey} (Buffering...)`;
-            }
+            if (eventData.isRemote) dom.titleFolderName.textContent = `${eventKey}`;
 
             const masterPlaylist = state.currentEventData.playlists.front;
             if(masterPlaylist.length > 0) {
@@ -646,40 +650,28 @@
                 dom.liveTimestamp.textContent = formatTime(0);
                 dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
             }
-            
-            if (eventData.isRemote) {
-                 dom.titleFolderName.textContent = eventKey;
-            }
 
-            // Day Events
+            // Timeline Markers
             if (state.currentEventData.firstClipTime && state.currentEventData.totalDuration > 0) {
                  const dateStr = eventKey.substring(0, 10);
                  if (state.eventsMap && state.eventsMap.has(dateStr)) {
                      const events = state.eventsMap.get(dateStr);
                      const dayStart = state.currentEventData.firstClipTime.getTime();
-
                      events.forEach((ev) => {
                          const startOffset = (ev.startTime - dayStart) / 1000;
                          const endOffset = (ev.endTime - dayStart) / 1000 + 60; 
-                         
                          if (endOffset > 0 && startOffset < state.currentEventData.totalDuration) {
                              state.dayEvents.push({
                                  startOffset: Math.max(0, startOffset),
                                  endOffset: Math.min(state.currentEventData.totalDuration, endOffset),
-                                 jsonPath: ev.jsonPath,
-                                 type: ev.type,
-                                 startTime: ev.startTime
+                                 jsonPath: ev.jsonPath, type: ev.type, startTime: ev.startTime
                              });
                              if (startOffset >= 0 && startOffset <= state.currentEventData.totalDuration) {
                                  const marker = document.createElement('div');
                                  marker.className = `timeline-marker ${ev.type}`;
                                  marker.style.left = `${(startOffset / state.currentEventData.totalDuration) * 100}%`;
                                  marker.title = `${ev.type === 'sentry' ? 'Sentry' : 'Saved'}: ${formatLocalTime(new Date(ev.startTime))}`;
-                                 
-                                 marker.addEventListener('click', (e) => {
-                                     e.stopPropagation();
-                                     seekAllVideos(startOffset);
-                                 });
+                                 marker.addEventListener('click', (e) => { e.stopPropagation(); seekAllVideos(startOffset); });
                                  dom.timelineMarkersContainer.appendChild(marker);
                              }
                          }
@@ -687,27 +679,22 @@
                  }
             }
 
-            // Initial Load + Preload
             const loadPromises = [];
             const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
-            
             cameraTypes.forEach(camera => {
                 const playlist = state.currentEventData.playlists[camera];
                 if (playlist && playlist.length > 0) {
                     const p1 = document.querySelector(`video.${camera}.p1`);
                     const p2 = document.querySelector(`video.${camera}.p2`);
-                    
-                    // Load first clip into P1
                     loadPromises.push(loadVideo(p1, playlist[0]));
-                    
-                    // Preload second clip into P2 (if exists)
                     if (playlist.length > 1) {
-                        loadVideo(p2, playlist[1]); // Don't await
+                         // Preload next without awaiting
+                         loadVideo(p2, playlist[1]).then(() => {});
                     }
                 }
             });
-            
             await Promise.all(loadPromises);
+            setLoading(false);
         }
 
         function loadVideo(videoElement, file) {
@@ -733,50 +720,54 @@
                     resolve();
                 }, { once: true });
 
+                // REVERTED LOGIC: Direct URL assignment
                 if (file.isRemote) {
-                    if (!file.blobUrl) {
+                     let url = file.url;
+                     // If using proxy, url is already http://localhost:8000/proxy?url=...
+                     // If NOT using proxy, and auth is needed, we embed in URL.
+                     if (state.piConfig && state.piConfig.user && state.piConfig.pass && !state.piConfig.useProxy) {
                          try {
-                             const headers = state.piConfig.user ? new Headers({'Authorization': 'Basic ' + btoa(state.piConfig.user + ":" + state.piConfig.pass)}) : new Headers();
-                             const res = await fetch(file.url, { headers });
-                             const blob = await res.blob();
-                             file.blobUrl = URL.createObjectURL(blob);
-                         } catch (e) {
-                             console.error("Failed to fetch video blob", e);
-                             resolve();
-                             return;
-                         }
-                    }
-                    videoElement.src = file.blobUrl;
+                            const urlObj = new URL(url);
+                            urlObj.username = state.piConfig.user;
+                            urlObj.password = state.piConfig.pass;
+                            url = urlObj.toString();
+                         } catch (e) {}
+                     }
+                     videoElement.src = url;
                 } else {
                     videoElement.src = URL.createObjectURL(file);
                 }
             });
         }
 
+        function playVideos() {
+            updatePlayButtonUI(true);
+            getActiveVideos().forEach(v => { 
+                if (v.src) {
+                    v.playbackRate = state.playbackRate;
+                    if (v.paused) v.play().catch(e => {});
+                }
+            });
+        }
+        
         function updatePlayButtonUI(isPlaying) {
             dom.playIcon.style.display = isPlaying ? 'none' : 'block';
             dom.pauseIcon.style.display = isPlaying ? 'block' : 'none';
             dom.statusDot.classList.toggle('ready', !isPlaying);
             dom.statusDot.classList.toggle('playing', isPlaying);
         }
-        function playVideos() {
-            updatePlayButtonUI(true);
-            getActiveVideos().forEach(v => { 
-                if (v.src && v.paused) {
-                    v.playbackRate = state.playbackRate;
-                    v.play().catch(error => console.error(`Play failed for ${v.className}:`, error));
-                }
-            });
-        }
+        
         function pauseVideos() { updatePlayButtonUI(false); getActiveVideos().forEach(v => v.pause()); }
+        
         function playPause() { 
             const front = getFrontVideo();
             front && !front.paused ? pauseVideos() : playVideos();
         }
+        
         function skipTo(seconds) { seekAllVideos(getCurrentTime() + seconds); }
+        
         function setPlaybackSpeed(rate) {
             state.playbackRate = parseFloat(rate);
-            // Update ALL videos (active and inactive)
             document.querySelectorAll('video').forEach(video => { video.playbackRate = state.playbackRate; });
             dom.speedDisplay.textContent = state.playbackRate + 'x';
         }
@@ -785,7 +776,6 @@
             if (isNaN(targetTime)) targetTime = 0;
             targetTime = Math.max(0, Math.min(targetTime, state.currentEventData.totalDuration));
             
-            // Find correct clip index for this time
             let timeIntoPlaylist = 0;
             let targetClipIndex = -1;
             for (let i = 0; i < state.currentEventData.clipDurations.length; i++) {
@@ -799,24 +789,13 @@
             const timeInTargetClip = targetTime - timeIntoPlaylist;
             const wasPlaying = !getFrontVideo().paused;
             
-            // Update indices
             const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
             cameraTypes.forEach(camera => {
                 state.currentEventData.playlistIndices[camera] = targetClipIndex;
-                
-                // For seeking, we might need to load into ACTIVE player
                 const playlist = state.currentEventData.playlists[camera];
                 if (playlist && playlist[targetClipIndex]) {
                     const activeVid = document.querySelector(`video.${camera}.${state.activePlayer}`);
-                    // If src matches, just seek. If not, load.
-                    // Use blob check or src check
                     const file = playlist[targetClipIndex];
-                    const srcMatch = (file.isRemote && file.blobUrl === activeVid.src) || (!file.isRemote && activeVid.src.includes(file.name)); // Rough check
-                    
-                    // Actually, just reload to be safe or if simple seek fails
-                    // But we implemented dual player.
-                    // Seeking is complex with dual player.
-                    // Simplest: Load target into Active. Load target+1 into Inactive.
                     
                     loadVideo(activeVid, file).then(() => {
                          activeVid.currentTime = timeInTargetClip;
@@ -854,42 +833,17 @@
         }
         function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
         function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
-        
-        function formatLocalTime(date) { 
-            if (!date || isNaN(date.getTime())) return '--:--:--'; 
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); 
-        }
-
+        function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return '--:--:--'; return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
         function getVideoDuration(file) { 
             return new Promise(resolve => { 
-                if (file.isRemote) {
-                    resolve(60);
-                    return;
-                }
-                const v = document.createElement('video'); 
-                v.preload = 'metadata'; 
-                v.onloadedmetadata = () => { 
-                    URL.revokeObjectURL(v.src); 
-                    resolve(v.duration); 
-                }; 
-                v.onerror = () => resolve(0); 
-                v.src = URL.createObjectURL(file); 
+                if (file.isRemote) { resolve(60); return; }
+                const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); 
             }); 
         }
-        
-        function toggleFullscreen() {
-            dom.body.classList.toggle('fullscreen-active');
-            const isFullscreen = dom.body.classList.contains('fullscreen-active');
-            dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block';
-            dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none';
-        }
+        function toggleFullscreen() { dom.body.classList.toggle('fullscreen-active'); const isFullscreen = dom.body.classList.contains('fullscreen-active'); dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block'; dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none'; }
+        function closeMap() { dom.mapContainer.style.display = 'none'; dom.mapIframe.src = ''; }
 
-        function closeMap() {
-            dom.mapContainer.style.display = 'none';
-            dom.mapIframe.src = '';
-        }
-
-        // --- Attach Event Listeners ---
+        // --- Event Listeners ---
         dom.piConnectBtn.addEventListener('click', connectToPi);
         dom.themeToggle.addEventListener('click', () => {
             const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
@@ -906,22 +860,14 @@
         dom.playbackSpeedSelector.addEventListener('input', (e) => {
              let val = parseInt(e.target.value);
              let speed;
-             if (val <= 50) {
-                 speed = 0.25 + (val / 50) * 0.75;
-             } else {
-                 speed = 1.0 + ((val - 50) / 50) * 14.0;
-             }
-             if (speed > 1) speed = Math.round(speed * 10) / 10;
-             else speed = Math.round(speed * 100) / 100;
+             // Map 0-30 slider to 0.25-3.0
+             if (val <= 10) speed = 0.25 + (val/10)*0.75; // 0-10 => 0.25-1.0
+             else speed = 1.0 + ((val-10)/20)*2.0; // 10-30 => 1.0-3.0
              
+             if (speed > 1) speed = Math.round(speed * 10) / 10; else speed = Math.round(speed * 100) / 100;
              setPlaybackSpeed(speed);
         });
-        
-        dom.resetSpeedBtn.addEventListener('click', () => {
-            dom.playbackSpeedSelector.value = 50; 
-            setPlaybackSpeed(1.0);
-        });
-        
+        dom.resetSpeedBtn.addEventListener('click', () => { dom.playbackSpeedSelector.value = 10; setPlaybackSpeed(1.0); });
         dom.masterScrubber.addEventListener('mousemove', (e) => {
             if (!state.currentEventData.totalDuration) return;
             const rect = dom.masterScrubber.getBoundingClientRect();
@@ -934,52 +880,40 @@
             if (state.currentEventData.firstClipTime) {
                  const hoverTime = new Date(state.currentEventData.firstClipTime.getTime() + (time * 1000));
                  dom.scrubberTooltip.textContent = formatLocalTime(hoverTime);
-            } else {
-                 dom.scrubberTooltip.textContent = formatTime(time);
-            }
+            } else { dom.scrubberTooltip.textContent = formatTime(time); }
         });
-        dom.masterScrubber.addEventListener('mouseout', () => {
-            dom.scrubberTooltip.style.opacity = '0';
-        });
+        dom.masterScrubber.addEventListener('mouseout', () => { dom.scrubberTooltip.style.opacity = '0'; });
 
-        // Listen to ALL videos for ended/timeupdate?
-        // No, only Active Front video drives the scrubber.
-        // But ANY active video ending triggers next.
-        // We need to attach listeners to all video elements.
-        
-        // Wait, `dom.allVideos` contains p1 AND p2.
-        // We need to ensure we only react to the ACTIVE player's events.
-        
         document.querySelectorAll('video').forEach(video => {
             video.addEventListener("timeupdate", (e) => {
-                if (!e.target.classList.contains('active') || !e.target.classList.contains('front')) return;
-                
-                if (!state.currentEventData.totalDuration || dom.masterScrubber.matches(':active')) return;
-                dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
-                updateLiveTimestamp();
-                
-                if (state.dayEvents && state.dayEvents.length > 0) {
-                    const currentTime = getCurrentTime();
-                    const activeEvent = state.dayEvents.find(e => currentTime >= e.startOffset && currentTime <= e.endOffset);
+                // Scrubber Update (only front)
+                if (e.target.classList.contains('active') && e.target.classList.contains('front')) {
+                    if (!state.currentEventData.totalDuration || dom.masterScrubber.matches(':active')) return;
+                    dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
+                    updateLiveTimestamp();
                     
-                    if (activeEvent) {
-                        if (state.currentActiveEvent !== activeEvent) {
-                            state.currentActiveEvent = activeEvent;
-                            displayEventDetails(activeEvent);
-                        }
-                    } else {
-                        if (state.currentActiveEvent) {
-                            state.currentActiveEvent = null;
-                            dom.eventDetailsContainer.style.display = 'none';
-                            dom.mapButton.style.display = 'none';
+                    // Event Details Logic
+                    if (state.dayEvents && state.dayEvents.length > 0) {
+                        const currentTime = getCurrentTime();
+                        const activeEvent = state.dayEvents.find(ev => currentTime >= ev.startOffset && currentTime <= ev.endOffset);
+                        if (activeEvent) {
+                            if (state.currentActiveEvent !== activeEvent) {
+                                state.currentActiveEvent = activeEvent;
+                                displayEventDetails(activeEvent);
+                            }
+                        } else {
+                            if (state.currentActiveEvent) {
+                                state.currentActiveEvent = null;
+                                dom.eventDetailsContainer.style.display = 'none';
+                                dom.mapButton.style.display = 'none';
+                            }
                         }
                     }
                 }
             });
 
             video.addEventListener("ended", async (e) => {
-                if (!e.target.classList.contains('active')) return; // Ignore inactive players
-                
+                if (!e.target.classList.contains('active')) return;
                 const camera = e.target.className.split(' ')[0];
                 if (!state.currentEventData.playlists || !state.currentEventData.playlists[camera]) return;
                 
@@ -987,41 +921,23 @@
                 const currentIdx = state.currentEventData.playlistIndices[camera];
                 
                 if (currentIdx + 1 < playlist.length) {
-                    // Swap players
-                    // Current active is e.target.
-                    // Other player is inactive.
-                    const wasPlaying = !e.target.paused; // Should be true if ended naturally
-                    
-                    // Only swap/update once per camera
-                    // Increment index
                     state.currentEventData.playlistIndices[camera]++;
-                    
-                    // Identify players
                     const p1 = document.querySelector(`video.${camera}.p1`);
                     const p2 = document.querySelector(`video.${camera}.p2`);
-                    
                     const nextPlayer = e.target === p1 ? p2 : p1;
                     
-                    // Swap classes
                     e.target.classList.remove('active');
                     nextPlayer.classList.add('active');
                     
-                    // Play next (already loaded)
                     nextPlayer.playbackRate = state.playbackRate;
                     nextPlayer.play().catch(err => {});
                     
-                    // Preload subsequent clip into the NOW inactive player (e.target)
                     if (currentIdx + 2 < playlist.length) {
                         loadVideo(e.target, playlist[currentIdx + 2]);
                     }
-                    
-                    // Update global active player state if front
-                    if (camera === 'front') {
-                        state.activePlayer = nextPlayer.classList.contains('p1') ? 'p1' : 'p2';
-                    }
+                    if (camera === 'front') state.activePlayer = nextPlayer.classList.contains('p1') ? 'p1' : 'p2';
 
                 } else if (camera === 'front') {
-                    // End of event
                     if (state.carouselIndex < state.sortedEventKeys.length - 1) {
                         await loadEvent(++state.carouselIndex);
                         playVideos();
@@ -1034,7 +950,8 @@
         
         dom.masterScrubber.addEventListener("input", () => { if (state.currentEventData.totalDuration) updateLiveTimestamp((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
         dom.masterScrubber.addEventListener("change", () => { if (state.currentEventData.totalDuration) seekAllVideos((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
-
+        
+        // Double Click Expand
         document.querySelectorAll('.video-container').forEach(container => {
             container.addEventListener('dblclick', (e) => {
                 const grid = dom.videoGrid;
@@ -1050,89 +967,41 @@
                 }
             });
         });
-        dom.fileBrowser.addEventListener("change", function(e) {
-            state.eventClips.clear(); 
-            state.sortedEventKeys = []; 
-            dom.dateSelector.innerHTML = '<option>Select Event</option>';
-            dom.titleFolderName.textContent = 'No Clips Selected';
-            for (const file of e.target.files) {
-                const pathParts = file.webkitRelativePath.split('/');
-                if (pathParts.length < 2) continue;
-                const eventId = pathParts[pathParts.length - 2];
-                if (!state.eventClips.has(eventId)) state.eventClips.set(eventId, { playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, eventJson: null, fullPath: file.webkitRelativePath });
-                const group = state.eventClips.get(eventId);
-                const videoMatch = file.name.match(/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})-(.+?)\.mp4$/);
-                if (videoMatch && group.playlists[videoMatch[2]]) group.playlists[videoMatch[2]].push(file);
-                if (file.name === "event.json") group.eventJson = file;
-            }
-            for (const [_, data] of state.eventClips.entries()) { for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name)); }
-            state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
-            if (state.sortedEventKeys.length === 0) { dom.titleFolderName.textContent = 'No Clips Found'; dom.dateSelector.innerHTML = '<option>No Events Found</option>'; return; }
-            dom.dateSelector.innerHTML = '';
-            state.sortedEventKeys.forEach((key, index) => { const option = document.createElement("option"); option.innerText = key; option.value = index; dom.dateSelector.appendChild(option); });
-            loadEvent(0);
-        });
-        dom.screenshotBtn.addEventListener('click', () => {
-            const visibleContainers = [...dom.videoGrid.querySelectorAll('.video-container:not(.hidden)')];
-            if (visibleContainers.length === 0) return;
-            // Use ACTIVE video
-            const firstVideo = visibleContainers[0].querySelector('video.active');
-            if (!firstVideo || !firstVideo.src || firstVideo.videoWidth === 0) return;
-            const videoWidth = firstVideo.videoWidth;
-            const videoHeight = firstVideo.videoHeight;
-            const gridMapping = { left_pillar: { col: 0, row: 0 }, front: { col: 1, row: 0 }, right_pillar: { col: 2, row: 0 }, left_repeater: { col: 0, row: 1 }, back: { col: 1, row: 1 }, right_repeater: { col: 2, row: 1 }, };
-            const canvas = document.createElement('canvas');
-            canvas.width = videoWidth * 3;
-            canvas.height = videoHeight * 2;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-color');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            visibleContainers.forEach(container => {
-                const video = container.querySelector('video.active');
-                const cameraType = [...container.classList].find(c => gridMapping[c]);
-                if (cameraType && video && video.videoWidth > 0) {
-                    const { col, row } = gridMapping[cameraType];
-                    const dx = col * videoWidth;
-                    const dy = row * videoHeight;
-                    ctx.drawImage(video, dx, dy, videoWidth, videoHeight);
-                }
-            });
-            const link = document.createElement('a');
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            link.download = `Tesla-Companion-Screenshot-${timestamp}.jpg`;
-            link.href = canvas.toDataURL('image/jpeg', 0.9);
-            link.click();
-        });
-        dom.fullscreenToggle.addEventListener('click', toggleFullscreen);
-        dom.mapButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (state.currentEventData.location) {
-                const { lat, lon } = state.currentEventData.location;
-                const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=es;z=14&output=embed`;
-                dom.mapIframe.src = mapUrl;
-                dom.mapContainer.style.display = 'flex';
-            }
-        });
-        dom.mapCloseButton.addEventListener('click', closeMap);
-        dom.mapContainer.addEventListener('click', (e) => { if (e.target === dom.mapContainer) closeMap(); });
-        document.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-            switch(e.key) {
-                case ' ': e.preventDefault(); playPause(); break;
-                case 'ArrowLeft': e.preventDefault(); skipTo(-5); break;
-                case 'ArrowRight': e.preventDefault(); skipTo(5); break;
-                case 'ArrowUp': e.preventDefault(); if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); break;
-                case 'ArrowDown': e.preventDefault(); if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); break;
-                case 'Escape': if (dom.body.classList.contains('fullscreen-active')) { toggleFullscreen(); } closeMap(); break;
-            }
-        });
-
-
-        // --- Initial App State ---
+        
+        // Init
         applyTheme(localStorage.getItem('theme') || 'dark');
-        dom.cameraControlsContainer.style.display = 'block'; 
+        // Skip splash logic here as it is handled in index.html
     });
 </script>
 
 </body>
 </html>
+
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+
+<environment_details>
+# Visual Studio Code Visible Files
+camera_viewer.html
+
+# Visual Studio Code Open Tabs
+cors_proxy.py
+trip_planner.html
+charging.html
+phantom_drain.html
+about.html
+howto.html
+styles.css
+index.html
+camera_viewer.html
+
+# Current Time
+11/23/2025, 4:43:19 PM (America/Chicago, UTC-6:00)
+
+# Context Window Usage
+761,398 / 1,048.576K tokens used (72%)
+
+# Current Mode
+ACT MODE
+</environment_details>
