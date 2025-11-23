@@ -3,790 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tesla Companion</title>
+    <title>Camera Viewer - Tesla Companion</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Open Source Map Libraries (Leaflet.js) - No API Key Needed -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
-    <!-- Leaflet Routing Machine for directions -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    
-    <!-- Leaflet Geocoder for address lookup and autocomplete (Fixes the error) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-    <style>
-        :root {
-            /* Dark Theme (Default) */
-            --bg-color: #0a0a0a;
-            --surface-color: #1a1a1a;
-            --surface-elevated: #252525;
-            --primary-color: #E82127;
-            --primary-hover-color: #c01a11;
-            --secondary-color: #0066ff;
-            --accent-color: #00d4aa;
-            --text-color: #f0f0f0;
-            --text-muted-color: #9ca3af;
-            --text-dim-color: #6b7280;
-            --border-color: #374151;
-            --border-hover-color: #4b5563;
-            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
-            --control-bg-color: rgba(255, 255, 255, 0.05);
-            --control-bg-hover: rgba(255, 255, 255, 0.1);
-            --control-bg-active: rgba(255, 255, 255, 0.15);
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --border-radius-sm: 4px;
-            --border-radius-md: 8px;
-            --border-radius-lg: 12px;
-            --border-radius-xl: 16px;
-            --transition-fast: 0.15s ease;
-            --transition-normal: 0.3s ease;
-            --transition-slow: 0.5s ease;
-        }
-
-        body.light-mode {
-            /* Light Theme */
-            --bg-color: #f8fafc;
-            --surface-color: #ffffff;
-            --surface-elevated: #f1f5f9;
-            --primary-color: #E82127;
-            --primary-hover-color: #d01e24;
-            --secondary-color: #0066ff;
-            --accent-color: #00d4aa;
-            --text-color: #1e293b;
-            --text-muted-color: #64748b;
-            --text-dim-color: #94a3b8;
-            --border-color: #e2e8f0;
-            --border-hover-color: #cbd5e1;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            --control-bg-color: rgba(0, 0, 0, 0.03);
-            --control-bg-hover: rgba(0, 0, 0, 0.08);
-            --control-bg-active: rgba(0, 0, 0, 0.12);
-        }
-
-        /* --- Global Styles & Scrollbar --- */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--surface-color); border-radius: var(--border-radius-md); }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: var(--border-radius-md); transition: var(--transition-fast); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover-color); }
-
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            height: 100vh;
-            overflow: hidden;
-            transition: background-color var(--transition-normal);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        /* --- Landing Page Styles --- */
-        #landing-page {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
-            height: 100vh;
-            width: 100%;
-            padding: 2rem;
-            box-sizing: border-box;
-            background: linear-gradient(135deg, var(--bg-color) 0%, var(--surface-color) 100%);
-            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-            z-index: 100;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        
-        #landing-page.hidden {
-            opacity: 0;
-            transform: scale(0.95);
-            pointer-events: none;
-        }
-
-        .landing-content {
-            max-width: 600px;
-            animation: fadeInFromBottom 1s ease-out;
-        }
-        
-        @keyframes fadeInFromBottom {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .landing-logo {
-            font-size: 3rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-        
-        .landing-subtitle {
-            font-size: 1.25rem;
-            color: var(--text-muted-color);
-            margin-bottom: 2.5rem;
-        }
-
-        .feature-list {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 3rem;
-        }
-
-        .feature-item {
-            background: var(--control-bg-color);
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--border-radius-lg);
-            font-weight: 500;
-            color: var(--text-muted-color);
-            border: 1px solid var(--border-color);
-            transition: all var(--transition-fast);
-        }
-        
-        .feature-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-            color: var(--text-color);
-            border-color: var(--border-hover-color);
-        }
-        
-        #launch-app-btn {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color));
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 600;
-            padding: 1rem 3rem;
-            border-radius: var(--border-radius-lg);
-            border: none;
-            cursor: pointer;
-            transition: all var(--transition-normal);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        #launch-app-btn:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: var(--shadow-xl);
-        }
-        
-        #launch-app-btn:active {
-            transform: translateY(-1px) scale(1.02);
-        }
-
-        /* --- Main App Styles --- */
-        .layout-container { 
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            transition: opacity 0.5s ease-in;
-            opacity: 1;
-        }
-
-        .layout-container.hidden {
-            display: none;
-            opacity: 0;
-        }
-        
-        .header {
-            background: var(--surface-color);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-            box-shadow: var(--shadow-lg);
-            z-index: 20;
-            padding: 0.75rem 1.5rem;
-            transition: var(--transition-normal);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .title-area { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
-        .title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            white-space: nowrap;
-        }
-
-        .main-tabs {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background-color: var(--surface-elevated);
-            padding: 0.5rem;
-            border-radius: var(--border-radius-lg);
-            justify-self: center;
-            overflow-x: auto;
-        }
-        .sub-tab-nav {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            padding: 0.5rem;
-            background-color: var(--surface-color);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .sub-tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted-color);
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all var(--transition-fast);
-        }
-        .sub-tab-btn.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-        }
-        .sub-tab-btn:hover {
-            color: var(--text-color);
-        }
-        .pi-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .pi-controls input {
-            padding: 0.4rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-md);
-            background: var(--control-bg-color);
-            color: var(--text-color);
-            font-size: 0.8rem;
-        }
-        .tab-button {
-            padding: 0.5rem 1rem;
-            border: none;
-            background-color: transparent;
-            color: var(--text-muted-color);
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: var(--border-radius-md);
-            transition: background-color 0.3s ease, color 0.3s ease;
-            white-space: nowrap;
-        }
-        .tab-button.active {
-            background-color: var(--control-bg-hover);
-            color: var(--text-color);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .top-right-controls { display: flex; align-items: center; gap: 0.75rem; }
-        
-        .file-select-stack, .event-action-stack, .utility-btn-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            align-items: stretch;
-        }
-        
-        .utility-btn-stack .btn {
-            padding: 0.25rem;
-            width: 38px;
-            height: 38px;
-        }
-
-        .clip-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.4; gap: 0.25rem; }
-        .title-folder-name { color: var(--text-color); font-weight: 600; font-size: 0.9rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 250px; }
-        
-        .event-detail-item {
-            font-size: 0.8rem;
-            color: var(--text-muted-color);
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-        .event-detail-item strong {
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-
-        #camera-controls-container {
-            padding: 1rem 1.5rem;
-            background: var(--surface-color);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .header-row { display: flex; width: 100%; align-items: center; flex-wrap: wrap; }
-        .top-ribbon {
-            display: grid;
-            gap: 1rem;
-            width: 100%;
-            grid-template-columns: auto 1fr auto;
-            align-items: center;
-        }
-        
-        .main-playback-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--surface-elevated);
-            border-radius: var(--border-radius-xl);
-            padding: 0.5rem;
-            box-shadow: var(--shadow-md);
-        }
-        
-        .file-select-stack {
-            flex-shrink: 0;
-        }
-
-        .time-display {
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
-            font-size: 0.85rem;
-            font-weight: 500;
-            white-space: nowrap;
-            color: var(--text-muted-color);
-            margin: 0 0.5rem;
-            background: var(--control-bg-color);
-            padding: 0.5rem 0.75rem;
-            border-radius: var(--border-radius-md);
-            border: 1px solid var(--border-color);
-        }
-        
-        .progress-container { padding: 0.75rem 0; position: relative; }
-        #master-scrubber { width: 100%; cursor: pointer; -webkit-appearance: none; appearance: none; height: 6px; background: var(--border-color); border-radius: var(--border-radius-md); outline: none; transition: var(--transition-fast); }
-        #master-scrubber:hover { height: 8px; }
-        #master-scrubber::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); border-radius: 50%; cursor: pointer; border: 3px solid var(--surface-color); box-shadow: var(--shadow-md); transition: var(--transition-fast); }
-        #master-scrubber:hover::-webkit-slider-thumb { transform: scale(1.2); box-shadow: var(--shadow-lg); }
-        #event-marker { position: absolute; top: 50%; width: 4px; height: 20px; background: linear-gradient(135deg, var(--accent-color), var(--secondary-color)); border-radius: var(--border-radius-sm); transform: translate(-50%, -50%); z-index: 2; display: none; pointer-events: none; box-shadow: var(--shadow-md); }
-        
-        #scrubber-tooltip {
-            position: absolute;
-            top: -35px;
-            background: var(--surface-elevated);
-            color: var(--text-color);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.1s;
-            border: 1px solid var(--border-color);
-            white-space: nowrap;
-            transform: translateX(-50%);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .collapsible-panel { max-height: 0; overflow: hidden; transition: max-height var(--transition-slow), padding var(--transition-slow); padding: 0; display: flex; flex-direction: column; gap: 1.5rem; border-top: 1px solid transparent; }
-        .collapsible-panel.visible { max-height: 600px; padding: 1.5rem 0 1rem; border-top: 1px solid var(--border-color); }
-        .panel-section { display: flex; flex-wrap: wrap; align-items: center; gap: 2rem; background: var(--surface-elevated); padding: 1rem 1.5rem; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); }
-        .panel-section .control-group { gap: 1rem; }
-
-        .btn { display: inline-flex; align-items: center; justify-content: center; background: var(--control-bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: var(--transition-fast); gap: 0.5rem; text-decoration: none; user-select: none; position: relative; overflow: hidden; }
-        .btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent); transition: left var(--transition-normal); }
-        .btn:hover::before { left: 100%; }
-        .btn:hover { background: var(--control-bg-hover); border-color: var(--border-hover-color); transform: translateY(-1px); box-shadow: var(--shadow-md); }
-        .btn:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
-        .btn svg { width: 18px; height: 18px; transition: var(--transition-fast); flex-shrink: 0; }
-        #theme-toggle svg, #github-link svg, #fullscreen-toggle svg { width: 24px; height: 24px; }
-        .main-playback-controls .icon-btn { width: 42px; height: 42px; padding: 0; flex-shrink: 0; border-radius: 50%; }
-        #play-pause-button { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; border-color: var(--primary-color); width: 48px; height: 48px; }
-        #play-pause-button:hover { background: linear-gradient(135deg, var(--primary-hover-color), var(--primary-color)); transform: scale(1.05); box-shadow: var(--shadow-lg); }
-        
-        .file-select-stack .btn,
-        .file-select-stack .styled-input,
-        .event-action-stack .btn {
-            padding-top: 0.25rem;
-            padding-bottom: 0.25rem;
-        }
-
-        .content-container { flex-grow: 1; overflow: hidden; background: var(--bg-color); display: flex; flex-direction: column;}
-        .tab-content { display: none; flex-grow: 1; flex-direction: column; overflow-y: auto; }
-        .tab-content.active { display: flex; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        #CameraViewer .video-grid-container { flex-grow: 1; overflow: auto; padding: 1rem; }
-        .video-grid { display: grid; height: 100%; width: 100%; gap: 0.5rem; grid-template-areas: "left-pillar front right-pillar" "left-repeater back right-repeater"; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
-        .video-container.hidden { display: none; }
-        .video-grid.single-view-mode .video-container:not(.hidden) { grid-area: initial; grid-column: 1 / -1; grid-row: 1 / -1; }
-        
-        .video-grid.expanded-view .video-container { display: none; }
-        .video-grid.expanded-view .video-container.expanded { display: flex; grid-area: 1 / 1 / -1 / -1; }
-
-        .video-container { position: relative; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 2px solid var(--border-color); border-radius: var(--border-radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); box-shadow: var(--shadow-md); cursor: pointer; }
-        .video-container:hover { border-color: var(--primary-color); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
-        .video-container.triggered { border-color: var(--accent-color); }
-        .video-container.triggered .video-label { background: linear-gradient(135deg, var(--accent-color), var(--primary-color)); color: white; border-color: rgba(255,255,255,0.3); }
-        
-        .video-label { position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.9)); color: white; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; border-radius: var(--border-radius-md); pointer-events: none; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 1; }
-        video { width: 100%; height: 100%; object-fit: contain; border-radius: calc(var(--border-radius-lg) - 2px); }
-        .video-container.front { grid-area: front; } .video-container.back { grid-area: back; } .video-container.left_repeater { grid-area: left-repeater; } .video-container.right_repeater { grid-area: right-repeater; } .video-container.left_pillar { grid-area: left-pillar; } .video-container.right_pillar { grid-area: right-pillar; }
-        
-        .info-container, .calculator-container { max-width: 800px; margin: 2rem auto; padding: 2rem 2rem 4rem 2rem; background-color: var(--surface-color); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg); width: 100%; }
-        .info-container h1, .calculator-container h1 { text-align: center; font-size: 1.5rem; margin-top: 0; margin-bottom: 2rem; color: var(--text-color); }
-        .info-container h2 { font-size: 1.25rem; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1rem; }
-        .info-container p, .info-container li { color: var(--text-muted-color); }
-        .info-container ul { list-style-type: none; padding-left: 0; }
-        .info-container li { margin-bottom: 0.75rem; padding-left: 1.5rem; position: relative; }
-        .info-container li::before { content: '✓'; position: absolute; left: 0; color: var(--accent-color); font-weight: bold; }
-        .info-container table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        .info-container th, .info-container td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border-color); }
-        .info-container th { font-weight: 600; color: var(--text-color); }
-        .info-container code { background-color: var(--control-bg-color); padding: 0.2rem 0.4rem; border-radius: var(--border-radius-sm); font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;}
-
-        .form-group { margin-bottom: 1.25rem; }
-        .calculator-container label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-muted-color); }
-        .calculator-container input, .calculator-container select { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-sizing: border-box; font-size: 1rem; background-color: var(--control-bg-color); color: var(--text-color); transition: var(--transition-fast); }
-        .calculator-container select option { background: var(--surface-elevated); color: var(--text-color); }
-        .calculator-container input:hover, .calculator-container select:hover { border-color: var(--border-hover-color); }
-        .calculator-container input:focus, .calculator-container select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(232, 33, 39, 0.1); }
-        .primary-btn { width: 100%; padding: 0.85rem; border: none; border-radius: var(--border-radius-md); background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); color: white; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1.5rem; transition: var(--transition-normal); box-shadow: var(--shadow-md); }
-        .primary-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-        hr { border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }
-        .result-box { margin-top: 2rem; padding: 1.5rem; text-align: center; font-size: 1.2rem; font-weight: 600; line-height: 1.5; background-color: var(--surface-elevated); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); min-height: 50px; color: var(--text-color); }
-        .checkbox-group { display: flex; align-items: center; margin-bottom: 0.75rem; padding: 0.5rem; border-radius: var(--border-radius-md); transition: background-color 0.2s; }
-        .checkbox-group:hover { background-color: var(--control-bg-color); }
-        .checkbox-group input { width: auto; margin-right: 0.75rem; accent-color: var(--primary-color); }
-        .checkbox-group label { margin-bottom: 0; font-weight: normal; color: var(--text-color); }
-
-        /* --- Phantom Drain & Charging Calculator Styles --- */
-        .calc-mode-switcher {
-            display: flex;
-            background-color: var(--surface-elevated);
-            border-radius: var(--border-radius-md);
-            padding: 0.25rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-        .mode-btn {
-            flex: 1;
-            padding: 0.75rem 0.5rem;
-            border: none;
-            background-color: transparent;
-            color: var(--text-muted-color);
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: var(--border-radius-sm);
-            transition: background-color 0.3s ease, color 0.3s ease;
-            text-align: center;
-        }
-        .mode-btn.active {
-            background-color: var(--control-bg-hover);
-            color: var(--text-color);
-            box-shadow: var(--shadow-sm);
-        }
-        .calc-mode-content { display: none; }
-        .calc-mode-content.active { display: block; animation: fadeIn 0.5s; }
-
-        .options-container {
-            margin-top: 2rem;
-            border-top: 1px solid var(--border-color);
-        }
-        .options-toggle-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted-color);
-            font-weight: 600;
-            cursor: pointer;
-            padding: 1rem 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            font-size: 0.9rem;
-            transition: color var(--transition-fast);
-        }
-        .options-toggle-btn:hover {
-            color: var(--primary-color);
-        }
-        .options-toggle-btn .chevron-icon {
-            width: 20px;
-            height: 20px;
-            transition: transform var(--transition-normal);
-            stroke: currentColor;
-        }
-        .options-container.is-open .chevron-icon {
-            transform: rotate(180deg);
-        }
-        .options-content {
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: max-height 0.5s ease, opacity 0.5s ease, margin-top 0.5s ease;
-            margin-top: 0;
-        }
-        .options-container.is-open .options-content {
-            max-height: 1000px; /* Increased max-height */
-            opacity: 1;
-            margin-top: 0;
-            padding-bottom: 1rem;
-        }
-
-
-        .camera-toggles { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .camera-toggles .divider { border-left: 2px solid var(--border-color); height: 24px; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border-color); transition: var(--transition-normal); border-radius: 24px; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: linear-gradient(135deg, #ffffff, #f0f0f0); transition: var(--transition-normal); border-radius: 50%; box-shadow: var(--shadow-sm); }
-        input:checked + .slider { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color)); }
-        input:checked + .slider:before { transform: translateX(20px); }
-        .toggle-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; font-size: 0.875rem; font-weight: 500; transition: var(--transition-fast); }
-        .toggle-label:hover { color: var(--primary-color); }
-        
-        select.styled-input option {
-            background: var(--surface-elevated);
-            color: var(--text-color);
-        }
-
-        .styled-input { background: var(--control-bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.5rem 1rem; font-size: 0.875rem; cursor: pointer; transition: var(--transition-fast); -webkit-appearance: none; appearance: none; backdrop-filter: blur(10px); }
-        .styled-input:hover { border-color: var(--border-hover-color); box-shadow: var(--shadow-sm); }
-        .styled-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(232, 33, 39, 0.1); }
-        
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.5rem; transition: background-color 0.3s; }
-        .status-dot.ready { background: var(--success-color); animation: none; }
-        .status-dot.playing { background-color: var(--error-color); animation: playing-pulse 2s infinite; }
-        
-        @keyframes playing-pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-
-        .btn:focus-visible, .switch:focus-within { outline: 2px solid var(--primary-color); outline-offset: 2px; }
-        .switch:focus-within { border-radius: 24px; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .header { animation: slideIn 0.5s ease-out; }
-
-        /* --- Map Overlay Styles --- */
-        #map-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none; /* Initially hidden */
-            align-items: center;
-            justify-content: center;
-            z-index: 110; /* Higher than header */
-            animation: fadeIn 0.3s ease;
-        }
-
-        #map-iframe {
-            width: 90vw;
-            height: 90vh;
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius-lg);
-        }
-
-        #map-close-button {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            font-size: 3rem;
-            color: #fff;
-            cursor: pointer;
-            line-height: 1;
-            transition: transform 0.2s ease;
-        }
-
-        #map-close-button:hover {
-            transform: scale(1.2) rotate(90deg);
-        }
-        
-        /* --- Fullscreen Styles --- */
-        body.fullscreen-active .header,
-        body.fullscreen-active #camera-controls-container {
-            display: none;
-        }
-        body.fullscreen-active .content-container {
-            padding: 0;
-            height: 100vh;
-        }
-        body.fullscreen-active #CameraViewer {
-            height: 100%;
-        }
-        body.fullscreen-active #CameraViewer .video-grid-container {
-            padding: 0;
-            max-height: 100vh;
-        }
-        body.fullscreen-active .video-grid {
-            gap: 1px;
-        }
-        body.fullscreen-active .video-container {
-            border-radius: 0;
-            border: 1px solid var(--bg-color);
-        }
-        body.fullscreen-active .video-container.triggered {
-            border-color: var(--accent-color);
-        }
-
-        /* --- Trip Planner Styles (Leaflet) --- */
-        #trip-planner-map {
-            height: 400px;
-            width: 100%;
-            background-color: var(--control-bg-color);
-            border-radius: var(--border-radius-lg);
-            margin-top: 1.5rem;
-            border: 1px solid var(--border-color);
-            z-index: 10;
-        }
-        #trip-planner-map.dark-mode .leaflet-tile-pane {
-             filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
-        }
-        .address-input-group {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .address-input-group input {
-            flex-grow: 1;
-        }
-        .address-input-group .btn {
-            margin-left: 0.5rem;
-            flex-shrink: 0;
-        }
-        .slider-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .slider-group .slider-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            color: var(--text-muted-color);
-        }
-        .slider-group input[type="range"] {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-            height: 6px;
-            background: var(--border-color);
-            border-radius: var(--border-radius-md);
-            outline: none;
-            transition: var(--transition-fast);
-        }
-        .slider-group input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: var(--primary-color);
-            cursor: pointer;
-            border-radius: 50%;
-            border: 3px solid var(--surface-color);
-            box-shadow: var(--shadow-md);
-        }
-        /* Style the routing panel */
-        .leaflet-routing-container {
-            background-color: var(--surface-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-md);
-        }
-        .leaflet-routing-alt, .leaflet-routing-geocoders, .leaflet-routing-error {
-            background-color: var(--surface-elevated);
-            border-top: 1px solid var(--border-color);
-            color: var(--text-muted-color);
-        }
-        .leaflet-routing-alt:hover {
-            background-color: var(--control-bg-hover);
-        }
-        .leaflet-routing-instruction {
-            color: var(--text-color);
-        }
-        .leaflet-routing-icon {
-            background-color: var(--surface-elevated);
-            border-radius: 50%;
-        }
-        
-        /* Autocomplete Styles */
-        .autocomplete-results {
-            position: absolute;
-            background-color: var(--surface-elevated);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-md);
-            max-height: 200px;
-            overflow-y: auto;
-            width: calc(100% - 150px); /* Adjust width based on button */
-            box-sizing: border-box;
-            z-index: 1000;
-            margin-top: 4px;
-            top: 100%;
-        }
-        .autocomplete-item {
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .autocomplete-item:hover {
-            background-color: var(--control-bg-hover);
-        }
-
-
-        /* Responsive Design */
-        @media (max-width: 1250px) {
-            .top-ribbon {
-                display: grid;
-                grid-template-areas:
-                    "playback playback"
-                    "details files";
-                grid-template-columns: 1fr auto;
-                gap: 1rem;
-            }
-            .main-playback-controls { grid-area: playback; }
-            .title-area { grid-area: details; justify-self: start; align-self: center; }
-            .file-select-stack { grid-area: files; justify-self: end; align-self: center; }
-        }
-
-        @media (max-width: 768px) {
-            .header { padding: 0.75rem 1rem; }
-            .header-top { flex-direction: column; gap: 0.75rem; }
-            .title { font-size: 1.25rem; }
-
-            .top-ribbon {
-                grid-template-areas:
-                    "playback"
-                    "details"
-                    "files";
-                grid-template-columns: 1fr;
-                justify-items: center;
-            }
-            .title-area, .file-select-stack { justify-self: center; }
-
-            .main-playback-controls { gap: 0.5rem; padding: 0.5rem; flex-wrap: wrap; }
-            .main-playback-controls .icon-btn { width: 38px; height: 38px; }
-            #play-pause-button { width: 44px; height: 44px; }
-            #CameraViewer .video-grid-container { padding: 0.5rem; }
-            .video-grid { gap: 0.5rem; }
-            .panel-section { padding: 1rem; gap: 1rem; }
-            .grid, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -821,82 +40,17 @@
             </div>
         </div>
         <div class="main-tabs">
-            <button class="tab-button active" onclick="openTab(event, 'HowTo')">How To</button>
-            <button class="tab-button" onclick="openTab(event, 'CameraViewer')">Camera Viewer</button>
-            <button class="tab-button" onclick="openTab(event, 'TripRangeEstimator')">Trip Range Estimator</button>
-            <button class="tab-button" onclick="openTab(event, 'ChargingEstimator')">Charging Time Estimator</button>
-            <button class="tab-button" onclick="openTab(event, 'PhantomDrain')">Phantom Drain Estimator</button>
-            <button class="tab-button" onclick="openTab(event, 'About')">About</button>
+            <a href="howto.html" class="tab-button">How To</a>
+            <a href="index.html" class="tab-button active">Camera Viewer</a>
+            <a href="trip_planner.html" class="tab-button">Trip Range Estimator</a>
+            <a href="charging.html" class="tab-button">Charging Time Estimator</a>
+            <a href="phantom_drain.html" class="tab-button">Phantom Drain Estimator</a>
+            <a href="about.html" class="tab-button">About</a>
         </div>
     </header>
 
     <div class="content-container">
-        <div id="HowTo" class="tab-content active">
-            <div class="info-container">
-                <h1>How To Use Tesla Companion</h1>
-                <p>Welcome to your all-in-one Tesla toolkit. Here's a guide to get you started:</p>
-                
-                <h2>Camera Viewer</h2>
-                <ul>
-                    <li><strong>Load Clips:</strong> Click the "Select Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
-                    <li><strong>Navigate Events:</strong> Use the dropdown or navigation buttons to move between events.</li>
-                    <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
-                    <li><strong>Jump to Event:</strong> If an event was triggered, a "Jump to Event" button will appear.</li>
-                    <li><strong>View Location:</strong> If the event contains GPS data, a "Event Map" button will appear.</li>
-                    <li><strong>Grid Screenshots:</strong> Use the "Screenshot" button in the top controls to download a single, high-quality image stitching all visible camera feeds together.</li>
-                </ul>
-
-                <h2>Trip Range Estimator</h2>
-                <ul>
-                    <li><strong>Enter Locations:</strong> Type in a starting and destination address. You can also click "Use Current Location" for the starting point.</li>
-                    <li><strong>Select Vehicle:</strong> Choose your Tesla model from the dropdown. This sets the battery capacity and efficiency.</li>
-                    <li><strong>Set Trip Parameters:</strong> Enter your starting battery percentage, payload, and wheel size. Select your driving style and road conditions. Use the sliders to set the expected outdoor temperature and your desired interior cabin temperature.</li>
-                    <li><strong>Calculate:</strong> Click "Estimate Trip" to see the route on the map and get an estimate of your remaining battery percentage upon arrival. The calculation considers all selected factors for a more accurate result.</li>
-                </ul>
-
-                <h2>Charging Time Estimator</h2>
-                <ul>
-                    <li><strong>Calculate Time to Target %:</strong> Enter your vehicle's details, your current and target battery percentage, and select your charger type. The tool will estimate how long the charging session will take.</li>
-                    <li><strong>Calculate % Gained Over Time:</strong> Enter your current battery percentage, a start time/date, and an end time/date. The tool will estimate your battery's state of charge after that period.</li>
-                    <li><strong>Custom Chargers:</strong> For both modes, you can select "Custom" to input specific voltage and amperage for your charger.</li>
-                </ul>
-                
-                <h2>Phantom Drain Estimator</h2>
-                <ul>
-                    <li><strong>Calculate Drain Time:</strong> Enter your current battery percentage and the percentage you expect it to drain to. The tool will estimate how long your battery will last under the selected conditions.</li>
-                    <li><strong>Calculate Percentage Lost:</strong> Enter your current battery percentage, a start time/date, and an end time/date. The tool will estimate how much battery percentage will be lost in that period.</li>
-                    <li><strong>Refine Calculation:</strong> For both modes, add your battery's current health, the outside temperature, and select any active features (like Sentry Mode) for a more accurate calculation.</li>
-                </ul>
-
-                <h2>Reference Information</h2>
-                <h3>Camera Indexes</h3>
-                <p>The <code>event.json</code> file references cameras by a number. Here is the mapping used by this application:</p>
-                <table>
-                    <thead><tr><th>Index</th><th>Camera View</th></tr></thead>
-                    <tbody>
-                        <tr><td><code>0</code></td><td>Front</td></tr>
-                        <tr><td><code>3</code></td><td>Left Pillar</td></tr>
-                        <tr><td><code>4</code></td><td>Right Pillar</td></tr>
-                        <tr><td><code>5</code></td><td>Left Repeater</td></tr>
-                        <tr><td><code>6</code></td><td>Right Repeater</td></tr>
-                        <tr><td><code>7</code></td><td>Back</td></tr>
-                    </tbody>
-                </table>
-                <h3>Event Reasons</h3>
-                <p>The <code>reason</code> field in the event file indicates what triggered the recording. Here are some common reasons:</p>
-                <table>
-                    <thead><tr><th>Reason Code</th><th>Description</th></tr></thead>
-                    <tbody>
-                        <tr><td><code>sentry_aware_object_detection</code></td><td>Sentry Mode detected an object or movement nearby.</td></tr>
-                        <tr><td><code>user_interaction_dashcam_icon_tapped</code></td><td>You manually triggered a Dashcam recording by tapping the icon on the screen.</td></tr>
-                        <tr><td><code>sentry_locked_handle_pulled</code></td><td>Sentry Mode detected someone pulling on a door handle while the car was locked.</td></tr>
-                        <tr><td><code>user_interaction_honk</code></td><td>You manually triggered a Dashcam recording by honking the horn.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <div id="CameraViewer" class="tab-content">
+        <div id="CameraViewer" class="tab-content active" style="display: flex;">
              <div class="sub-tab-nav">
                 <button class="sub-tab-btn active" id="btn-source-local" onclick="switchCameraSource('local')">Local Files</button>
                 <button class="sub-tab-btn" id="btn-source-pi" onclick="switchCameraSource('pi')">Raspberry Pi</button>
@@ -926,7 +80,7 @@
                                     <button class="btn" id="skip-forward" title="Forward 5s">+5s</button>
                                     <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
                                     <div style="display:flex; align-items:center; position:relative;">
-                                        <input type="number" id="playback-speed" class="styled-input" title="Playback Speed" value="1" min="0.1" max="20" step="0.1" style="width: 60px; padding-right: 20px;">
+                                        <input type="number" id="playback-speed" class="styled-input" title="Playback Speed" value="1" min="0.1" max="16" step="0.1" style="width: 60px; padding-right: 20px;">
                                         <span style="position:absolute; right:8px; color:var(--text-muted-color); font-size:0.8rem; pointer-events:none;">x</span>
                                     </div>
                                     <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
@@ -960,6 +114,7 @@
                             </div>
                             <div class="header-row progress-container">
                                 <div id="event-marker"></div>
+                                <div id="timeline-markers"></div>
                                 <div id="scrubber-tooltip">00:00</div>
                                 <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
                             </div>
@@ -990,288 +145,6 @@
                     </div>
              </div>
         </div>
-
-        <div id="TripRangeEstimator" class="tab-content">
-            <div class="calculator-container">
-                <h1>Trip Range Estimator</h1>
-                <div class="grid">
-                    <div class="form-group">
-                        <label for="start-address">Start Address</label>
-                        <div class="address-input-group">
-                           <input type="text" id="start-address" placeholder="Enter starting point" autocomplete="off">
-                           <button class="btn" id="use-current-location">Current Location</button>
-                        </div>
-                        <div id="start-address-results" class="autocomplete-results"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="end-address">Destination Address</label>
-                         <div class="address-input-group">
-                            <input type="text" id="end-address" placeholder="Enter destination" autocomplete="off">
-                        </div>
-                        <div id="end-address-results" class="autocomplete-results"></div>
-                    </div>
-                </div>
-                <div id="trip-planner-map"></div>
-                <hr>
-                <div class="grid">
-                    <div class="form-group">
-                        <label for="tesla-model">Vehicle</label>
-                        <select id="tesla-model"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="trip-start-soc">Starting Battery (%)</label>
-                        <input type="number" id="trip-start-soc" value="90" min="0" max="100">
-                    </div>
-                </div>
-                <div id="custom-vehicle-params" class="grid" style="display:none;">
-                    <div class="form-group">
-                        <label for="custom-capacity">Custom Capacity (kWh)</label>
-                        <input type="number" id="custom-capacity" value="75">
-                    </div>
-                    <div class="form-group">
-                        <label for="custom-efficiency">Custom Efficiency (Wh/mi)</label>
-                        <input type="number" id="custom-efficiency" value="250">
-                    </div>
-                </div>
-                <div class="options-container is-open">
-                     <div class="options-content" style="max-height: 1000px; opacity: 1; margin-top: 0; padding-bottom: 1rem;">
-                        <div class="grid-4">
-                            <div class="form-group">
-                                <label for="road-conditions">Road Conditions</label>
-                                <select id="road-conditions">
-                                    <option value="1.0" selected>Dry</option>
-                                    <option value="1.15">Wet</option>
-                                    <option value="1.3">Snow</option>
-                                </select>
-                            </div>
-                             <div class="form-group">
-                                <label for="wheel-size">Wheels</label>
-                                <select id="wheel-size"></select>
-                            </div>
-                            <div class="form-group">
-                                <label for="tire-pressure">Tire Pressure</label>
-                                <select id="tire-pressure">
-                                    <option value="1.0" selected>Optimal</option>
-                                    <option value="1.03">Slightly Low</option>
-                                    <option value="1.08">Low</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="payload">Additional Payload (lbs)</label>
-                                <input type="number" id="payload" value="0" min="0" step="50">
-                            </div>
-                             <div class="form-group">
-                                <label for="driving-style">Driving Style</label>
-                                <select id="driving-style">
-                                    <option value="0.95">Chill (FSD)</option>
-                                    <option value="1.0" selected>Average (FSD)</option>
-                                    <option value="1.1">Assertive (FSD)</option>
-                                    <option value="manual">Manual</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div id="manual-driving-slider-container" class="form-group slider-group" style="display:none;">
-                            <label for="manual-aggression" class="slider-label"><span>Manual Driving: Eco</span><span>Aggressive</span></label>
-                            <input type="range" id="manual-aggression" min="0.9" max="1.25" value="1.0" step="0.01">
-                        </div>
-                        <div class="grid">
-                            <div class="form-group slider-group">
-                                <label for="outdoor-temp" class="slider-label"><span>Outdoor Temperature</span><span id="outdoor-temp-value">70°F</span></label>
-                                <input type="range" id="outdoor-temp" min="0" max="110" value="70">
-                            </div>
-                            <div class="form-group slider-group">
-                                <label for="interior-temp" class="slider-label"><span>Interior Temperature</span><span id="interior-temp-value">70°F</span></label>
-                                <input type="range" id="interior-temp" min="60" max="80" value="70">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button class="primary-btn" id="calculate-trip-btn">Estimate Trip</button>
-                <div id="trip-result" class="result-box">Enter trip details above to see your estimate.</div>
-            </div>
-        </div>
-        
-        <div id="ChargingEstimator" class="tab-content">
-             <div class="calculator-container">
-                    <h1>Charging Time Estimator</h1>
-
-                    <!-- Mode Switcher -->
-                    <div class="calc-mode-switcher">
-                        <button id="mode-charge-time-btn" class="mode-btn active">Calculate Time to Target %</button>
-                        <button id="mode-charge-gain-btn" class="mode-btn">Calculate % Gained Over Time</button>
-                    </div>
-
-                    <!-- Shared Inputs -->
-                    <div class="grid">
-                        <div class="form-group"><label for="battery-capacity">Original Battery Capacity (kWh)</label><input type="number" id="battery-capacity" value="75"></div>
-                        <div class="form-group"><label for="charger-efficiency">Charger Efficiency (%)</label><input type="number" id="charger-efficiency" value="85"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="charger-type">Charger Type</label>
-                        <select id="charger-type" onchange="toggleCustomParams()"><option value="1.5">Mobile (15A / 120V)</option><option value="7.7">Mobile (50A / 240V)</option><option value="9.6" selected>Level 2 (Workplace/Home)</option><option value="250">Supercharger</option><option value="custom">Custom...</option></select>
-                    </div>
-                    <div id="custom-params" style="display:none;"><hr><div class="grid"><div class="form-group"><label for="voltage">Voltage (V)</label><input type="number" id="voltage" placeholder="240"></div><div class="form-group"><label for="amps">Amps (A)</label><input type="number" id="amps" placeholder="32"></div></div></div>
-                    <hr>
-                    
-                    <!-- ===== CALCULATOR 1: TIME TO TARGET ===== -->
-                    <div id="chargeTimeToTargetCalculator" class="calc-mode-content active">
-                        <div class="grid">
-                            <div class="form-group"><label for="current-soc">Current Battery (%)</label><input type="number" id="current-soc" placeholder="20" min="0" max="100"></div>
-                            <div class="form-group"><label for="target-soc">Target Battery (%)</label><input type="number" id="target-soc" placeholder="80" min="0" max="100"></div>
-                        </div>
-                        <button class="primary-btn" onclick="calculateChargeToTarget()">Calculate Time</button>
-                    </div>
-
-                    <!-- ===== CALCULATOR 2: % GAINED OVER TIME ===== -->
-                    <div id="chargeGainOverTimeCalculator" class="calc-mode-content">
-                        <div class="form-group">
-                            <label for="charge-gain-current-soc">Current Battery (%)</label>
-                            <input type="number" id="charge-gain-current-soc" placeholder="20" min="0" max="100">
-                        </div>
-                        <div class="grid">
-                            <div class="form-group">
-                                <label for="charge-start-date">Start Date</label>
-                                <input type="date" id="charge-start-date">
-                            </div>
-                            <div class="form-group">
-                                <label for="charge-start-time">Start Time</label>
-                                <input type="time" id="charge-start-time">
-                            </div>
-                        </div>
-                        <div class="grid">
-                            <div class="form-group">
-                                <label for="charge-end-date">End Date</label>
-                                <input type="date" id="charge-end-date">
-                            </div>
-                            <div class="form-group">
-                                <label for="charge-end-time">End Time</label>
-                                <input type="time" id="charge-end-time">
-                            </div>
-                        </div>
-                        <button class="primary-btn" onclick="calculateChargeGain()">Calculate Battery Gain</button>
-                    </div>
-
-                    <!-- Result Box -->
-                    <div id="charging-result" class="result-box"></div>
-             </div>
-        </div>
-
-        <div id="PhantomDrain" class="tab-content">
-             <div class="calculator-container">
-                    <h1>Phantom Drain Estimator</h1>
-                    
-                    <!-- Mode Switcher -->
-                    <div class="calc-mode-switcher">
-                        <button id="mode-drain-time-btn" class="mode-btn active">Calculate Time to Drain</button>
-                        <button id="mode-drain-percent-btn" class="mode-btn">Calculate % Lost Over Time</button>
-                    </div>
-
-                    <!-- ===== CALCULATOR 1: TIME TO DRAIN ===== -->
-                    <div id="drainTimeCalculator" class="calc-mode-content active">
-                        <div class="grid">
-                            <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
-                            <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
-                        </div>
-                        
-                        <div class="options-container">
-                            <button type="button" class="options-toggle-btn">
-                                <span>Refine Calculation (Optional)</span>
-                                <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </button>
-                            <div class="options-content">
-                                <div class="grid">
-                                    <div class="form-group"><label for="drain-time-battery-health">Current Battery Health (%)</label><input type="number" id="drain-time-battery-health" value="100" min="50" max="100"></div>
-                                    <div class="form-group"><label for="drain-time-outside-temp">Outside Temperature (°F)</label><input type="number" id="drain-time-outside-temp" value="70"></div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Auxiliary Features Enabled:</label>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-sentry" name="drain-time-feature" value="230"><label for="drain-time-sentry">Sentry Mode</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-summon" name="drain-time-feature" value="150"><label for="drain-time-summon">Summon Standby</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-accessory" name="drain-time-feature" value="100"><label for="drain-time-accessory">Keep Accessory Power On</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-climate" name="drain-time-feature" value="1000"><label for="drain-time-climate">Keep Climate On (A/C)</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-overheat-ac" name="drain-time-feature" value="150"><label for="drain-time-overheat-ac">Cabin Overheat Protection (A/C)</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-time-overheat-fan" name="drain-time-feature" value="50"><label for="drain-time-overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
-                        <div id="drain-time-result" class="result-box"></div>
-                    </div>
-
-                    <!-- ===== CALCULATOR 2: % LOST OVER TIME ===== -->
-                    <div id="drainPercentCalculator" class="calc-mode-content">
-                        <div class="form-group">
-                            <label for="drain-current-soc-percent">Current Battery (%)</label>
-                            <input type="number" id="drain-current-soc-percent" placeholder="80" min="0" max="100">
-                        </div>
-                        <div class="grid">
-                            <div class="form-group">
-                                <label for="drain-start-date">Start Date</label>
-                                <input type="date" id="drain-start-date">
-                            </div>
-                            <div class="form-group">
-                                <label for="drain-start-time">Start Time</label>
-                                <input type="time" id="drain-start-time">
-                            </div>
-                        </div>
-                        <div class="grid">
-                            <div class="form-group">
-                                <label for="drain-end-date">End Date</label>
-                                <input type="date" id="drain-end-date">
-                            </div>
-                            <div class="form-group">
-                                <label for="drain-end-time">End Time</label>
-                                <input type="time" id="drain-end-time">
-                            </div>
-                        </div>
-
-                        <div class="options-container">
-                            <button type="button" class="options-toggle-btn">
-                                <span>Refine Calculation (Optional)</span>
-                                <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </button>
-                            <div class="options-content">
-                                <div class="grid">
-                                    <div class="form-group"><label for="drain-percent-battery-health">Current Battery Health (%)</label><input type="number" id="drain-percent-battery-health" value="100" min="50" max="100"></div>
-                                    <div class="form-group"><label for="drain-percent-outside-temp">Outside Temperature (°F)</label><input type="number" id="drain-percent-outside-temp" value="70"></div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Auxiliary Features Enabled:</label>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-sentry" name="drain-percent-feature" value="230"><label for="drain-percent-sentry">Sentry Mode</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-summon" name="drain-percent-feature" value="150"><label for="drain-percent-summon">Summon Standby</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-accessory" name="drain-percent-feature" value="100"><label for="drain-percent-accessory">Keep Accessory Power On</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-climate" name="drain-percent-feature" value="1000"><label for="drain-percent-climate">Keep Climate On (A/C)</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-overheat-ac" name="drain-percent-feature" value="150"><label for="drain-percent-overheat-ac">Cabin Overheat Protection (A/C)</label></div>
-                                    <div class="checkbox-group"><input type="checkbox" id="drain-percent-overheat-fan" name="drain-percent-feature" value="50"><label for="drain-percent-overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button class="primary-btn" onclick="calculateDrainPercentage()">Calculate Percentage Lost</button>
-                        <div id="drain-percent-result" class="result-box"></div>
-                    </div>
-             </div>
-        </div>
-
-        <div id="About" class="tab-content">
-            <div class="info-container">
-                <h1>About Tesla Companion</h1>
-                <p>This application was created to provide an easy-to-use toolkit for Tesla owners. It combines several useful utilities into a single, responsive web interface that works on any device.</p>
-                
-                <h2>Credits & Acknowledgements</h2>
-                <ul>
-                    <li>The core Camera Viewer functionality was originally created by <strong>Lythinari</strong>. You can find the original project on <a href="https://github.com/Lythinari/TeslaCamViewer" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
-                    <li>This version was further edited and refined by <strong>Joshua Leshnick</strong>. You can find the project on <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" style="color: var(--primary-color);">GitHub</a>.</li>
-                    <li>This app was built with HTML5, CSS3, and modern JavaScript.</li>
-                    <li>Icons provided by Feather Icons.</li>
-                    <li>Font by Google Fonts (Inter).</li>
-                </ul>
-
-                <h2>Disclaimer</h2>
-                <p>This is an unofficial, open-source community project and is not affiliated with Tesla, Inc. All calculations are estimates and should be used for informational purposes only.</p>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -1287,9 +160,6 @@
             sortedEventKeys: [], currentEventData: {},
             cameraSource: 'local', // 'local' or 'pi'
             piConfig: { ip: '', user: '', pass: '', useProxy: false },
-            // Trip Planner State
-            tripMap: null,
-            routingControl: null,
         };
 
         const dom = {
@@ -1329,6 +199,7 @@
             skipRewindButton: document.querySelector('#skip-rewind'),
             playbackSpeedSelector: document.querySelector('#playback-speed'),
             scrubberTooltip: document.getElementById('scrubber-tooltip'),
+            timelineMarkersContainer: document.getElementById('timeline-markers'),
             collapsibleControls: document.querySelector('#collapsible-controls'),
             titleFolderName: document.querySelector('.title-folder-name'),
             eventDetailsContainer: document.getElementById('event-details-container'),
@@ -1348,38 +219,6 @@
             piPassInput: document.getElementById('pi-pass'),
             piUseProxy: document.getElementById('pi-use-proxy'),
             piConnectBtn: document.getElementById('pi-connect-btn'),
-            // Charging Estimator Elements
-            modeChargeTimeBtn: document.getElementById('mode-charge-time-btn'),
-            modeChargeGainBtn: document.getElementById('mode-charge-gain-btn'),
-            chargeTimeToTargetCalculator: document.getElementById('chargeTimeToTargetCalculator'),
-            chargeGainOverTimeCalculator: document.getElementById('chargeGainOverTimeCalculator'),
-            // Phantom Drain Elements
-            modeDrainTimeBtn: document.getElementById('mode-drain-time-btn'),
-            modeDrainPercentBtn: document.getElementById('mode-drain-percent-btn'),
-            drainTimeCalculator: document.getElementById('drainTimeCalculator'),
-            drainPercentCalculator: document.getElementById('drainPercentCalculator'),
-            // Trip Planner Elements
-            tripPlannerMap: document.getElementById('trip-planner-map'),
-            startAddressInput: document.getElementById('start-address'),
-            startAddressResults: document.getElementById('start-address-results'),
-            endAddressInput: document.getElementById('end-address'),
-            endAddressResults: document.getElementById('end-address-results'),
-            useCurrentLocationBtn: document.getElementById('use-current-location'),
-            calculateTripBtn: document.getElementById('calculate-trip-btn'),
-            tripResultDiv: document.getElementById('trip-result'),
-            outdoorTempSlider: document.getElementById('outdoor-temp'),
-            outdoorTempValue: document.getElementById('outdoor-temp-value'),
-            interiorTempSlider: document.getElementById('interior-temp'),
-            interiorTempValue: document.getElementById('interior-temp-value'),
-            teslaModelSelect: document.getElementById('tesla-model'),
-            customVehicleParams: document.getElementById('custom-vehicle-params'),
-            wheelSelect: document.getElementById('wheel-size'),
-            drivingStyleSelect: document.getElementById('driving-style'),
-            manualAggressionContainer: document.getElementById('manual-driving-slider-container'),
-            manualAggressionSlider: document.getElementById('manual-aggression'),
-            payloadInput: document.getElementById('payload'),
-            roadConditionsSelect: document.getElementById('road-conditions'),
-            tirePressureSelect: document.getElementById('tire-pressure'),
         };
 
         const friendlyEventReasons = {
@@ -1389,61 +228,6 @@
             'sentry_locked_handle_pulled': 'Sentry: Handle Pulled',
             'user_interaction_dashcam_multifunction_selected': 'Dashcam Saved (Manual)',
         };
-        
-        const teslaModelData = {
-            'm3-sr': { name: 'Model 3 Standard Range', epaRange: 272, capacity: 54, efficiency: 250, wheels: { '18" Aero': 1.0, '19" Sport': 1.04 } },
-            'm3-lr': { name: 'Model 3 Long Range', epaRange: 333, capacity: 75, efficiency: 250, wheels: { '18" Aero': 1.0, '19" Sport': 1.04 } },
-            'm3-p': { name: 'Model 3 Performance', epaRange: 315, capacity: 75, efficiency: 260, wheels: { '20" Uberturbine': 1.0 } },
-            'my-lr': { name: 'Model Y Long Range', epaRange: 330, capacity: 75, efficiency: 280, wheels: { '19" Gemini': 1.0, '20" Induction': 1.05 } },
-            'my-p': { name: 'Model Y Performance', epaRange: 303, capacity: 75, efficiency: 300, wheels: { '21" Uberturbine': 1.0 } },
-            'ms-lr': { name: 'Model S Long Range', epaRange: 405, capacity: 100, efficiency: 280, wheels: { '19" Tempest': 1.0, '21" Arachnid': 1.06 } },
-            'ms-plaid': { name: 'Model S Plaid', epaRange: 396, capacity: 100, efficiency: 290, wheels: { '19" Tempest': 1.0, '21" Arachnid': 1.06 } },
-            'mx-lr': { name: 'Model X Long Range', epaRange: 348, capacity: 100, efficiency: 320, wheels: { '20" Cyberstream': 1.0, '22" Turbine': 1.08 } },
-            'mx-plaid': { name: 'Model X Plaid', epaRange: 333, capacity: 100, efficiency: 330, wheels: { '20" Cyberstream': 1.0, '22" Turbine': 1.08 } },
-            'ct-awd': { name: 'Cybertruck AWD', epaRange: 340, capacity: 123, efficiency: 450, wheels: { '35" All-Terrain': 1.0 } },
-        };
-
-        window.openTab = (evt, tabName) => {
-            let i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) tabcontent[i].classList.remove("active");
-            tablinks = document.getElementsByClassName("tab-button");
-            for (i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("active");
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
-            dom.cameraControlsContainer.style.display = (tabName === 'CameraViewer') ? 'block' : 'none';
-            // Show sub-tab nav only in Camera Viewer
-            const subTabNav = document.querySelector('.sub-tab-nav');
-            if(subTabNav) subTabNav.style.display = (tabName === 'CameraViewer') ? 'flex' : 'none';
-
-            if (tabName === 'PhantomDrain') {
-                setDefaultDrainTimes();
-            }
-            if (tabName === 'ChargingEstimator') {
-                setDefaultChargeTimes();
-            }
-            if (tabName === 'TripRangeEstimator' && !state.tripMap) {
-                initTripPlannerMap();
-            }
-        }
-
-        const applyTheme = (theme) => {
-            if (theme === 'light') {
-                dom.body.classList.add('light-mode');
-                dom.tripPlannerMap.classList.remove('dark-mode');
-                dom.themeIconSun.style.display = 'none';
-                dom.themeIconMoon.style.display = 'block';
-            } else {
-                dom.body.classList.remove('light-mode');
-                dom.tripPlannerMap.classList.add('dark-mode');
-                dom.themeIconSun.style.display = 'block';
-                dom.themeIconMoon.style.display = 'none';
-            }
-        }
-        
-        window.toggleCustomParams = () => {
-            document.getElementById('custom-params').style.display = (document.getElementById('charger-type').value === 'custom') ? 'block' : 'none';
-        }
 
         window.switchCameraSource = (source) => {
             state.cameraSource = source;
@@ -1481,8 +265,21 @@
             dom.durationDisplay.textContent = "00:00";
             dom.masterScrubber.value = 0;
             dom.eventMarker.style.display = "none";
+            dom.timelineMarkersContainer.innerHTML = '';
             dom.jumpToEventButton.style.display = "none";
             dom.mapButton.style.display = 'none';
+        }
+        
+        const applyTheme = (theme) => {
+            if (theme === 'light') {
+                dom.body.classList.add('light-mode');
+                dom.themeIconSun.style.display = 'none';
+                dom.themeIconMoon.style.display = 'block';
+            } else {
+                dom.body.classList.remove('light-mode');
+                dom.themeIconSun.style.display = 'block';
+                dom.themeIconMoon.style.display = 'none';
+            }
         }
 
         async function connectToPi() {
@@ -1539,27 +336,42 @@
             
             const useProxy = state.piConfig.useProxy;
 
-            // Scan for SentryClips AND SavedClips to count events per day
-            const eventsCountMap = new Map(); // Date -> Set of sequence names
-            for (const line of lines) {
+            // Scan for SentryClips AND SavedClips to count events per day and store for markers
+            const eventsMap = new Map(); // Date -> [{ time, type, sequenceName }, ...]
+            
+            for (const lineRaw of lines) {
+                 const line = lineRaw.trim();
+                 if (!line) continue;
                  if (line.startsWith('SentryClips') || line.startsWith('SavedClips')) {
                      const parts = line.split('/');
                      if (parts.length >= 2) {
-                         const sequenceName = parts[1]; // e.g. 2023-11-23_12-30-00
-                         // Extract date YYYY-MM-DD
+                         const group = parts[0];
+                         const sequenceName = parts[1]; 
                          const dateMatch = sequenceName.match(/^(\d{4}-\d{2}-\d{2})/);
                          if (dateMatch) {
                              const date = dateMatch[1];
-                             if (!eventsCountMap.has(date)) eventsCountMap.set(date, new Set());
-                             eventsCountMap.get(date).add(sequenceName);
+                             if (!eventsMap.has(date)) eventsMap.set(date, new Map());
+                             
+                             if (!eventsMap.get(date).has(sequenceName)) {
+                                 const isoTime = sequenceName.substring(0, 10) + 'T' + sequenceName.substring(11).replace(/-/g, ':');
+                                 const eventDate = new Date(isoTime);
+                                 
+                                 eventsMap.get(date).set(sequenceName, {
+                                     time: eventDate,
+                                     type: group === 'SentryClips' ? 'sentry' : 'saved',
+                                     sequenceName: sequenceName
+                                 });
+                             }
                          }
                      }
                  }
             }
+            state.eventsMap = eventsMap;
 
-            for (const line of lines) {
-                // Expected format: Group/SequenceName/Filename
-                // e.g. RecentClips/2023-11-23_12-00-00/front.mp4
+            for (const lineRaw of lines) {
+                const line = lineRaw.trim();
+                if (!line) continue;
+                
                 const parts = line.split('/');
                 if (parts.length < 3) continue;
 
@@ -1629,23 +441,32 @@
                 }
             }
 
-            state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
+            // For dropdown, we only want keys that look like dates (RecentClips days)
+            const allKeys = Array.from(state.eventClips.keys()).sort();
+            state.sortedEventKeys = allKeys;
             
-            if (state.sortedEventKeys.length === 0) {
-                dom.titleFolderName.textContent = 'No Clips Found on Pi';
-                dom.dateSelector.innerHTML = '<option>No Events Found</option>';
-                return;
+            const dateKeys = allKeys.filter(k => k.match(/^\d{4}-\d{2}-\d{2}$/));
+            
+            if (dateKeys.length === 0) {
+                 if (allKeys.length === 0) {
+                    dom.titleFolderName.textContent = 'No Clips Found on Pi';
+                    dom.dateSelector.innerHTML = '<option>No Events Found</option>';
+                    return;
+                 }
             }
 
             dom.dateSelector.innerHTML = '';
-            state.sortedEventKeys.forEach((key, index) => { 
+            const keysToShow = dateKeys.length > 0 ? dateKeys : allKeys;
+            
+            keysToShow.forEach((key) => { 
+                const index = state.sortedEventKeys.indexOf(key);
                 const option = document.createElement("option"); 
                 
-                // Check if key looks like a date (for RecentClips folder structure)
                 const dateMatch = key.match(/^(\d{4}-\d{2}-\d{2})/);
                 if (dateMatch && key.length === 10) {
                      const dateStr = dateMatch[1];
-                     const eventCount = eventsCountMap.has(dateStr) ? eventsCountMap.get(dateStr).size : 0;
+                     const eventsForDate = eventsMap.get(dateStr);
+                     const eventCount = eventsForDate ? eventsForDate.size : 0;
                      option.innerText = `${key} (${eventCount} events)`;
                 } else {
                     option.innerText = key;
@@ -1654,584 +475,14 @@
                 option.value = index; 
                 dom.dateSelector.appendChild(option); 
             });
-            dom.titleFolderName.textContent = `Found ${state.sortedEventKeys.length} Events`;
-            loadEvent(0);
-        }
-
-        // --- Charging Estimator Logic ---
-
-        function getChargerPower() {
-            const chargerType = document.getElementById('charger-type').value;
-            let chargerPower = 0;
-            if (chargerType === 'custom') {
-                const voltage = parseFloat(document.getElementById('voltage').value);
-                const amps = parseFloat(document.getElementById('amps').value);
-                if (isNaN(voltage) || isNaN(amps) || voltage <= 0 || amps <= 0) {
-                    return { error: "Please enter valid Voltage and Amperage." };
-                }
-                chargerPower = (voltage * amps) / 1000;
-            } else {
-                chargerPower = parseFloat(chargerType);
-            }
-            return { power: chargerPower };
-        }
-
-        function formatDuration(timeHours) {
-            const days = Math.floor(timeHours / 24);
-            const hours = Math.floor(timeHours % 24);
-            const minutes = Math.round((timeHours - Math.floor(timeHours)) * 60);
-
-            let resultText = '';
-            if (days > 0) resultText += `${days}d `;
-            if (hours > 0) resultText += `${hours}h `;
-            if (minutes > 0) resultText += `${minutes}m`;
-            if (resultText === '') return "less than a minute";
-            return resultText.trim();
-        }
-
-        window.calculateChargeToTarget = () => {
-            const capacity = parseFloat(document.getElementById('battery-capacity').value);
-            const efficiency = parseFloat(document.getElementById('charger-efficiency').value) / 100;
-            const currentSOC = parseFloat(document.getElementById('current-soc').value);
-            const targetSOC = parseFloat(document.getElementById('target-soc').value);
-            const resultDiv = document.getElementById('charging-result');
-
-            if (isNaN(capacity) || isNaN(currentSOC) || isNaN(targetSOC) || currentSOC >= targetSOC) {
-                resultDiv.innerHTML = "Please enter valid capacity and battery percentages.";
-                return;
-            }
-
-            const powerResult = getChargerPower();
-            if (powerResult.error) {
-                resultDiv.innerHTML = powerResult.error;
-                return;
-            }
-            const chargerPower = powerResult.power;
-
-            const energyNeeded = (targetSOC - currentSOC) / 100 * capacity;
-            // Superchargers (DC) are not affected by the car's onboard charger efficiency
-            const timeHours = energyNeeded / (chargerPower * (chargerPower === 250 ? 1 : efficiency));
-            const hours = Math.floor(timeHours);
-            const minutes = Math.round((timeHours - hours) * 60);
-
-            let resultText = `Estimated time to charge:<br><strong>`;
-              if (hours > 0) resultText += `${hours} hr `;
-            if (minutes > 0) resultText += `${minutes} min`;
-            if (hours === 0 && minutes === 0) resultText = "Charge time is less than a minute.";
-            resultDiv.innerHTML = resultText + `</strong>`;
-        }
-        
-        window.calculateChargeGain = () => {
-            const resultDiv = document.getElementById('charging-result');
-            const capacity = parseFloat(document.getElementById('battery-capacity').value);
-            const efficiency = parseFloat(document.getElementById('charger-efficiency').value) / 100;
-            const currentSOC = parseFloat(document.getElementById('charge-gain-current-soc').value);
-
-            const startDateStr = document.getElementById('charge-start-date').value;
-            const startTimeStr = document.getElementById('charge-start-time').value;
-            const endDateStr = document.getElementById('charge-end-date').value;
-            const endTimeStr = document.getElementById('charge-end-time').value;
-
-            if (isNaN(capacity) || isNaN(efficiency) || isNaN(currentSOC)) {
-                resultDiv.innerHTML = "Please enter valid capacity, efficiency, and current battery %.";
-                return;
-            }
-            if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
-                resultDiv.innerHTML = "Please enter valid start and end dates/times.";
-                return;
-            }
-
-            const startTime = new Date(`${startDateStr}T${startTimeStr}`);
-            const endTime = new Date(`${endDateStr}T${endTimeStr}`);
-
-            if (endTime <= startTime) {
-                resultDiv.innerHTML = "End time must be after the start time.";
-                return;
-            }
-
-            const powerResult = getChargerPower();
-            if (powerResult.error) {
-                resultDiv.innerHTML = powerResult.error;
-                return;
-            }
-            const chargerPower = powerResult.power;
-
-            const durationMillis = endTime - startTime;
-            const durationHours = durationMillis / (1000 * 60 * 60);
-
-            // Superchargers (DC) are not affected by the car's onboard charger efficiency
-            const energyAddedKwh = chargerPower * durationHours * (chargerPower === 250 ? 1 : efficiency); 
-            const percentageGained = (energyAddedKwh / capacity) * 100;
-            let finalSOC = currentSOC + percentageGained;
-
-            let capped = false;
-            if (finalSOC > 100) {
-                finalSOC = 100;
-                capped = true;
-            }
-
-            resultDiv.innerHTML = `Estimated battery at end time: <strong style="font-size: 1.5rem;">${finalSOC.toFixed(1)}%</strong><br>
-                <small>(Gained ~${percentageGained.toFixed(1)}% over ${formatDuration(durationHours)})${capped ? ' - Charge capped at 100%' : ''}</small>`;
-        }
-
-        function setDefaultChargeTimes() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            const hh = String(now.getHours()).padStart(2, '0');
-            const min = String(now.getMinutes()).padStart(2, '0');
-
-            document.getElementById('charge-start-date').value = `${year}-${mm}-${dd}`;
-            document.getElementById('charge-start-time').value = `${hh}:${min}`;
-
-            // Default end time to one hour from now
-            const later = new Date(now.getTime() + 60 * 60 * 1000);
-            const year_t = later.getFullYear();
-            const mm_t = String(later.getMonth() + 1).padStart(2, '0');
-            const dd_t = String(later.getDate()).padStart(2, '0');
-            const hh_t = String(later.getHours()).padStart(2, '0');
-            const min_t = String(later.getMinutes()).padStart(2, '0');
-
-            document.getElementById('charge-end-date').value = `${year_t}-${mm_t}-${dd_t}`;
-            document.getElementById('charge-end-time').value = `${hh_t}:${min_t}`;
-        }
-
-        function switchChargeMode(mode) {
-            if (mode === 'time') {
-                dom.modeChargeTimeBtn.classList.add('active');
-                dom.modeChargeGainBtn.classList.remove('active');
-                dom.chargeTimeToTargetCalculator.classList.add('active');
-                dom.chargeGainOverTimeCalculator.classList.remove('active');
-            } else { // mode === 'gain'
-                dom.modeChargeTimeBtn.classList.remove('active');
-                dom.modeChargeGainBtn.classList.add('active');
-                dom.chargeTimeToTargetCalculator.classList.remove('active');
-                dom.chargeGainOverTimeCalculator.classList.add('active');
-                setDefaultChargeTimes();
-            }
-        }
-
-
-        // --- Phantom Drain Calculator Logic (Updated) ---
-
-        function getDrainParameters() {
-            const prefix = dom.drainTimeCalculator.classList.contains('active') ? 'drain-time-' : 'drain-percent-';
             
-            const originalCapacity = 75; // Base capacity in kWh
-            const batteryHealth = parseFloat(document.getElementById(prefix + 'battery-health').value) / 100;
-            const outsideTempF = parseFloat(document.getElementById(prefix + 'outside-temp').value);
-
-            let totalDrainWatts = 0;
-            let featuresActive = false;
-            document.getElementsByName(prefix + 'feature').forEach(feature => {
-                if (feature.checked) {
-                    featuresActive = true;
-                    totalDrainWatts += parseFloat(feature.value);
-                }
-            });
-
-            // If no specific features are active, assume a base idle drain for a sleeping car.
-            if (!featuresActive) {
-                totalDrainWatts = 50; 
+            if (dom.dateSelector.options.length > 0) {
+                dom.dateSelector.selectedIndex = 0;
+                loadEvent(parseInt(dom.dateSelector.value));
             }
-            
-            // Adjust drain based on temperature, as the battery management system may activate.
-            let tempMultiplier = 1.0;
-            if (outsideTempF > 90) { // Extreme heat can trigger battery cooling.
-                tempMultiplier = 1.5; 
-            } else if (outsideTempF < 40) { // Extreme cold can trigger battery heating.
-                tempMultiplier = 2.0; 
-            }
-
-            const actualDrainWatts = totalDrainWatts * tempMultiplier;
-            const currentCapacityKwh = originalCapacity * batteryHealth;
-
-            if (isNaN(batteryHealth) || isNaN(outsideTempF)) {
-                return null;
-            }
-
-            return { actualDrainWatts, currentCapacityKwh };
+             dom.titleFolderName.textContent = `Found ${keysToShow.length} Days`;
         }
 
-        window.calculateDrainTime = () => {
-            const resultDiv = document.getElementById('drain-time-result');
-            const currentSOC = parseFloat(document.getElementById('drain-current-soc').value);
-            const targetSOC = parseFloat(document.getElementById('drain-target-soc').value);
-            
-            if (isNaN(currentSOC) || isNaN(targetSOC) || currentSOC <= targetSOC) {
-                resultDiv.innerHTML = "Please enter valid battery percentages (Current > Target).";
-                return;
-            }
-
-            const params = getDrainParameters();
-            if (!params) {
-                resultDiv.innerHTML = "Please enter valid battery health and temperature.";
-                return;
-            }
-            
-            const energyToDrainWh = (currentSOC - targetSOC) / 100 * params.currentCapacityKwh * 1000;
-            const timeHours = energyToDrainWh / params.actualDrainWatts;
-            
-            const days = Math.floor(timeHours / 24);
-            const hours = Math.floor(timeHours % 24);
-
-            let resultText = `Estimated time to drain:<br><strong>`;
-            if (days > 0) resultText += `${days} days `;
-            if (hours > 0) resultText += `${hours} hours`;
-            if (days === 0 && hours === 0) resultText = "Drain time is very short.";
-            resultDiv.innerHTML = resultText + `</strong>`;
-        }
-
-        window.calculateDrainPercentage = () => {
-            const resultDiv = document.getElementById('drain-percent-result');
-            const currentSOC = parseFloat(document.getElementById('drain-current-soc-percent').value);
-            
-            const startDateStr = document.getElementById('drain-start-date').value;
-            const startTimeStr = document.getElementById('drain-start-time').value;
-            const endDateStr = document.getElementById('drain-end-date').value;
-            const endTimeStr = document.getElementById('drain-end-time').value;
-
-            if (isNaN(currentSOC)) {
-                 resultDiv.innerHTML = "Please enter a valid current battery percentage.";
-                 return;
-            }
-
-            if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
-                resultDiv.innerHTML = "Please enter valid start and end dates/times.";
-                return;
-            }
-
-            const startTime = new Date(`${startDateStr}T${startTimeStr}`);
-            const endTime = new Date(`${endDateStr}T${endTimeStr}`);
-
-            if (endTime <= startTime) {
-                resultDiv.innerHTML = "End time must be after the start time.";
-                return;
-            }
-
-            const params = getDrainParameters();
-            if (!params) {
-                resultDiv.innerHTML = "Please enter valid battery health and temperature.";
-                return;
-            }
-
-            const durationMillis = endTime - startTime;
-            const durationHours = durationMillis / (1000 * 60 * 60);
-
-            const energyDrainedWh = params.actualDrainWatts * durationHours;
-            const energyDrainedKwh = energyDrainedWh / 1000;
-
-            const percentageLost = (energyDrainedKwh / params.currentCapacityKwh) * 100;
-            const finalSOC = currentSOC - percentageLost;
-
-            resultDiv.innerHTML = `Estimated drain: <strong>${percentageLost.toFixed(1)}%</strong><br>Final SOC will be ~<strong>${finalSOC.toFixed(1)}%</strong>`;
-        }
-
-        function setDefaultDrainTimes() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            const hh = String(now.getHours()).padStart(2, '0');
-            const min = String(now.getMinutes()).padStart(2, '0');
-
-            document.getElementById('drain-start-date').value = `${year}-${mm}-${dd}`;
-            document.getElementById('drain-start-time').value = `${hh}:${min}`;
-
-            // Default end date to tomorrow
-            const tomorrow = new Date(now);
-            tomorrow.setDate(now.getDate() + 1);
-            const year_t = tomorrow.getFullYear();
-            const mm_t = String(tomorrow.getMonth() + 1).padStart(2, '0');
-            const dd_t = String(tomorrow.getDate()).padStart(2, '0');
-            document.getElementById('drain-end-date').value = `${year_t}-${mm_t}-${dd_t}`;
-            document.getElementById('drain-end-time').value = `${hh}:${min}`;
-        }
-
-        function switchDrainMode(mode) {
-            if (mode === 'time') {
-                dom.modeDrainTimeBtn.classList.add('active');
-                dom.modeDrainPercentBtn.classList.remove('active');
-                dom.drainTimeCalculator.classList.add('active');
-                dom.drainPercentCalculator.classList.remove('active');
-            } else { // mode === 'percent'
-                dom.modeDrainTimeBtn.classList.remove('active');
-                dom.modeDrainPercentBtn.classList.add('active');
-                dom.drainTimeCalculator.classList.remove('active');
-                dom.drainPercentCalculator.classList.add('active');
-                setDefaultDrainTimes(); // Set defaults when switching to this mode
-            }
-        }
-
-        // --- Trip Planner Logic (Leaflet) ---
-        function populateVehicleSelect() {
-            dom.teslaModelSelect.innerHTML = '';
-            for (const [key, model] of Object.entries(teslaModelData)) {
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = `${model.name} (${model.epaRange} mi)`;
-                dom.teslaModelSelect.appendChild(option);
-            }
-            const customOption = document.createElement('option');
-            customOption.value = 'custom';
-            customOption.textContent = 'Custom...';
-            dom.teslaModelSelect.appendChild(customOption);
-        }
-
-        function updateWheelOptions() {
-            const modelKey = dom.teslaModelSelect.value;
-            dom.wheelSelect.innerHTML = '';
-            if (modelKey !== 'custom' && teslaModelData[modelKey] && teslaModelData[modelKey].wheels) {
-                for (const [name, efficiency] of Object.entries(teslaModelData[modelKey].wheels)) {
-                    const option = document.createElement('option');
-                    option.value = efficiency;
-                    option.textContent = name;
-                    dom.wheelSelect.appendChild(option);
-                }
-                dom.wheelSelect.parentElement.style.display = 'block';
-            } else {
-                 dom.wheelSelect.parentElement.style.display = 'none';
-            }
-        }
-
-        function initTripPlannerMap() {
-            state.tripMap = L.map(dom.tripPlannerMap).setView([34.7304, -86.5861], 8); // Huntsville, AL
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(state.tripMap);
-            
-            populateVehicleSelect();
-            updateWheelOptions();
-            applyTheme(localStorage.getItem('theme') || 'dark');
-            
-            initAutocomplete(dom.startAddressInput, dom.startAddressResults);
-            initAutocomplete(dom.endAddressInput, dom.endAddressResults);
-        }
-
-        function useCurrentLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async position => {
-                    const { latitude, longitude } = position.coords;
-                    // Use Nominatim for reverse geocoding (coords to address)
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                    const data = await response.json();
-                    if (data && data.display_name) {
-                        dom.startAddressInput.value = data.display_name;
-                    } else {
-                        alert("Could not find address for your location.");
-                    }
-                }, () => {
-                    alert("Error: The Geolocation service failed.");
-                });
-            } else {
-                alert("Error: Your browser doesn't support geolocation.");
-            }
-        }
-        
-        const debounce = (func, delay) => {
-            let timeout;
-            return function(...args) {
-                const context = this;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);
-            };
-        };
-
-        async function fetchAutocompleteResults(query, resultsContainer) {
-            if (query.length < 2) { // Trigger autocomplete sooner
-                resultsContainer.innerHTML = '';
-                resultsContainer.style.display = 'none';
-                return;
-            }
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
-            const results = await response.json();
-            
-            resultsContainer.innerHTML = '';
-            if (results.length > 0) {
-                results.forEach(result => {
-                    const item = document.createElement('div');
-                    item.className = 'autocomplete-item';
-                    item.textContent = result.display_name;
-                    item.onclick = () => {
-                        resultsContainer.previousElementSibling.querySelector('input').value = result.display_name;
-                        resultsContainer.innerHTML = '';
-                        resultsContainer.style.display = 'none';
-                    };
-                    resultsContainer.appendChild(item);
-                });
-                resultsContainer.style.display = 'block';
-            } else {
-                resultsContainer.style.display = 'none';
-            }
-        }
-
-        function initAutocomplete(inputElement, resultsContainer) {
-            const debouncedFetch = debounce(fetchAutocompleteResults, 250); // Reduced delay
-            inputElement.addEventListener('input', () => {
-                debouncedFetch(inputElement.value, resultsContainer);
-            });
-        }
-
-        // Helper function to convert an address to coordinates
-        async function geocodeAddress(address) {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-            const results = await response.json();
-            if (results && results.length > 0) {
-                return L.latLng(results[0].lat, results[0].lon);
-            } else {
-                throw new Error(`Could not find coordinates for "${address}"`);
-            }
-        }
-
-        async function calculateAndDisplayRoute() {
-            const startAddress = dom.startAddressInput.value;
-            const endAddress = dom.endAddressInput.value;
-            dom.tripResultDiv.innerHTML = 'Calculating route...';
-
-            if (!startAddress || !endAddress) {
-                dom.tripResultDiv.innerHTML = "Please enter both a start and destination address.";
-                return;
-            }
-
-            if (state.routingControl) {
-                state.tripMap.removeControl(state.routingControl);
-                state.routingControl = null;
-            }
-
-            try {
-                // First, convert addresses to coordinates
-                const [startWaypoint, endWaypoint] = await Promise.all([
-                    geocodeAddress(startAddress),
-                    geocodeAddress(endAddress)
-                ]);
-
-                // Then, create the route with the found coordinates
-                state.routingControl = L.Routing.control({
-                    waypoints: [startWaypoint, endWaypoint],
-                    routeWhileDragging: false,
-                    createMarker: () => null, // Hide default markers
-                    show: false, // Hide the default turn-by-turn panel
-                    lineOptions: {
-                        styles: [{ color: 'var(--primary-color)', opacity: 0.8, weight: 6 }]
-                    },
-                    // Add router to get elevation data
-                    router: L.Routing.osrmv1({
-                        serviceUrl: 'https://router.project-osrm.org/route/v1',
-                        profile: 'driving',
-                        routingOptions: {
-                            alternatives: true,
-                            steps: true,
-                            overview: 'full',
-                            geometries: 'geojson'
-                        }
-                    })
-                }).on('routesfound', function(e) {
-                    var routes = e.routes;
-                    estimateTrip(routes[0]);
-                }).on('routingerror', function(e) {
-                    dom.tripResultDiv.innerHTML = `Could not find a route. Error: ${e.error.message}`;
-                }).addTo(state.tripMap);
-
-            } catch (error) {
-                console.error("Geocoding/Routing Error:", error);
-                dom.tripResultDiv.innerHTML = error.message;
-            }
-        }
-
-
-        function estimateTrip(route) {
-            const distanceMeters = route.summary.totalDistance;
-            const distanceMiles = distanceMeters * 0.000621371;
-            
-            // Elevation calculation
-            let elevationGainMeters = 0;
-            if (route.coordinates && route.coordinates.length > 0) {
-                for (let i = 1; i < route.coordinates.length; i++) {
-                    if(route.coordinates[i].alt > route.coordinates[i-1].alt) {
-                       elevationGainMeters += route.coordinates[i].alt - route.coordinates[i-1].alt;
-                    }
-                }
-            }
-            const elevationGainFeet = elevationGainMeters * 3.28084;
-
-
-            const modelKey = dom.teslaModelSelect.value;
-            let model;
-
-            if (modelKey === 'custom') {
-                model = {
-                    capacity: parseFloat(document.getElementById('custom-capacity').value),
-                    efficiency: parseFloat(document.getElementById('custom-efficiency').value),
-                };
-            } else {
-                model = teslaModelData[modelKey];
-            }
-            
-            const startSOC = parseFloat(document.getElementById('trip-start-soc').value);
-            const outdoorTempF = parseFloat(dom.outdoorTempSlider.value);
-            const interiorTempF = parseFloat(dom.interiorTempSlider.value);
-            const payloadLbs = parseFloat(dom.payloadInput.value);
-            
-            let drivingStyleMultiplier = parseFloat(dom.drivingStyleSelect.value);
-            if (dom.drivingStyleSelect.value === 'manual') {
-                drivingStyleMultiplier = parseFloat(dom.manualAggressionSlider.value);
-            }
-            const wheelMultiplier = parseFloat(dom.wheelSelect.value) || 1.0;
-            const roadConditionMultiplier = parseFloat(dom.roadConditionsSelect.value);
-            const tirePressureMultiplier = parseFloat(dom.tirePressureSelect.value);
-            
-            if (isNaN(startSOC) || isNaN(model.capacity) || isNaN(model.efficiency)) {
-                dom.tripResultDiv.innerHTML = "Please enter valid vehicle and battery info.";
-                return;
-            }
-
-            // 1. Base consumption adjusted for wheels and driving style
-            let adjustedEfficiency = model.efficiency * wheelMultiplier * drivingStyleMultiplier * roadConditionMultiplier * tirePressureMultiplier;
-            let totalWhConsumed = distanceMiles * adjustedEfficiency;
-
-            // 2. Temperature effect on battery efficiency
-            let tempMultiplier = 1.0;
-            if (outdoorTempF < 40) { // Cold penalty
-                tempMultiplier = 1 + (40 - outdoorTempF) * 0.015; // 1.5% less efficient per degree below 40F
-            } else if (outdoorTempF > 90) { // Hot penalty
-                tempMultiplier = 1 + (outdoorTempF - 90) * 0.005; // 0.5% less efficient per degree above 90F
-            }
-            totalWhConsumed *= tempMultiplier;
-
-            // 3. HVAC consumption
-            const tempDifference = Math.abs(outdoorTempF - interiorTempF);
-            if (tempDifference > 5) {
-                const hvacWatts = 250 + Math.pow(tempDifference, 2) * 2; // Simple curve
-                const tripDurationHours = (distanceMiles / 55); // Assume avg speed of 55 mph
-                const hvacWhConsumed = hvacWatts * tripDurationHours;
-                totalWhConsumed += hvacWhConsumed;
-            }
-            
-            // 4. Payload consumption
-            const payloadWhConsumed = (payloadLbs / 200) * 0.01 * totalWhConsumed; // 1% penalty per 200 lbs
-            totalWhConsumed += payloadWhConsumed;
-
-            // 5. Elevation consumption
-            // Energy to lift mass (Wh) = mgh / 3600. Assume avg vehicle mass of 4500 lbs
-            const totalMassKg = (4500 + payloadLbs) * 0.453592;
-            const elevationWhConsumed = (totalMassKg * 9.81 * elevationGainMeters) / 3600;
-            // Assume 60% regen braking efficiency on the way down
-            const elevationWhRegained = elevationWhConsumed * 0.60;
-            totalWhConsumed += (elevationWhConsumed - elevationWhRegained);
-
-
-            const percentUsed = (totalWhConsumed / (model.capacity * 1000)) * 100;
-            const endSOC = startSOC - percentUsed;
-
-            dom.tripResultDiv.innerHTML = `
-                Trip: <strong>${distanceMiles.toFixed(1)} miles</strong> | Elev. Gain: <strong>${Math.round(elevationGainFeet)} ft</strong><br>
-                Estimated Arrival SOC: <strong style="color: ${endSOC < 20 ? 'var(--error-color)' : 'var(--success-color)'}; font-size: 1.5rem;">${Math.round(endSOC)}%</strong><br>
-                <small>(Used ~${percentUsed.toFixed(1)}% of the battery)</small>
-            `;
-        }
-
-        // --- Camera Viewer Logic ---
         async function loadEvent(index) {
             state.carouselIndex = index;
             if (index < 0 || index >= state.sortedEventKeys.length) return;
@@ -2247,6 +498,7 @@
             dom.eventTimeDisplay.innerHTML = '';
             dom.eventTriggerDisplay.innerHTML = '';
             dom.eventCityDisplay.innerHTML = '';
+            dom.timelineMarkersContainer.innerHTML = '';
             document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
 
             const eventKey = state.sortedEventKeys[index];
@@ -2295,6 +547,29 @@
             } else {
                 dom.liveTimestamp.textContent = formatTime(0);
                 dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
+            }
+
+            if (state.currentEventData.firstClipTime && state.currentEventData.totalDuration > 0) {
+                 const dateStr = eventKey.substring(0, 10);
+                 if (state.eventsMap && state.eventsMap.has(dateStr)) {
+                     const events = state.eventsMap.get(dateStr);
+                     events.forEach((eventInfo, sequenceName) => {
+                         const diffSeconds = (eventInfo.time.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
+                         
+                         if (diffSeconds >= 0 && diffSeconds <= state.currentEventData.totalDuration) {
+                             const marker = document.createElement('div');
+                             marker.className = `timeline-marker ${eventInfo.type}`;
+                             marker.style.left = `${(diffSeconds / state.currentEventData.totalDuration) * 100}%`;
+                             marker.title = `${eventInfo.type === 'sentry' ? 'Sentry' : 'Saved'}: ${formatLocalTime(eventInfo.time)}`;
+                             
+                             marker.addEventListener('click', (e) => {
+                                 e.stopPropagation();
+                                 seekAllVideos(diffSeconds);
+                             });
+                             dom.timelineMarkersContainer.appendChild(marker);
+                         }
+                     });
+                 }
             }
             
             if(eventData.eventJson) {
@@ -2372,7 +647,8 @@
                 }
                 
                 videoElement.playbackRate = state.playbackRate;
-                
+                videoElement.preload = "auto";
+
                 if (!file) {
                     videoElement.src = '';
                     resolve();
@@ -2385,78 +661,16 @@
                 
                 videoElement.addEventListener('error', function onError(e) {
                     console.error(`Error loading video file: ${file.name}`, e);
-                    resolve(); // Resolve anyway to not block other videos
+                    resolve();
                 }, { once: true });
 
                 if (file.isRemote) {
                     videoElement.src = file.url;
-                    // For Basic Auth protected resources, setting src directly might prompt the browser 
-                    // OR if we are lucky and the browser cached the credentials from the fetch call, it works.
-                    // However, standard <video> tags don't support custom headers.
-                    // If the user included credentials in the URL (http://user:pass@ip), it might work.
-                    // But we are sending headers. 
-                    
-                    // Trick: If we fetched with headers, maybe we can fetch as blob and set object URL?
-                    // Fetching large video files as blobs takes time and memory.
-                    // Streaming with headers is hard for <video>.
-                    
-                    // Workaround: We hope the browser handles the auth challenge (it might prompt the user once).
-                    // Or we embed credentials in the URL if we have them.
-                    
-                    // Let's try embedding credentials in the URL for the video src if available
                     if (state.piConfig && state.piConfig.user && state.piConfig.pass) {
                         try {
-                            const urlObj = new URL(file.url);
-                            // Only add credentials if NOT using local proxy (local proxy handles headers if we updated loadVideo logic properly, but we updated loadVideo to USE headers for fetch, but for video src we are setting src attribute)
-                            // Wait, if using proxy, the proxy url is http://localhost:8000/proxy?url=...
-                            // And the target URL is http://192...
-                            // The proxy script handles Authorization header forwarding!
-                            // BUT video element doesn't send Authorization header to proxy.
-                            
-                            // If using proxy, we need to pass auth to proxy somehow?
-                            // Or put auth in the target URL passed to proxy?
-                            // `http://localhost:8000/proxy?url=http://user:pass@192...`
-                            
                             if (state.piConfig.useProxy) {
-                                // The file.url already contains the proxy wrapper.
-                                // But does it contain credentials?
-                                // In processRemoteFileList:
-                                // fileUrl = `${baseUrl}/TeslaCam/${line}`
-                                // if (useProxy) fileUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(fileUrl)}`
-                                
-                                // So file.url points to localhost.
-                                // Localhost proxy needs the Authorization header.
-                                // But <video> request won't send it.
-                                
-                                // So we must embed credentials in the target URL param!
-                                // Rewrite logic in processRemoteFileList or here?
-                                // If file.url is proxy url, we can't easily modify the query param inside.
-                                
-                                // Actually, let's fix this in processRemoteFileList or rely on the proxy accepting something else?
-                                // No, let's fix processRemoteFileList logic in the write_to_file content above.
-                                
-                                // Wait, I can't edit the write_to_file content I just wrote in my thinking block.
-                                // I am writing to file NOW.
-                                
-                                // Let's adjust `processRemoteFileList` logic in the content I am about to write.
-                                
-                                // If useProxy is true:
-                                // base url for target is http://user:pass@ip...
-                                // So proxy receives target url with creds.
-                                
-                                // In `processRemoteFileList`:
-                                // const baseUrl = ip.startsWith('http') ? ip : `http://${ip}`;
-                                // if (useProxy && user && pass) {
-                                //    const urlObj = new URL(baseUrl);
-                                //    urlObj.username = user;
-                                //    urlObj.password = pass;
-                                //    baseUrlWithCreds = urlObj.toString();
-                                // }
-                                
-                                // I need to add this logic to `processRemoteFileList` or `connectToPi`.
-                                
+                                // URL already proxied
                             } else {
-                                // Direct connection
                                 const urlObj = new URL(file.url);
                                 urlObj.username = state.piConfig.user;
                                 urlObj.password = state.piConfig.pass;
@@ -2549,8 +763,6 @@
         function getVideoDuration(file) { 
             return new Promise(resolve => { 
                 if (file.isRemote) {
-                    // Optimization: Assume 60s for remote clips to avoid network storm.
-                    // Scanning hundreds of clips over network takes too long.
                     resolve(60);
                     return;
                 }
@@ -2580,6 +792,7 @@
         // --- Attach Event Listeners ---
         dom.piConnectBtn.addEventListener('click', connectToPi);
         dom.launchAppBtn.addEventListener('click', () => {
+            sessionStorage.setItem('appLaunched', 'true');
             dom.landingPage.classList.add('hidden');
             dom.appContainer.classList.remove('hidden');
         });
@@ -2597,20 +810,15 @@
         dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
         dom.playbackSpeedSelector.addEventListener('input', (e) => setPlaybackSpeed(e.target.value));
         
-        // Scrubber Hover Tooltip
         dom.masterScrubber.addEventListener('mousemove', (e) => {
             if (!state.currentEventData.totalDuration) return;
-            
             const rect = dom.masterScrubber.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const width = rect.width;
             const percentage = Math.max(0, Math.min(1, x / width));
             const time = percentage * state.currentEventData.totalDuration;
-            
-            // Position tooltip
             dom.scrubberTooltip.style.left = `${percentage * 100}%`;
             dom.scrubberTooltip.style.opacity = '1';
-            
             if (state.currentEventData.firstClipTime) {
                  const hoverTime = new Date(state.currentEventData.firstClipTime.getTime() + (time * 1000));
                  dom.scrubberTooltip.textContent = formatLocalTime(hoverTime);
@@ -2651,27 +859,18 @@
             video.addEventListener("ended", async (e) => {
                 const wasPlaying = dom.playIcon.style.display === 'none';
                 const camera = e.target.className.split(' ')[0];
-
-                if (!state.currentEventData.playlists || !state.currentEventData.playlists[camera]) {
-                    return;
-                }
-
+                if (!state.currentEventData.playlists || !state.currentEventData.playlists[camera]) return;
                 const currentIdx = ++state.currentEventData.playlistIndices[camera];
                 const playlist = state.currentEventData.playlists[camera];
-
                 if (playlist && currentIdx < playlist.length) {
                     await loadVideo(e.target, playlist[currentIdx]);
                     if (wasPlaying) {
-                        e.target.play().catch(err => {
-                            if (err.name !== 'AbortError') console.error('Error playing next clip:', err);
-                        });
+                        e.target.play().catch(err => { if (err.name !== 'AbortError') console.error('Error playing next clip:', err); });
                     }
                 } else if (camera === 'front') {
                     if (state.carouselIndex < state.sortedEventKeys.length - 1) {
                         await loadEvent(++state.carouselIndex);
-                        if (wasPlaying) {
-                            playVideos();
-                        }
+                        if (wasPlaying) playVideos();
                     } else {
                         pauseVideos();
                     }
@@ -2770,46 +969,17 @@
             }
         });
 
-        // Charging Estimator Listeners
-        dom.modeChargeTimeBtn.addEventListener('click', () => switchChargeMode('time'));
-        dom.modeChargeGainBtn.addEventListener('click', () => switchChargeMode('gain'));
-
-        // Phantom Drain Listeners
-        dom.modeDrainTimeBtn.addEventListener('click', () => switchDrainMode('time'));
-        dom.modeDrainPercentBtn.addEventListener('click', () => switchDrainMode('percent'));
-        document.querySelectorAll('.options-toggle-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                button.closest('.options-container').classList.toggle('is-open');
-            });
-        });
-
-        // Trip Planner Listeners
-        dom.useCurrentLocationBtn.addEventListener('click', useCurrentLocation);
-        dom.calculateTripBtn.addEventListener('click', calculateAndDisplayRoute);
-        dom.outdoorTempSlider.addEventListener('input', (e) => dom.outdoorTempValue.textContent = `${e.target.value}°F`);
-        dom.interiorTempSlider.addEventListener('input', (e) => dom.interiorTempValue.textContent = `${e.target.value}°F`);
-        dom.teslaModelSelect.addEventListener('change', () => {
-            dom.customVehicleParams.style.display = dom.teslaModelSelect.value === 'custom' ? 'grid' : 'none';
-            updateWheelOptions();
-        });
-        dom.drivingStyleSelect.addEventListener('change', () => {
-             dom.manualAggressionContainer.style.display = dom.drivingStyleSelect.value === 'manual' ? 'block' : 'none';
-        });
-        
-        // Hide autocomplete on global click
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.address-input-group')) {
-                dom.startAddressResults.style.display = 'none';
-                dom.endAddressResults.style.display = 'none';
-            }
-        });
-
 
         // --- Initial App State ---
         applyTheme(localStorage.getItem('theme') || 'dark');
-        dom.cameraControlsContainer.style.display = 'none'; 
+        dom.cameraControlsContainer.style.display = 'block'; 
+        
+        // Splash Screen Logic
+        if (sessionStorage.getItem('appLaunched')) {
+            dom.landingPage.classList.add('hidden');
+            dom.appContainer.classList.remove('hidden');
+        }
     });
 </script>
 
 </body>
-</html>

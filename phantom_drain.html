@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phantom Drain Estimator - Tesla Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-top">
+            <div class="title-area">
+                <div class="title">Tesla Companion</div>
+            </div>
+            <div class="top-right-controls">
+                <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
+                    <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+                <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" class="btn icon-btn" id="github-link" title="View on GitHub">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 24px; height: 24px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                </a>
+            </div>
+        </div>
+        <div class="main-tabs">
+            <a href="index.html" class="tab-button">Camera Viewer</a>
+            <a href="trip_planner.html" class="tab-button">Trip Range Estimator</a>
+            <a href="charging.html" class="tab-button">Charging Time Estimator</a>
+            <a href="phantom_drain.html" class="tab-button active">Phantom Drain Estimator</a>
+        </div>
+    </header>
+
+    <div class="content-container" style="overflow-y: auto;">
+        <div class="calculator-container">
+            <h1>Phantom Drain Estimator</h1>
+            
+            <!-- Mode Switcher -->
+            <div class="calc-mode-switcher">
+                <button id="mode-drain-time-btn" class="mode-btn active">Calculate Time to Drain</button>
+                <button id="mode-drain-percent-btn" class="mode-btn">Calculate % Lost Over Time</button>
+            </div>
+
+            <!-- ===== CALCULATOR 1: TIME TO DRAIN ===== -->
+            <div id="drainTimeCalculator" class="calc-mode-content active">
+                <div class="grid">
+                    <div class="form-group"><label for="drain-current-soc">Current Battery (%)</label><input type="number" id="drain-current-soc" placeholder="80" min="0" max="100"></div>
+                    <div class="form-group"><label for="drain-target-soc">Drain To (%)</label><input type="number" id="drain-target-soc" placeholder="20" min="0" max="100"></div>
+                </div>
+                
+                <div class="options-container">
+                    <button type="button" class="options-toggle-btn">
+                        <span>Refine Calculation (Optional)</span>
+                        <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="options-content">
+                        <div class="grid">
+                            <div class="form-group"><label for="drain-time-battery-health">Current Battery Health (%)</label><input type="number" id="drain-time-battery-health" value="100" min="50" max="100"></div>
+                            <div class="form-group"><label for="drain-time-outside-temp">Outside Temperature (°F)</label><input type="number" id="drain-time-outside-temp" value="70"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Auxiliary Features Enabled:</label>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-time-sentry" name="drain-time-feature" value="230"><label for="drain-time-sentry">Sentry Mode</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-time-summon" name="drain-time-feature" value="150"><label for="drain-time-summon">Summon Standby</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-time-accessory" name="drain-time-feature" value="100"><label for="drain-time-accessory">Keep Accessory Power On</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-time-climate" name="drain-time-feature" value="1000"><label for="drain-time-climate">Keep Climate On (A/C)</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-time-overheat-ac" name="drain-time-feature" value="150"><label for="drain-time-overheat-ac">Cabin Overheat Protection (A/C)</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-time-overheat-fan" name="drain-time-feature" value="50"><label for="drain-time-overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="primary-btn" onclick="calculateDrainTime()">Calculate Drain Time</button>
+                <div id="drain-time-result" class="result-box"></div>
+            </div>
+
+            <!-- ===== CALCULATOR 2: % LOST OVER TIME ===== -->
+            <div id="drainPercentCalculator" class="calc-mode-content">
+                <div class="form-group">
+                    <label for="drain-current-soc-percent">Current Battery (%)</label>
+                    <input type="number" id="drain-current-soc-percent" placeholder="80" min="0" max="100">
+                </div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="drain-start-date">Start Date</label>
+                        <input type="date" id="drain-start-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="drain-start-time">Start Time</label>
+                        <input type="time" id="drain-start-time">
+                    </div>
+                </div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="drain-end-date">End Date</label>
+                        <input type="date" id="drain-end-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="drain-end-time">End Time</label>
+                        <input type="time" id="drain-end-time">
+                    </div>
+                </div>
+
+                <div class="options-container">
+                    <button type="button" class="options-toggle-btn">
+                        <span>Refine Calculation (Optional)</span>
+                        <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="options-content">
+                        <div class="grid">
+                            <div class="form-group"><label for="drain-percent-battery-health">Current Battery Health (%)</label><input type="number" id="drain-percent-battery-health" value="100" min="50" max="100"></div>
+                            <div class="form-group"><label for="drain-percent-outside-temp">Outside Temperature (°F)</label><input type="number" id="drain-percent-outside-temp" value="70"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Auxiliary Features Enabled:</label>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-percent-sentry" name="drain-percent-feature" value="230"><label for="drain-percent-sentry">Sentry Mode</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-percent-summon" name="drain-percent-feature" value="150"><label for="drain-percent-summon">Summon Standby</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-percent-accessory" name="drain-percent-feature" value="100"><label for="drain-percent-accessory">Keep Accessory Power On</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-percent-climate" name="drain-percent-feature" value="1000"><label for="drain-percent-climate">Keep Climate On (A/C)</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-percent-overheat-ac" name="drain-percent-feature" value="150"><label for="drain-percent-overheat-ac">Cabin Overheat Protection (A/C)</label></div>
+                            <div class="checkbox-group"><input type="checkbox" id="drain-percent-overheat-fan" name="drain-percent-feature" value="50"><label for="drain-percent-overheat-fan">Cabin Overheat Protection (Fan Only)</label></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="primary-btn" onclick="calculateDrainPercentage()">Calculate Percentage Lost</button>
+                <div id="drain-percent-result" class="result-box"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const dom = {
+        body: document.body,
+        themeToggle: document.querySelector('#theme-toggle'),
+        themeIconSun: document.querySelector('#theme-icon-sun'),
+        themeIconMoon: document.querySelector('#theme-icon-moon'),
+        modeDrainTimeBtn: document.getElementById('mode-drain-time-btn'),
+        modeDrainPercentBtn: document.getElementById('mode-drain-percent-btn'),
+        drainTimeCalculator: document.getElementById('drainTimeCalculator'),
+        drainPercentCalculator: document.getElementById('drainPercentCalculator'),
+    };
+
+    const applyTheme = (theme) => {
+        if (theme === 'light') {
+            dom.body.classList.add('light-mode');
+            dom.themeIconSun.style.display = 'none';
+            dom.themeIconMoon.style.display = 'block';
+        } else {
+            dom.body.classList.remove('light-mode');
+            dom.themeIconSun.style.display = 'block';
+            dom.themeIconMoon.style.display = 'none';
+        }
+    }
+
+    // --- Phantom Drain Calculator Logic (Updated) ---
+
+    function getDrainParameters() {
+        const prefix = dom.drainTimeCalculator.classList.contains('active') ? 'drain-time-' : 'drain-percent-';
+        
+        const originalCapacity = 75; // Base capacity in kWh
+        const batteryHealth = parseFloat(document.getElementById(prefix + 'battery-health').value) / 100;
+        const outsideTempF = parseFloat(document.getElementById(prefix + 'outside-temp').value);
+
+        let totalDrainWatts = 0;
+        let featuresActive = false;
+        document.getElementsByName(prefix + 'feature').forEach(feature => {
+            if (feature.checked) {
+                featuresActive = true;
+                totalDrainWatts += parseFloat(feature.value);
+            }
+        });
+
+        // If no specific features are active, assume a base idle drain for a sleeping car.
+        if (!featuresActive) {
+            totalDrainWatts = 50; 
+        }
+        
+        // Adjust drain based on temperature, as the battery management system may activate.
+        let tempMultiplier = 1.0;
+        if (outsideTempF > 90) { // Extreme heat can trigger battery cooling.
+            tempMultiplier = 1.5; 
+        } else if (outsideTempF < 40) { // Extreme cold can trigger battery heating.
+            tempMultiplier = 2.0; 
+        }
+
+        const actualDrainWatts = totalDrainWatts * tempMultiplier;
+        const currentCapacityKwh = originalCapacity * batteryHealth;
+
+        if (isNaN(batteryHealth) || isNaN(outsideTempF)) {
+            return null;
+        }
+
+        return { actualDrainWatts, currentCapacityKwh };
+    }
+
+    window.calculateDrainTime = () => {
+        const resultDiv = document.getElementById('drain-time-result');
+        const currentSOC = parseFloat(document.getElementById('drain-current-soc').value);
+        const targetSOC = parseFloat(document.getElementById('drain-target-soc').value);
+        
+        if (isNaN(currentSOC) || isNaN(targetSOC) || currentSOC <= targetSOC) {
+            resultDiv.innerHTML = "Please enter valid battery percentages (Current > Target).";
+            return;
+        }
+
+        const params = getDrainParameters();
+        if (!params) {
+            resultDiv.innerHTML = "Please enter valid battery health and temperature.";
+            return;
+        }
+        
+        const energyToDrainWh = (currentSOC - targetSOC) / 100 * params.currentCapacityKwh * 1000;
+        const timeHours = energyToDrainWh / params.actualDrainWatts;
+        
+        const days = Math.floor(timeHours / 24);
+        const hours = Math.floor(timeHours % 24);
+
+        let resultText = `Estimated time to drain:<br><strong>`;
+        if (days > 0) resultText += `${days} days `;
+        if (hours > 0) resultText += `${hours} hours`;
+        if (days === 0 && hours === 0) resultText = "Drain time is very short.";
+        resultDiv.innerHTML = resultText + `</strong>`;
+    }
+
+    window.calculateDrainPercentage = () => {
+        const resultDiv = document.getElementById('drain-percent-result');
+        const currentSOC = parseFloat(document.getElementById('drain-current-soc-percent').value);
+        
+        const startDateStr = document.getElementById('drain-start-date').value;
+        const startTimeStr = document.getElementById('drain-start-time').value;
+        const endDateStr = document.getElementById('drain-end-date').value;
+        const endTimeStr = document.getElementById('drain-end-time').value;
+
+        if (isNaN(currentSOC)) {
+             resultDiv.innerHTML = "Please enter a valid current battery percentage.";
+             return;
+        }
+
+        if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
+            resultDiv.innerHTML = "Please enter valid start and end dates/times.";
+            return;
+        }
+
+        const startTime = new Date(`${startDateStr}T${startTimeStr}`);
+        const endTime = new Date(`${endDateStr}T${endTimeStr}`);
+
+        if (endTime <= startTime) {
+            resultDiv.innerHTML = "End time must be after the start time.";
+            return;
+        }
+
+        const params = getDrainParameters();
+        if (!params) {
+            resultDiv.innerHTML = "Please enter valid battery health and temperature.";
+            return;
+        }
+
+        const durationMillis = endTime - startTime;
+        const durationHours = durationMillis / (1000 * 60 * 60);
+
+        const energyDrainedWh = params.actualDrainWatts * durationHours;
+        const energyDrainedKwh = energyDrainedWh / 1000;
+
+        const percentageLost = (energyDrainedKwh / params.currentCapacityKwh) * 100;
+        const finalSOC = currentSOC - percentageLost;
+
+        resultDiv.innerHTML = `Estimated drain: <strong>${percentageLost.toFixed(1)}%</strong><br>Final SOC will be ~<strong>${finalSOC.toFixed(1)}%</strong>`;
+    }
+
+    function setDefaultDrainTimes() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+
+        document.getElementById('drain-start-date').value = `${year}-${mm}-${dd}`;
+        document.getElementById('drain-start-time').value = `${hh}:${min}`;
+
+        // Default end date to tomorrow
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        const year_t = tomorrow.getFullYear();
+        const mm_t = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const dd_t = String(tomorrow.getDate()).padStart(2, '0');
+        document.getElementById('drain-end-date').value = `${year_t}-${mm_t}-${dd_t}`;
+        document.getElementById('drain-end-time').value = `${hh}:${min}`;
+    }
+
+    function switchDrainMode(mode) {
+        if (mode === 'time') {
+            dom.modeDrainTimeBtn.classList.add('active');
+            dom.modeDrainPercentBtn.classList.remove('active');
+            dom.drainTimeCalculator.classList.add('active');
+            dom.drainPercentCalculator.classList.remove('active');
+        } else { // mode === 'percent'
+            dom.modeDrainTimeBtn.classList.remove('active');
+            dom.modeDrainPercentBtn.classList.add('active');
+            dom.drainTimeCalculator.classList.remove('active');
+            dom.drainPercentCalculator.classList.add('active');
+            setDefaultDrainTimes(); // Set defaults when switching to this mode
+        }
+    }
+
+    // Init
+    dom.themeToggle.addEventListener('click', () => {
+        const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    });
+    
+    dom.modeDrainTimeBtn.addEventListener('click', () => switchDrainMode('time'));
+    dom.modeDrainPercentBtn.addEventListener('click', () => switchDrainMode('percent'));
+    document.querySelectorAll('.options-toggle-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            button.closest('.options-container').classList.toggle('is-open');
+        });
+    });
+    
+    applyTheme(localStorage.getItem('theme') || 'dark');
+    setDefaultDrainTimes();
+    
+    // Skip splash screen on return to index
+    sessionStorage.setItem('appLaunched', 'true');
+
+ </script>
+</body>

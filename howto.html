@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How To - Tesla Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-top">
+            <div class="title-area">
+                <div class="title">Tesla Companion</div>
+            </div>
+            <div class="top-right-controls">
+                <button class="btn icon-btn" id="theme-toggle" title="Toggle Theme">
+                    <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg id="theme-icon-moon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+                <a href="https://github.com/JLeshnick/TeslaCompanion" target="_blank" class="btn icon-btn" id="github-link" title="View on GitHub">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 24px; height: 24px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                </a>
+            </div>
+        </div>
+        <div class="main-tabs">
+            <a href="index.html" class="tab-button">Camera Viewer</a>
+            <a href="trip_planner.html" class="tab-button">Trip Range Estimator</a>
+            <a href="charging.html" class="tab-button">Charging Time Estimator</a>
+            <a href="phantom_drain.html" class="tab-button">Phantom Drain Estimator</a>
+        </div>
+    </header>
+
+    <div class="content-container" style="overflow-y: auto;">
+        <div class="info-container">
+            <h1>How To Use Tesla Companion</h1>
+            <p>Welcome to your all-in-one Tesla toolkit. Here's a guide to get you started:</p>
+            
+            <h2>Camera Viewer</h2>
+            <ul>
+                <li><strong>Load Clips:</strong> Click the "Select Directory" button and choose your main `TeslaCam` folder from your USB drive. The app will automatically find and group all video events.</li>
+                <li><strong>Navigate Events:</strong> Use the dropdown or navigation buttons to move between events.</li>
+                <li><strong>Playback:</strong> Use the main playback controls to play, pause, skip, and scrub through the combined video clips for an event.</li>
+                <li><strong>Jump to Event:</strong> If an event was triggered, a "Jump to Event" button will appear.</li>
+                <li><strong>View Location:</strong> If the event contains GPS data, a "Event Map" button will appear.</li>
+                <li><strong>Grid Screenshots:</strong> Use the "Screenshot" button in the top controls to download a single, high-quality image stitching all visible camera feeds together.</li>
+            </ul>
+
+            <h2>Trip Range Estimator</h2>
+            <ul>
+                <li><strong>Enter Locations:</strong> Type in a starting and destination address. You can also click "Use Current Location" for the starting point.</li>
+                <li><strong>Select Vehicle:</strong> Choose your Tesla model from the dropdown. This sets the battery capacity and efficiency.</li>
+                <li><strong>Set Trip Parameters:</strong> Enter your starting battery percentage, payload, and wheel size. Select your driving style and road conditions. Use the sliders to set the expected outdoor temperature and your desired interior cabin temperature.</li>
+                <li><strong>Calculate:</strong> Click "Estimate Trip" to see the route on the map and get an estimate of your remaining battery percentage upon arrival. The calculation considers all selected factors for a more accurate result.</li>
+            </ul>
+
+            <h2>Charging Time Estimator</h2>
+            <ul>
+                <li><strong>Calculate Time to Target %:</strong> Enter your vehicle's details, your current and target battery percentage, and select your charger type. The tool will estimate how long the charging session will take.</li>
+                <li><strong>Calculate % Gained Over Time:</strong> Enter your current battery percentage, a start time/date, and an end time/date. The tool will estimate your battery's state of charge after that period.</li>
+                <li><strong>Custom Chargers:</strong> For both modes, you can select "Custom" to input specific voltage and amperage for your charger.</li>
+            </ul>
+            
+            <h2>Phantom Drain Estimator</h2>
+            <ul>
+                <li><strong>Calculate Drain Time:</strong> Enter your current battery percentage and the percentage you expect it to drain to. The tool will estimate how long your battery will last under the selected conditions.</li>
+                <li><strong>Calculate Percentage Lost:</strong> Enter your current battery percentage, a start time/date, and an end time/date. The tool will estimate how much battery percentage will be lost in that period.</li>
+                <li><strong>Refine Calculation:</strong> For both modes, add your battery's current health, the outside temperature, and select any active features (like Sentry Mode) for a more accurate calculation.</li>
+            </ul>
+
+            <h2>Reference Information</h2>
+            <h3>Camera Indexes</h3>
+            <p>The <code>event.json</code> file references cameras by a number. Here is the mapping used by this application:</p>
+            <table>
+                <thead><tr><th>Index</th><th>Camera View</th></tr></thead>
+                <tbody>
+                    <tr><td><code>0</code></td><td>Front</td></tr>
+                    <tr><td><code>3</code></td><td>Left Pillar</td></tr>
+                    <tr><td><code>4</code></td><td>Right Pillar</td></tr>
+                    <tr><td><code>5</code></td><td>Left Repeater</td></tr>
+                    <tr><td><code>6</code></td><td>Right Repeater</td></tr>
+                    <tr><td><code>7</code></td><td>Back</td></tr>
+                </tbody>
+            </table>
+            <h3>Event Reasons</h3>
+            <p>The <code>reason</code> field in the event file indicates what triggered the recording. Here are some common reasons:</p>
+            <table>
+                <thead><tr><th>Reason Code</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>sentry_aware_object_detection</code></td><td>Sentry Mode detected an object or movement nearby.</td></tr>
+                    <tr><td><code>user_interaction_dashcam_icon_tapped</code></td><td>You manually triggered a Dashcam recording by tapping the icon on the screen.</td></tr>
+                    <tr><td><code>sentry_locked_handle_pulled</code></td><td>Sentry Mode detected someone pulling on a door handle while the car was locked.</td></tr>
+                    <tr><td><code>user_interaction_honk</code></td><td>You manually triggered a Dashcam recording by honking the horn.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    const dom = {
+        body: document.body,
+        themeToggle: document.querySelector('#theme-toggle'),
+        themeIconSun: document.querySelector('#theme-icon-sun'),
+        themeIconMoon: document.querySelector('#theme-icon-moon'),
+    };
+
+    const applyTheme = (theme) => {
+        if (theme === 'light') {
+            dom.body.classList.add('light-mode');
+            dom.themeIconSun.style.display = 'none';
+            dom.themeIconMoon.style.display = 'block';
+        } else {
+            dom.body.classList.remove('light-mode');
+            dom.themeIconSun.style.display = 'block';
+            dom.themeIconMoon.style.display = 'none';
+        }
+    }
+
+    dom.themeToggle.addEventListener('click', () => {
+        const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    });
+
+    applyTheme(localStorage.getItem('theme') || 'dark');
+    
+    // Skip splash screen on return to index
+    sessionStorage.setItem('appLaunched', 'true');
+</script>
+</body>
+</html>
