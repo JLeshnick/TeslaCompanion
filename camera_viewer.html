@@ -38,6 +38,26 @@
             font-weight: 600;
             box-shadow: var(--shadow-lg);
         }
+        
+        /* Recording Overlay */
+        #recording-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+        #recording-icon {
+            width: 64px; height: 64px; fill: #ef4444;
+            animation: pulse-rec 1s infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes pulse-rec { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -69,6 +89,12 @@
         </div>
     </header>
 
+    <div id="recording-overlay">
+        <svg id="recording-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        <h2 style="margin:0;">Recording...</h2>
+        <p>Please wait while the clip is generated.</p>
+    </div>
+
     <div class="content-container">
         <div id="CameraViewer" class="tab-content active" style="display: flex;">
              <div class="sub-tab-nav">
@@ -93,6 +119,7 @@
                                 <div class="main-playback-controls">
                                     <div class="event-action-stack">
                                         <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Jump to Event</button>
+                                        <button class="btn" id="next-event-btn" style="display: none;" title="Go to Next Event">Next Event</button>
                                         <button class="btn" id="map-button" style="display: none;" title="View on Map">Event Map</button>
                                     </div>
                                     <button class="btn icon-btn previous" title="Previous Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"></path></svg></button>
@@ -111,6 +138,21 @@
                                     <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
                                     <div class="utility-btn-stack">
                                         <button class="btn icon-btn" id="screenshot-btn" title="Screenshot"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
+                                        
+                                        <!-- Recording Controls -->
+                                        <div style="display:flex; gap:2px; align-items:center; background:var(--control-bg-color); border-radius:var(--border-radius-md); border:1px solid var(--border-color); padding:2px;">
+                                            <input type="text" id="clip-custom-title" placeholder="Title" style="width: 60px; background: transparent; border: none; color: var(--text-color); font-size: 0.7rem; padding: 0 4px; border-bottom: 1px solid var(--border-color);">
+                                            <select id="record-duration" style="background:transparent; border:none; color:var(--text-color); font-size:0.7rem; width:45px; cursor:pointer;">
+                                                <option value="5">5s</option>
+                                                <option value="10">10s</option>
+                                                <option value="15">15s</option>
+                                                <option value="20">20s</option>
+                                                <option value="25">25s</option>
+                                                <option value="30" selected>30s</option>
+                                            </select>
+                                            <button class="btn icon-btn" id="save-clip-btn" title="Save Clip" style="width:32px; height:32px; border:none; background:transparent;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
+                                        </div>
+
                                         <button class="btn icon-btn" id="fullscreen-toggle" title="Toggle Fullscreen">
                                             <svg id="maximize-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
                                             <svg id="minimize-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
@@ -163,33 +205,33 @@
                     <div class="video-grid" id="video-grid">
                         <div class="video-container front">
                             <div class="video-label">Front</div>
-                            <video class="front p1 active" muted playsinline></video>
-                            <video class="front p2" muted playsinline></video>
+                            <video class="front p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="front p2" muted playsinline crossOrigin="anonymous"></video>
                         </div>
                         <div class="video-container back">
                             <div class="video-label">Back</div>
-                            <video class="back p1 active" muted playsinline></video>
-                            <video class="back p2" muted playsinline></video>
+                            <video class="back p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="back p2" muted playsinline crossOrigin="anonymous"></video>
                         </div>
                         <div class="video-container left_repeater">
                             <div class="video-label">Left Fender</div>
-                            <video class="left_repeater p1 active" muted playsinline></video>
-                            <video class="left_repeater p2" muted playsinline></video>
+                            <video class="left_repeater p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="left_repeater p2" muted playsinline crossOrigin="anonymous"></video>
                         </div>
                         <div class="video-container right_repeater">
                             <div class="video-label">Right Fender</div>
-                            <video class="right_repeater p1 active" muted playsinline></video>
-                            <video class="right_repeater p2" muted playsinline></video>
+                            <video class="right_repeater p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="right_repeater p2" muted playsinline crossOrigin="anonymous"></video>
                         </div>
                         <div class="video-container left_pillar">
                             <div class="video-label">Left Pillar</div>
-                            <video class="left_pillar p1 active" muted playsinline></video>
-                            <video class="left_pillar p2" muted playsinline></video>
+                            <video class="left_pillar p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="left_pillar p2" muted playsinline crossOrigin="anonymous"></video>
                         </div>
                         <div class="video-container right_pillar">
                             <div class="video-label">Right Pillar</div>
-                            <video class="right_pillar p1 active" muted playsinline></video>
-                            <video class="right_pillar p2" muted playsinline></video>
+                            <video class="right_pillar p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="right_pillar p2" muted playsinline crossOrigin="anonymous"></video>
                         </div>
                     </div>
              </div>
@@ -212,7 +254,8 @@
             dayEvents: [], 
             currentActiveEvent: null,
             activePlayer: 'p1',
-            isLoading: false
+            isLoading: false,
+            waitingForSync: 0
         };
 
         const dom = {
@@ -231,6 +274,7 @@
             statusDot: document.querySelector('.status-dot'),
             eventMarker: document.querySelector("#event-marker"),
             jumpToEventButton: document.querySelector("#jump-to-event"),
+            nextEventBtn: document.getElementById('next-event-btn'),
             mapButton: document.getElementById('map-button'),
             mapContainer: document.getElementById('map-container'),
             mapIframe: document.getElementById('map-iframe'),
@@ -258,6 +302,9 @@
             eventTriggerDisplay: document.getElementById('event-trigger-display'),
             eventCityDisplay: document.getElementById('event-city-display'),
             screenshotBtn: document.querySelector('#screenshot-btn'),
+            saveClipBtn: document.querySelector('#save-clip-btn'),
+            recordDurationSelect: document.querySelector('#record-duration'),
+            clipCustomTitle: document.getElementById('clip-custom-title'),
             cameraControlsContainer: document.getElementById('camera-controls-container'),
             btnSourceLocal: document.getElementById('btn-source-local'),
             btnSourcePi: document.getElementById('btn-source-pi'),
@@ -268,7 +315,8 @@
             piPassInput: document.getElementById('pi-pass'),
             piUseProxy: document.getElementById('pi-use-proxy'),
             piConnectBtn: document.getElementById('pi-connect-btn'),
-            loadingOverlay: document.getElementById('loading-overlay')
+            loadingOverlay: document.getElementById('loading-overlay'),
+            recordingOverlay: document.getElementById('recording-overlay'),
         };
         
         // Helpers
@@ -281,7 +329,6 @@
         function setLoading(loading) {
             state.isLoading = loading;
             dom.loadingOverlay.style.display = loading ? 'flex' : 'none';
-            // Disable controls
             dom.playPauseButton.disabled = loading;
             dom.masterScrubber.disabled = loading;
             dom.dateSelector.disabled = loading;
@@ -334,9 +381,11 @@
             dom.eventMarker.style.display = "none";
             dom.timelineMarkersContainer.innerHTML = '';
             dom.jumpToEventButton.style.display = "none";
+            dom.nextEventBtn.style.display = "none";
             dom.mapButton.style.display = 'none';
             state.activePlayer = 'p1';
             updatePlayerVisibility();
+            setLoading(false);
         }
         
         function updatePlayerVisibility() {
@@ -439,7 +488,7 @@
                 if (meta.minTime) {
                      const dateStr = new Date(meta.minTime).toISOString().substring(0, 10);
                      if (!eventsMap.has(dateStr)) eventsMap.set(dateStr, []);
-                     eventsMap.get(dateStr).push({
+                     state.eventsMap.get(dateStr).push({
                          sequenceName: seqName,
                          startTime: meta.minTime,
                          endTime: meta.maxTime || meta.minTime,
@@ -522,7 +571,22 @@
         }
 
         async function displayEventDetails(eventInfo) {
-            if (!eventInfo.jsonPath) {
+            let jsonData = null;
+            if (eventInfo.jsonPath) {
+                try {
+                    const headers = state.piConfig.user ? new Headers({'Authorization': 'Basic ' + btoa(state.piConfig.user + ":" + state.piConfig.pass)}) : new Headers();
+                    const res = await fetch(eventInfo.jsonPath, { headers });
+                    if (state.currentActiveEvent !== eventInfo) return; // Race condition check
+                    jsonData = await res.json();
+                } catch (e) { console.error("Error fetching remote json", e); }
+            } else if (eventInfo.jsonFile) {
+                try {
+                    const text = await eventInfo.jsonFile.text();
+                    jsonData = JSON.parse(text);
+                } catch (e) { console.error("Error parsing local json", e); }
+            }
+
+            if (!jsonData) {
                 dom.eventDetailsContainer.style.display = 'block';
                 dom.eventReasonDisplay.innerHTML = `Event: <strong>${eventInfo.type === 'sentry' ? 'Sentry Event' : 'Saved Clip'}</strong>`;
                 dom.eventTimeDisplay.innerHTML = `Time: <strong>${formatLocalTime(new Date(eventInfo.startTime))}</strong>`;
@@ -533,10 +597,6 @@
             }
             
             try {
-                const headers = state.piConfig.user ? new Headers({'Authorization': 'Basic ' + btoa(state.piConfig.user + ":" + state.piConfig.pass)}) : new Headers();
-                const res = await fetch(eventInfo.jsonPath, { headers });
-                const jsonData = await res.json();
-                
                 dom.eventDetailsContainer.style.display = 'block';
                 const friendlyReason = friendlyEventReasons[jsonData.reason] || jsonData.reason.replace(/_/g, ' ');
                 dom.eventReasonDisplay.innerHTML = `Event: <strong>${friendlyReason}</strong>`;
@@ -545,7 +605,7 @@
                 else dom.eventCityDisplay.innerHTML = '';
                 
                 if (jsonData.est_lat && jsonData.est_lon) {
-                    state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
+                    state.currentEventData.location = { lat: parseFloat(jsonData.est_lat), lon: parseFloat(jsonData.est_lon) };
                     dom.mapButton.style.display = 'inline-flex';
                 } else {
                     dom.mapButton.style.display = 'none';
@@ -556,27 +616,18 @@
         }
 
         function preloadNextClip(camera, index) {
+            // Minimal preloading for streaming mode
+            if (state.playbackRate > 1.5) return;
             const playlist = state.currentEventData.playlists[camera];
             if (playlist && index + 1 < playlist.length) {
-                // Simply loading into a video element that is muted and not playing is a good way to buffer
                 const nextFile = playlist[index + 1];
-                const v = document.createElement('video');
-                v.preload = 'auto';
-                v.muted = true;
-                // Revert to direct src logic
-                if (nextFile.isRemote) {
-                     let url = nextFile.url;
-                     if (state.piConfig && state.piConfig.user && state.piConfig.pass && !state.piConfig.useProxy) {
-                        try {
-                            const urlObj = new URL(url);
-                            urlObj.username = state.piConfig.user;
-                            urlObj.password = state.piConfig.pass;
-                            url = urlObj.toString();
-                        } catch (e) {}
-                    }
-                    v.src = url;
-                } else {
-                    v.src = URL.createObjectURL(nextFile);
+                if (!nextFile.isRemote) {
+                    // Only preload local files blob
+                    // For remote streaming, browser handles buffering of current video.
+                    // We can try creating a detached video element to start the request?
+                    // Or just rely on the dual player loading it into P2.
+                    // Dual Player logic ALREADY loads P2.
+                    // So this function is redundant for Dual Player logic which calls loadVideo on P2.
                 }
             }
         }
@@ -593,6 +644,7 @@
             dom.durationDisplay.textContent = "00:00";
             dom.eventMarker.style.display = "none";
             dom.jumpToEventButton.style.display = "none";
+            dom.nextEventBtn.style.display = "none";
             dom.mapButton.style.display = 'none';
             dom.eventDetailsContainer.style.display = 'none';
             dom.timelineMarkersContainer.innerHTML = '';
@@ -661,11 +713,24 @@
                          const startOffset = (ev.startTime - dayStart) / 1000;
                          const endOffset = (ev.endTime - dayStart) / 1000 + 60; 
                          if (endOffset > 0 && startOffset < state.currentEventData.totalDuration) {
-                             state.dayEvents.push({
+                             const evt = {
                                  startOffset: Math.max(0, startOffset),
                                  endOffset: Math.min(state.currentEventData.totalDuration, endOffset),
-                                 jsonPath: ev.jsonPath, type: ev.type, startTime: ev.startTime
-                             });
+                                 jsonPath: ev.jsonPath, 
+                                 jsonFile: ev.jsonFile,
+                                 type: ev.type, 
+                                 startTime: ev.startTime,
+                                 sequenceName: ev.sequenceName,
+                                 isCurrent: ev.sequenceName === eventKey // Mark if this is the loaded event
+                             };
+                             state.dayEvents.push(evt);
+                             
+                             // Jump Button Logic
+                             if (ev.sequenceName === eventKey) {
+                                 state.currentEventData.eventTriggerOffset = startOffset;
+                                 dom.jumpToEventButton.style.display = "inline-flex";
+                             }
+
                              if (startOffset >= 0 && startOffset <= state.currentEventData.totalDuration) {
                                  const marker = document.createElement('div');
                                  marker.className = `timeline-marker ${ev.type}`;
@@ -688,7 +753,6 @@
                     const p2 = document.querySelector(`video.${camera}.p2`);
                     loadPromises.push(loadVideo(p1, playlist[0]));
                     if (playlist.length > 1) {
-                         // Preload next without awaiting
                          loadVideo(p2, playlist[1]).then(() => {});
                     }
                 }
@@ -720,11 +784,8 @@
                     resolve();
                 }, { once: true });
 
-                // REVERTED LOGIC: Direct URL assignment
                 if (file.isRemote) {
                      let url = file.url;
-                     // If using proxy, url is already http://localhost:8000/proxy?url=...
-                     // If NOT using proxy, and auth is needed, we embed in URL.
                      if (state.piConfig && state.piConfig.user && state.piConfig.pass && !state.piConfig.useProxy) {
                          try {
                             const urlObj = new URL(url);
@@ -790,6 +851,12 @@
             const wasPlaying = !getFrontVideo().paused;
             
             const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
+            
+            // Seek might trigger buffering if streaming
+            setLoading(true);
+            
+            const seekPromises = [];
+            
             cameraTypes.forEach(camera => {
                 state.currentEventData.playlistIndices[camera] = targetClipIndex;
                 const playlist = state.currentEventData.playlists[camera];
@@ -797,10 +864,10 @@
                     const activeVid = document.querySelector(`video.${camera}.${state.activePlayer}`);
                     const file = playlist[targetClipIndex];
                     
-                    loadVideo(activeVid, file).then(() => {
+                    seekPromises.push(loadVideo(activeVid, file).then(() => {
                          activeVid.currentTime = timeInTargetClip;
                          if (wasPlaying) activeVid.play();
-                    });
+                    }));
                     
                     // Preload next
                     const inactivePlayer = state.activePlayer === 'p1' ? 'p2' : 'p1';
@@ -810,6 +877,8 @@
                     }
                 }
             });
+            
+            Promise.all(seekPromises).then(() => setLoading(false));
         }
         
         function getCurrentTime() {
@@ -843,8 +912,272 @@
         function toggleFullscreen() { dom.body.classList.toggle('fullscreen-active'); const isFullscreen = dom.body.classList.contains('fullscreen-active'); dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block'; dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none'; }
         function closeMap() { dom.mapContainer.style.display = 'none'; dom.mapIframe.src = ''; }
 
+        async function saveClip() {
+             const duration = parseInt(dom.recordDurationSelect.value) || 30;
+             const customTitle = dom.clipCustomTitle.value.trim() || 'TeslaCam Event Recording';
+             dom.recordingOverlay.style.display = 'flex';
+             
+             // Fetch Map Image
+             let mapImg = null;
+             if (state.currentEventData.location) {
+                 try {
+                     const {lat, lon} = state.currentEventData.location;
+                     let mapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=15&size=600x400&maptype=mapnik`;
+                     if (state.piConfig.useProxy) {
+                         mapUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(mapUrl)}`;
+                     }
+                     // Attempt fetch
+                     const resp = await fetch(mapUrl).catch(() => null);
+                     if (resp && resp.ok) {
+                         const blob = await resp.blob();
+                         mapImg = await createImageBitmap(blob);
+                     }
+                 } catch(e) { console.log("Map fetch failed", e); }
+             }
+
+             const canvas = document.createElement('canvas');
+             canvas.width = 1920;
+             canvas.height = 1080; // HD
+             const ctx = canvas.getContext('2d');
+             
+             const stream = canvas.captureStream(30);
+             const recorder = new MediaRecorder(stream, { mimeType: 'video/webm', videoBitsPerSecond: 8000000 });
+             const chunks = [];
+             recorder.ondataavailable = e => chunks.push(e.data);
+             recorder.onstop = () => {
+                 const blob = new Blob(chunks, { type: 'video/webm' });
+                 const url = URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = `TeslaCam-Clip-${new Date().toISOString().replace(/[:.]/g, '-')}.webm`;
+                 a.click();
+                 dom.recordingOverlay.style.display = 'none';
+             };
+             
+             recorder.start();
+             
+             // Phase 1: Title Screen (3s)
+             let phase = 'title';
+             const startTime = Date.now();
+             const totalDuration = (duration + 3) * 1000; 
+             
+             const drawLoop = () => {
+                 if (Date.now() - startTime > totalDuration) {
+                     recorder.stop();
+                     return;
+                 }
+                 
+                 // Background
+                 const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                 grad.addColorStop(0, '#0a0a0a');
+                 grad.addColorStop(1, '#1a1a1a');
+                 ctx.fillStyle = grad;
+                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                 
+                 if (Date.now() - startTime < 3000) {
+                     // Title Screen
+                     ctx.fillStyle = 'white';
+                     ctx.font = 'bold 60px Inter, sans-serif';
+                     ctx.textAlign = 'center';
+                     // Shadow
+                     ctx.shadowColor = 'black';
+                     ctx.shadowBlur = 10;
+                     ctx.fillText(customTitle, canvas.width/2, 150);
+                     ctx.shadowBlur = 0;
+                     
+                     if (mapImg) {
+                         const mw = 600, mh = 400;
+                         const mx = (canvas.width - mw) / 2;
+                         const my = 220;
+                         
+                         // Border
+                         ctx.strokeStyle = '#444';
+                         ctx.lineWidth = 4;
+                         ctx.strokeRect(mx, my, mw, mh);
+                         
+                         ctx.drawImage(mapImg, mx, my, mw, mh);
+                     }
+
+                     ctx.font = '36px Inter, sans-serif';
+                     ctx.fillStyle = '#cccccc';
+                     
+                     // Date
+                     let dateStr = "";
+                     if (state.currentEventData.firstClipTime) {
+                         dateStr = state.currentEventData.firstClipTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                     }
+                     ctx.fillText(dateStr, canvas.width/2, 680);
+
+                     const timeStr = dom.liveTimestamp.textContent; 
+                     ctx.fillText(`Time: ${timeStr}`, canvas.width/2, 730);
+                     
+                     if (state.currentActiveEvent && state.currentActiveEvent.type) {
+                         ctx.fillStyle = state.currentActiveEvent.type === 'sentry' ? '#ef4444' : '#3b82f6';
+                         ctx.font = 'bold 40px Inter, sans-serif';
+                         ctx.fillText(`${state.currentActiveEvent.type.toUpperCase()} EVENT`, canvas.width/2, 820);
+                     }
+                     
+                     if (state.currentEventData.location) {
+                          ctx.fillStyle = '#9ca3af';
+                          ctx.font = '30px Inter, sans-serif';
+                          ctx.fillText(`Location: ${state.currentEventData.location.lat.toFixed(5)}, ${state.currentEventData.location.lon.toFixed(5)}`, canvas.width/2, 880);
+                     }
+                     
+                     ctx.font = '24px Inter, sans-serif';
+                     ctx.fillStyle = '#666';
+                     ctx.fillText("Generated by Tesla Companion", canvas.width/2, canvas.height - 50);
+
+                 } else {
+                     // Video Grid
+                     const videos = Array.from(getActiveVideos());
+                     const w = canvas.width / 3;
+                     const h = canvas.height / 2;
+                     
+                     videos.forEach(v => {
+                         let dx=0, dy=0;
+                         if (v.classList.contains('front')) { dx=w; dy=0; }
+                         else if (v.classList.contains('left_pillar')) { dx=0; dy=0; }
+                         else if (v.classList.contains('right_pillar')) { dx=w*2; dy=0; }
+                         else if (v.classList.contains('left_repeater')) { dx=0; dy=h; }
+                         else if (v.classList.contains('back')) { dx=w; dy=h; }
+                         else if (v.classList.contains('right_repeater')) { dx=w*2; dy=h; }
+                         
+                         ctx.drawImage(v, dx, dy, w, h);
+                     });
+                     
+                     // Timestamp overlay
+                     ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                     ctx.fillRect(10, 10, 450, 50);
+                     ctx.fillStyle = 'white';
+                     ctx.font = '30px monospace';
+                     ctx.textAlign = 'left';
+                     // Add Date to timestamp
+                     let fullTimestamp = dom.liveTimestamp.textContent;
+                     if (state.currentEventData.firstClipTime) {
+                         const datePart = state.currentEventData.firstClipTime.toLocaleDateString();
+                         fullTimestamp = `${datePart} ${fullTimestamp}`;
+                     }
+                     ctx.fillText(fullTimestamp, 20, 45);
+                 }
+                 
+                 requestAnimationFrame(drawLoop);
+             };
+             
+             drawLoop();
+             
+             // Start playback if paused
+             playVideos();
+        }
+
         // --- Event Listeners ---
         dom.piConnectBtn.addEventListener('click', connectToPi);
+        dom.fileBrowser.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            dom.titleFolderName.textContent = "Processing Local Files...";
+            setLoading(true);
+            setTimeout(() => processLocalFiles(files), 100);
+        });
+
+        function processLocalFiles(files) {
+             state.eventClips.clear();
+             state.sortedEventKeys = [];
+             state.eventsMap.clear();
+             dom.dateSelector.innerHTML = '<option>Select Event</option>';
+             
+             const sequenceMetadata = new Map();
+
+             files.forEach(file => {
+                 const pathParts = file.webkitRelativePath.split('/');
+                 // Looser regex to match timestamp in folder name even if it has suffix
+                 const eventName = pathParts.find(p => p.match(/\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/)); 
+                 if (!eventName) return;
+                 
+                 let type = 'saved';
+                 if (file.webkitRelativePath.includes('SentryClips')) type = 'sentry';
+                 
+                 if (!sequenceMetadata.has(eventName)) {
+                     sequenceMetadata.set(eventName, { minTime: null, maxTime: null, jsonFile: null, type: type });
+                 }
+                 const meta = sequenceMetadata.get(eventName);
+
+                 if (file.name.toLowerCase() === 'event.json') {
+                     meta.jsonFile = file;
+                 } else if (file.name.endsWith('.mp4')) {
+                     const match = file.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+                     if (match) {
+                         const isoTime = match[1].substring(0, 10) + 'T' + match[1].substring(11).replace(/-/g, ':');
+                         const time = new Date(isoTime).getTime();
+                         if (meta.minTime === null || time < meta.minTime) meta.minTime = time;
+                         if (meta.maxTime === null || time > meta.maxTime) meta.maxTime = time;
+                     }
+                     
+                     if (!state.eventClips.has(eventName)) {
+                         state.eventClips.set(eventName, { 
+                             playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, 
+                             eventJson: null, isRemote: false 
+                         });
+                     }
+                     const eventData = state.eventClips.get(eventName);
+                     
+                     const lowerName = file.name.toLowerCase();
+                     let cameraType = null;
+                     if (lowerName.includes('front')) cameraType = 'front';
+                     else if (lowerName.includes('back')) cameraType = 'back';
+                     else if (lowerName.includes('left_repeater')) cameraType = 'left_repeater';
+                     else if (lowerName.includes('right_repeater')) cameraType = 'right_repeater';
+                     else if (lowerName.includes('left_pillar')) cameraType = 'left_pillar';
+                     else if (lowerName.includes('right_pillar')) cameraType = 'right_pillar';
+                     
+                     if (cameraType) {
+                         eventData.playlists[cameraType].push(file);
+                     }
+                 }
+             });
+             
+            sequenceMetadata.forEach((meta, seqName) => {
+                if (meta.minTime) {
+                     const dateStr = new Date(meta.minTime).toISOString().substring(0, 10);
+                     if (!state.eventsMap.has(dateStr)) state.eventsMap.set(dateStr, []);
+                     state.eventsMap.get(dateStr).push({
+                         sequenceName: seqName,
+                         startTime: meta.minTime,
+                         endTime: meta.maxTime || meta.minTime,
+                         type: meta.type,
+                         jsonFile: meta.jsonFile
+                     });
+                     
+                     if (state.eventClips.has(seqName)) {
+                         state.eventClips.get(seqName).eventJson = meta.jsonFile;
+                     }
+                }
+            });
+             
+             for (const [_, data] of state.eventClips.entries()) { 
+                for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name));
+             }
+             
+             state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
+             
+             if (state.sortedEventKeys.length === 0) {
+                 dom.titleFolderName.textContent = 'No Clips Found';
+                 setLoading(false);
+                 return;
+             }
+             
+             state.sortedEventKeys.forEach((key) => {
+                 const index = state.sortedEventKeys.indexOf(key);
+                 const option = document.createElement("option");
+                 option.innerText = key;
+                 option.value = index;
+                 dom.dateSelector.appendChild(option);
+             });
+             
+             dom.titleFolderName.textContent = `Found ${state.sortedEventKeys.length} Events`;
+             dom.dateSelector.selectedIndex = 0;
+             loadEvent(0);
+        }
+
         dom.themeToggle.addEventListener('click', () => {
             const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
             localStorage.setItem('theme', newTheme);
@@ -855,6 +1188,47 @@
         dom.nextButton.addEventListener("click", () => { if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); });
         dom.previousButton.addEventListener("click", () => { if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); });
         dom.jumpToEventButton.addEventListener("click", () => seekAllVideos(state.currentEventData.eventTriggerOffset));
+        
+        // Next Event Button
+        dom.nextEventBtn.addEventListener('click', () => {
+             if (state.dayEvents && state.dayEvents.length > 0) {
+                 const currentTime = getCurrentTime();
+                 // Prioritize the currently loaded event if overlapping
+                 let activeEvent = state.dayEvents.find(ev => ev.isCurrent && currentTime >= ev.startOffset && currentTime <= ev.endOffset);
+                 if (!activeEvent) {
+                     activeEvent = state.dayEvents.find(ev => currentTime >= ev.startOffset && currentTime <= ev.endOffset);
+                 }
+
+                 if (activeEvent) {
+                     if (state.currentActiveEvent !== activeEvent) {
+                         state.currentActiveEvent = activeEvent;
+                         displayEventDetails(activeEvent);
+                     }
+                 } else {
+                     if (state.currentActiveEvent) {
+                         state.currentActiveEvent = null;
+                         dom.eventDetailsContainer.style.display = 'none';
+                         dom.mapButton.style.display = 'none';
+                     }
+                 }
+                 
+                 // Show/Hide Next Event Button
+                 const hasNext = state.dayEvents.some(ev => ev.startOffset > currentTime + 5);
+                 dom.nextEventBtn.style.display = hasNext ? 'inline-flex' : 'none';
+             }
+        });
+        
+        dom.mapButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (state.currentEventData.location) {
+                const { lat, lon } = state.currentEventData.location;
+                // OSM Embed
+                const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.005},${lat-0.005},${lon+0.005},${lat+0.005}&layer=mapnik&marker=${lat},${lon}`;
+                dom.mapIframe.src = mapUrl;
+                dom.mapContainer.style.display = 'flex';
+            }
+        });
+        
         dom.skipForwardButton.addEventListener('click', () => skipTo(5));
         dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
         dom.playbackSpeedSelector.addEventListener('input', (e) => {
@@ -885,6 +1259,36 @@
         dom.masterScrubber.addEventListener('mouseout', () => { dom.scrubberTooltip.style.opacity = '0'; });
 
         document.querySelectorAll('video').forEach(video => {
+            // Buffering / Sync Logic
+            video.addEventListener('waiting', () => {
+                if (!video.classList.contains('active')) return;
+                // If any active video is buffering, pause all
+                if (!state.isLoading) {
+                    console.log('Buffering:', video.className);
+                    // We use a lighter loading state here to avoid blocking UI completely?
+                    // For now reuse setLoading but keep controls enabled? 
+                    // Or just pause.
+                    getActiveVideos().forEach(v => v.pause());
+                    dom.loadingOverlay.style.display = 'flex';
+                    dom.loadingOverlay.querySelector('#loading-text').textContent = "Buffering...";
+                }
+            });
+            
+            video.addEventListener('canplay', () => {
+                if (!video.classList.contains('active')) return;
+                // Check if all active videos are ready
+                const active = Array.from(getActiveVideos());
+                const allReady = active.every(v => v.readyState >= 3); // HAVE_FUTURE_DATA
+                if (allReady && dom.loadingOverlay.style.display === 'flex' && dom.loadingOverlay.querySelector('#loading-text').textContent === "Buffering...") {
+                    dom.loadingOverlay.style.display = 'none';
+                    dom.loadingOverlay.querySelector('#loading-text').textContent = "Loading...";
+                    // Resume if we were playing (how to track? infer from UI)
+                    if (dom.playIcon.style.display === 'none') { 
+                        playVideos();
+                    }
+                }
+            });
+
             video.addEventListener("timeupdate", (e) => {
                 // Scrubber Update (only front)
                 if (e.target.classList.contains('active') && e.target.classList.contains('front')) {
@@ -895,7 +1299,12 @@
                     // Event Details Logic
                     if (state.dayEvents && state.dayEvents.length > 0) {
                         const currentTime = getCurrentTime();
-                        const activeEvent = state.dayEvents.find(ev => currentTime >= ev.startOffset && currentTime <= ev.endOffset);
+                        // Prioritize the currently loaded event if overlapping
+                        let activeEvent = state.dayEvents.find(ev => ev.isCurrent && currentTime >= ev.startOffset && currentTime <= ev.endOffset);
+                        if (!activeEvent) {
+                            activeEvent = state.dayEvents.find(ev => currentTime >= ev.startOffset && currentTime <= ev.endOffset);
+                        }
+
                         if (activeEvent) {
                             if (state.currentActiveEvent !== activeEvent) {
                                 state.currentActiveEvent = activeEvent;
@@ -908,7 +1317,20 @@
                                 dom.mapButton.style.display = 'none';
                             }
                         }
+                        
+                        // Show/Hide Next Event Button
+                        const hasNext = state.dayEvents.some(ev => ev.startOffset > currentTime + 5);
+                        dom.nextEventBtn.style.display = hasNext ? 'inline-flex' : 'none';
                     }
+                    
+                    // Sync check for all videos
+                     getActiveVideos().forEach(v => {
+                         if (!v.classList.contains('front')) {
+                             if (Math.abs(v.currentTime - e.target.currentTime) > 0.5) {
+                                 v.currentTime = e.target.currentTime;
+                             }
+                         }
+                     });
                 }
             });
 
@@ -968,6 +1390,10 @@
             });
         });
         
+        dom.saveClipBtn.addEventListener('click', saveClip);
+        dom.mapCloseButton.addEventListener('click', closeMap);
+        dom.mapContainer.addEventListener('click', (e) => { if (e.target === dom.mapContainer) closeMap(); });
+        
         // Init
         applyTheme(localStorage.getItem('theme') || 'dark');
         // Skip splash logic here as it is handled in index.html
@@ -976,32 +1402,3 @@
 
 </body>
 </html>
-
-</final_file_content>
-
-IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
-
-<environment_details>
-# Visual Studio Code Visible Files
-camera_viewer.html
-
-# Visual Studio Code Open Tabs
-cors_proxy.py
-trip_planner.html
-charging.html
-phantom_drain.html
-about.html
-howto.html
-styles.css
-index.html
-camera_viewer.html
-
-# Current Time
-11/23/2025, 4:43:19 PM (America/Chicago, UTC-6:00)
-
-# Context Window Usage
-761,398 / 1,048.576K tokens used (72%)
-
-# Current Mode
-ACT MODE
-</environment_details>
