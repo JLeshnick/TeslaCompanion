@@ -783,6 +783,16 @@
                      state.currentActiveEvent = initialEvent;
                  }
              }
+             
+            // Timestamp Adjustment Logic
+            if (state.currentEventData.firstClipTime && state.currentEventData.eventTriggerOffset > -1) {
+                 // Check if event.json is parsed (done async). 
+                 // If so, we can adjust offset.
+                 // Since it's async, we rely on displayEventDetails or user interaction.
+                 // But we can calculate a 'best guess' if we have event.json loaded.
+                 // For local files, we can read it here?
+                 // ...
+            }
 
             const loadPromises = [];
             const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
@@ -1143,9 +1153,8 @@
 
              files.forEach(file => {
                  const pathParts = file.webkitRelativePath.split('/');
-                 // Looser regex to match timestamp in folder name even if it has suffix
-                 const eventName = pathParts.find(p => p.match(/\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/)); 
-                 if (!eventName) return;
+                 if (pathParts.length < 2) return;
+                 const eventName = pathParts[pathParts.length - 2]; // Use parent folder as event ID
                  
                  let type = 'saved';
                  if (file.webkitRelativePath.includes('SentryClips')) type = 'sentry';
