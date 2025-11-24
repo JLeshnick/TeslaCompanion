@@ -6,6 +6,59 @@
     <title>Camera Viewer - Tesla Companion</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .playback-speed-control {
+            background: var(--control-bg-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            height: 38px; 
+        }
+        .video-container video { display: none; width: 100%; height: 100%; object-fit: contain; }
+        .video-container video.active { display: block; }
+        
+        #loading-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            border-radius: var(--border-radius-xl);
+            backdrop-filter: blur(2px);
+        }
+        #loading-text {
+            background: var(--surface-color);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-md);
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        /* Recording Overlay */
+        #recording-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+        #recording-icon {
+            width: 64px; height: 64px; fill: #ef4444;
+            animation: pulse-rec 1s infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes pulse-rec { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
 </head>
 <body>
 
@@ -36,10 +89,21 @@
         </div>
     </header>
 
+    <div id="recording-overlay">
+        <svg id="recording-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        <h2 style="margin:0;">Recording...</h2>
+        <p>Please wait while the clip is generated.</p>
+    </div>
+
     <div class="content-container">
         <div id="CameraViewer" class="tab-content active" style="display: flex;">
+             <div class="sub-tab-nav">
+                <button class="sub-tab-btn active" id="btn-source-local" onclick="switchCameraSource('local')">Local Files</button>
+                <button class="sub-tab-btn" id="btn-source-pi" onclick="switchCameraSource('pi')">Raspberry Pi</button>
+             </div>
              <div id="camera-controls-container">
                     <div class="header-main">
+                            <div id="loading-overlay"><div id="loading-text">Loading...</div></div>
                             <div class="header-row top-ribbon">
                                 <div class="title-area">
                                     <div class="clip-info">
@@ -55,6 +119,7 @@
                                 <div class="main-playback-controls">
                                     <div class="event-action-stack">
                                         <button class="btn" id="jump-to-event" style="display: none;" title="Jump to event trigger">Jump to Event</button>
+                                        <button class="btn" id="next-event-btn" style="display: none;" title="Go to Next Event">Next Event</button>
                                         <button class="btn" id="map-button" style="display: none;" title="View on Map">Event Map</button>
                                     </div>
                                     <button class="btn icon-btn previous" title="Previous Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"></path></svg></button>
@@ -62,10 +127,32 @@
                                     <button class="btn icon-btn" id="play-pause-button"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M8 5v14l11-7z"></path></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
                                     <button class="btn" id="skip-forward" title="Forward 5s">+5s</button>
                                     <button class="btn icon-btn next" title="Next Clip"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"></path></svg></button>
-                                    <select id="playback-speed" class="styled-input" title="Playback Speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
+                                    
+                                    <!-- Playback Speed Slider -->
+                                    <div class="playback-speed-control">
+                                        <span id="speed-display" style="font-weight:600; min-width:3ch; text-align:right;">1.0x</span>
+                                        <input type="range" id="playback-speed" min="0" max="30" value="10" style="width: 80px; padding:0; margin:0; height:6px;">
+                                        <button class="btn" id="reset-speed" title="Reset to 1x" style="padding:0.2rem 0.5rem; height: 24px; font-size:0.7rem; min-width: auto;">1x</button>
+                                    </div>
+
                                     <div class="time-display"><span class="status-dot ready"></span><span id="live-timestamp">00:00</span> / <span id="duration-display">00:00</span></div>
                                     <div class="utility-btn-stack">
                                         <button class="btn icon-btn" id="screenshot-btn" title="Screenshot"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
+                                        
+                                        <!-- Recording Controls -->
+                                        <div style="display:flex; gap:2px; align-items:center; background:var(--control-bg-color); border-radius:var(--border-radius-md); border:1px solid var(--border-color); padding:2px;">
+                                            <input type="text" id="clip-custom-title" placeholder="Title" style="width: 60px; background: transparent; border: none; color: var(--text-color); font-size: 0.7rem; padding: 0 4px; border-bottom: 1px solid var(--border-color);">
+                                            <select id="record-duration" style="background:transparent; border:none; color:var(--text-color); font-size:0.7rem; width:45px; cursor:pointer;">
+                                                <option value="5">5s</option>
+                                                <option value="10">10s</option>
+                                                <option value="15">15s</option>
+                                                <option value="20">20s</option>
+                                                <option value="25">25s</option>
+                                                <option value="30" selected>30s</option>
+                                            </select>
+                                            <button class="btn icon-btn" id="save-clip-btn" title="Save Clip" style="width:32px; height:32px; border:none; background:transparent;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
+                                        </div>
+
                                         <button class="btn icon-btn" id="fullscreen-toggle" title="Toggle Fullscreen">
                                             <svg id="maximize-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
                                             <svg id="minimize-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
@@ -73,13 +160,29 @@
                                     </div>
                                 </div>
                                 <div class="file-select-stack">
-                                    <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
-                                    <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                                    <div id="local-file-controls">
+                                        <label for="fileBrowser" class="btn"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 0.5rem;"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>Select Directory</label>
+                                        <input type="file" id="fileBrowser" webkitdirectory multiple hidden>
+                                    </div>
+                                    <div id="pi-file-controls" style="display:none;" class="pi-controls">
+                                        <input type="text" id="pi-ip" placeholder="IP (e.g. 192.168.1.173)">
+                                        <div style="display:flex; gap:0.25rem;">
+                                            <input type="text" id="pi-user" placeholder="User" style="width:50%">
+                                            <input type="password" id="pi-pass" placeholder="Pass" style="width:50%">
+                                        </div>
+                                        <div class="checkbox-group" style="margin-bottom:0; padding:0; justify-content: center;">
+                                            <input type="checkbox" id="pi-use-proxy">
+                                            <label for="pi-use-proxy" style="font-size:0.8rem; color:var(--text-muted-color);">Use Proxy (localhost:8000)</label>
+                                        </div>
+                                        <button class="btn" id="pi-connect-btn">Connect</button>
+                                    </div>
                                     <select id="date-select" class="styled-input"><option>Select Event</option></select>
                                 </div>
                             </div>
                             <div class="header-row progress-container">
                                 <div id="event-marker"></div>
+                                <div id="timeline-markers"></div>
+                                <div id="scrubber-tooltip">00:00</div>
                                 <input type="range" id="master-scrubber" min="0" max="100" value="0" step="0.1">
                             </div>
                     </div>
@@ -100,12 +203,36 @@
              </div>
              <div class="video-grid-container">
                     <div class="video-grid" id="video-grid">
-                        <div class="video-container front"><div class="video-label">Front</div><video class="front" muted playsinline></video></div>
-                        <div class="video-container back"><div class="video-label">Back</div><video class="back" muted playsinline></video></div>
-                        <div class="video-container left_repeater"><div class="video-label">Left Fender</div><video class="left_repeater" muted playsinline></video></div>
-                        <div class="video-container right_repeater"><div class="video-label">Right Fender</div><video class="right_repeater" muted playsinline></video></div>
-                        <div class="video-container left_pillar"><div class="video-label">Left Pillar</div><video class="left_pillar" muted playsinline></video></div>
-                        <div class="video-container right_pillar"><div class="video-label">Right Pillar</div><video class="right_pillar" muted playsinline></video></div>
+                        <div class="video-container front">
+                            <div class="video-label">Front</div>
+                            <video class="front p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="front p2" muted playsinline crossOrigin="anonymous"></video>
+                        </div>
+                        <div class="video-container back">
+                            <div class="video-label">Back</div>
+                            <video class="back p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="back p2" muted playsinline crossOrigin="anonymous"></video>
+                        </div>
+                        <div class="video-container left_repeater">
+                            <div class="video-label">Left Fender</div>
+                            <video class="left_repeater p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="left_repeater p2" muted playsinline crossOrigin="anonymous"></video>
+                        </div>
+                        <div class="video-container right_repeater">
+                            <div class="video-label">Right Fender</div>
+                            <video class="right_repeater p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="right_repeater p2" muted playsinline crossOrigin="anonymous"></video>
+                        </div>
+                        <div class="video-container left_pillar">
+                            <div class="video-label">Left Pillar</div>
+                            <video class="left_pillar p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="left_pillar p2" muted playsinline crossOrigin="anonymous"></video>
+                        </div>
+                        <div class="video-container right_pillar">
+                            <div class="video-label">Right Pillar</div>
+                            <video class="right_pillar p1 active" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="right_pillar p2" muted playsinline crossOrigin="anonymous"></video>
+                        </div>
                     </div>
              </div>
         </div>
@@ -121,13 +248,19 @@
         const state = {
             playbackRate: 1, carouselIndex: 0, eventClips: new Map(),
             sortedEventKeys: [], currentEventData: {},
+            cameraSource: 'local', 
+            piConfig: { ip: '', user: '', pass: '', useProxy: false },
+            eventsMap: new Map(), 
+            dayEvents: [], 
+            currentActiveEvent: null,
+            activePlayer: 'p1',
+            isLoading: false,
+            waitingForSync: 0
         };
 
         const dom = {
             body: document.body,
             videoGrid: document.querySelector("#video-grid"),
-            allVideos: document.querySelectorAll("video"), 
-            frontVideo: document.querySelector("video.front"),
             fileBrowser: document.querySelector("#fileBrowser"),
             dateSelector: document.querySelector("#date-select"),
             nextButton: document.querySelector("button.next"),
@@ -141,6 +274,7 @@
             statusDot: document.querySelector('.status-dot'),
             eventMarker: document.querySelector("#event-marker"),
             jumpToEventButton: document.querySelector("#jump-to-event"),
+            nextEventBtn: document.getElementById('next-event-btn'),
             mapButton: document.getElementById('map-button'),
             mapContainer: document.getElementById('map-container'),
             mapIframe: document.getElementById('map-iframe'),
@@ -156,6 +290,11 @@
             skipForwardButton: document.querySelector('#skip-forward'),
             skipRewindButton: document.querySelector('#skip-rewind'),
             playbackSpeedSelector: document.querySelector('#playback-speed'),
+            speedDisplay: document.querySelector('#speed-display'),
+            resetSpeedBtn: document.querySelector('#reset-speed'),
+            scrubberTooltip: document.getElementById('scrubber-tooltip'),
+            timelineMarkersContainer: document.getElementById('timeline-markers'),
+            collapsibleControls: document.querySelector('#collapsible-controls'),
             titleFolderName: document.querySelector('.title-folder-name'),
             eventDetailsContainer: document.getElementById('event-details-container'),
             eventReasonDisplay: document.getElementById('event-reason-display'),
@@ -163,7 +302,39 @@
             eventTriggerDisplay: document.getElementById('event-trigger-display'),
             eventCityDisplay: document.getElementById('event-city-display'),
             screenshotBtn: document.querySelector('#screenshot-btn'),
+            saveClipBtn: document.querySelector('#save-clip-btn'),
+            recordDurationSelect: document.querySelector('#record-duration'),
+            clipCustomTitle: document.getElementById('clip-custom-title'),
+            cameraControlsContainer: document.getElementById('camera-controls-container'),
+            btnSourceLocal: document.getElementById('btn-source-local'),
+            btnSourcePi: document.getElementById('btn-source-pi'),
+            localFileControls: document.getElementById('local-file-controls'),
+            piFileControls: document.getElementById('pi-file-controls'),
+            piIpInput: document.getElementById('pi-ip'),
+            piUserInput: document.getElementById('pi-user'),
+            piPassInput: document.getElementById('pi-pass'),
+            piUseProxy: document.getElementById('pi-use-proxy'),
+            piConnectBtn: document.getElementById('pi-connect-btn'),
+            loadingOverlay: document.getElementById('loading-overlay'),
+            recordingOverlay: document.getElementById('recording-overlay'),
         };
+        
+        // Helpers
+        function getActiveVideos() {
+            return document.querySelectorAll(`video.${state.activePlayer}`);
+        }
+        function getFrontVideo() {
+            return document.querySelector(`video.front.${state.activePlayer}`);
+        }
+        function setLoading(loading) {
+            state.isLoading = loading;
+            dom.loadingOverlay.style.display = loading ? 'flex' : 'none';
+            dom.playPauseButton.disabled = loading;
+            dom.masterScrubber.disabled = loading;
+            dom.dateSelector.disabled = loading;
+            dom.nextButton.disabled = loading;
+            dom.previousButton.disabled = loading;
+        }
 
         const friendlyEventReasons = {
             'sentry_aware_object_detection': 'Sentry: Object Detected',
@@ -173,6 +344,55 @@
             'user_interaction_dashcam_multifunction_selected': 'Dashcam Saved (Manual)',
         };
 
+        window.switchCameraSource = (source) => {
+            state.cameraSource = source;
+            if (source === 'local') {
+                dom.btnSourceLocal.classList.add('active');
+                dom.btnSourcePi.classList.remove('active');
+                dom.localFileControls.style.display = 'block';
+                dom.piFileControls.style.display = 'none';
+            } else {
+                dom.btnSourceLocal.classList.remove('active');
+                dom.btnSourcePi.classList.add('active');
+                dom.localFileControls.style.display = 'none';
+                dom.piFileControls.style.display = 'flex';
+                if (localStorage.getItem('piConfig')) {
+                    const saved = JSON.parse(localStorage.getItem('piConfig'));
+                    dom.piIpInput.value = saved.ip || '';
+                    dom.piUserInput.value = saved.user || '';
+                    dom.piPassInput.value = saved.pass || '';
+                    dom.piUseProxy.checked = saved.useProxy || false;
+                }
+            }
+            resetViewer();
+        };
+
+        function resetViewer() {
+            state.eventClips.clear();
+            state.sortedEventKeys = [];
+            state.eventsMap.clear();
+            dom.dateSelector.innerHTML = '<option>Select Event</option>';
+            dom.titleFolderName.textContent = 'No Clips Selected';
+            document.querySelectorAll('video').forEach(v => v.src = '');
+            dom.eventDetailsContainer.style.display = 'none';
+            dom.liveTimestamp.textContent = "00:00";
+            dom.durationDisplay.textContent = "00:00";
+            dom.masterScrubber.value = 0;
+            dom.eventMarker.style.display = "none";
+            dom.timelineMarkersContainer.innerHTML = '';
+            dom.jumpToEventButton.style.display = "none";
+            dom.nextEventBtn.style.display = "none";
+            dom.mapButton.style.display = 'none';
+            state.activePlayer = 'p1';
+            updatePlayerVisibility();
+            setLoading(false);
+        }
+        
+        function updatePlayerVisibility() {
+            document.querySelectorAll('.video-container video').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll(`.video-container video.${state.activePlayer}`).forEach(v => v.classList.add('active'));
+        }
+        
         const applyTheme = (theme) => {
             if (theme === 'light') {
                 dom.body.classList.add('light-mode');
@@ -183,23 +403,312 @@
                 dom.themeIconSun.style.display = 'block';
                 dom.themeIconMoon.style.display = 'none';
             }
-        };
+        }
+
+        async function connectToPi() {
+            const ip = dom.piIpInput.value.trim();
+            const user = dom.piUserInput.value.trim();
+            const pass = dom.piPassInput.value.trim();
+            const useProxy = dom.piUseProxy.checked;
+
+            if (!ip) {
+                alert("Please enter an IP address.");
+                return;
+            }
+
+            state.piConfig = { ip, user, pass, useProxy };
+            localStorage.setItem('piConfig', JSON.stringify(state.piConfig));
+
+            dom.titleFolderName.textContent = "Connecting...";
+            
+            const authHeaders = new Headers();
+            if (user && pass) {
+                authHeaders.set('Authorization', 'Basic ' + btoa(user + ":" + pass));
+            }
+
+            try {
+                const baseUrl = ip.startsWith('http') ? ip : `http://${ip}`;
+                let url = `${baseUrl}/cgi-bin/videolist.sh`;
+                if (useProxy) {
+                    url = `http://localhost:8000/proxy?url=${encodeURIComponent(url)}`;
+                }
+
+                const response = await fetch(url, { headers: authHeaders });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const text = await response.text();
+                processRemoteFileList(text, baseUrl, authHeaders);
+
+            } catch (error) {
+                console.error("Connection failed:", error);
+                dom.titleFolderName.textContent = "Connection Failed";
+                alert(`Failed to connect: ${error.message}`);
+            }
+        }
+
+        function processRemoteFileList(fileListText, baseUrl, authHeaders) {
+            state.eventClips.clear();
+            state.sortedEventKeys = [];
+            dom.dateSelector.innerHTML = '<option>Select Event</option>';
+            const lines = fileListText.split('\n');
+            const useProxy = state.piConfig.useProxy;
+            const sequenceMetadata = new Map(); 
+
+            for (const lineRaw of lines) {
+                 const line = lineRaw.trim();
+                 if (!line) continue;
+                 if (line.startsWith('SentryClips') || line.startsWith('SavedClips')) {
+                     const parts = line.split('/');
+                     if (parts.length >= 2) {
+                         const group = parts[0];
+                         const sequenceName = parts[1];
+                         const filename = parts.length > 2 ? parts[parts.length - 1] : '';
+                         if (!sequenceMetadata.has(sequenceName)) {
+                             sequenceMetadata.set(sequenceName, { minTime: null, maxTime: null, jsonPath: null, type: group === 'SentryClips' ? 'sentry' : 'saved' });
+                         }
+                         const meta = sequenceMetadata.get(sequenceName);
+                         if (filename === 'event.json') {
+                             let jsonUrl = `${baseUrl}/TeslaCam/${line}`;
+                             if (useProxy) jsonUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(jsonUrl)}`;
+                             meta.jsonPath = jsonUrl;
+                         } else if (filename.endsWith('.mp4')) {
+                             const match = filename.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+                             if (match) {
+                                 const isoTime = match[1].substring(0, 10) + 'T' + match[1].substring(11).replace(/-/g, ':');
+                                 const time = new Date(isoTime).getTime();
+                                 if (meta.minTime === null || time < meta.minTime) meta.minTime = time;
+                                 if (meta.maxTime === null || time > meta.maxTime) meta.maxTime = time;
+                             }
+                         }
+                     }
+                 }
+            }
+
+            const eventsMap = new Map(); 
+            sequenceMetadata.forEach((meta, seqName) => {
+                if (meta.minTime) {
+                     const dateStr = new Date(meta.minTime).toISOString().substring(0, 10);
+                     if (!eventsMap.has(dateStr)) eventsMap.set(dateStr, []);
+                     eventsMap.get(dateStr).push({
+                         sequenceName: seqName,
+                         startTime: meta.minTime,
+                         endTime: meta.maxTime || meta.minTime,
+                         type: meta.type,
+                         jsonPath: meta.jsonPath
+                     });
+                }
+            });
+            state.eventsMap = eventsMap;
+
+            for (const lineRaw of lines) {
+                const line = lineRaw.trim();
+                if (!line) continue;
+                const parts = line.split('/');
+                if (parts.length < 3) continue;
+                const [group, sequenceName, filename] = parts;
+                if (!['RecentClips', 'SavedClips', 'SentryClips'].includes(group)) continue;
+                if (!state.eventClips.has(sequenceName)) {
+                    state.eventClips.set(sequenceName, { 
+                        playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, 
+                        eventJson: null, fullPath: line, isRemote: true, baseUrl: baseUrl, authHeaders: authHeaders
+                    });
+                }
+                const eventData = state.eventClips.get(sequenceName);
+                let cameraType = null;
+                if (filename.includes('front')) cameraType = 'front';
+                else if (filename.includes('back')) cameraType = 'back';
+                else if (filename.includes('left_repeater')) cameraType = 'left_repeater';
+                else if (filename.includes('right_repeater')) cameraType = 'right_repeater';
+                else if (filename.includes('left_pillar')) cameraType = 'left_pillar';
+                else if (filename.includes('right_pillar')) cameraType = 'right_pillar';
+
+                if (cameraType && filename.endsWith('.mp4')) {
+                    let fakeName = filename;
+                    if (!filename.match(/^\d{4}-\d{2}-\d{2}/)) fakeName = `${sequenceName}-${filename}`;
+                    let fileUrl = `${baseUrl}/TeslaCam/${line}`;
+                    if (useProxy) fileUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(fileUrl)}`;
+                    if (eventData.playlists[cameraType]) { // Safety check
+                        eventData.playlists[cameraType].push({ name: fakeName, url: fileUrl, isRemote: true });
+                    }
+                }
+            }
+
+            for (const [_, data] of state.eventClips.entries()) { 
+                for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            const allKeys = Array.from(state.eventClips.keys()).sort();
+            state.sortedEventKeys = allKeys; 
+            const dateKeys = allKeys.filter(k => k.match(/^\d{4}-\d{2}-\d{2}$/));
+            
+            if (dateKeys.length === 0 && allKeys.length === 0) {
+                dom.titleFolderName.textContent = 'No Clips Found on Pi';
+                dom.dateSelector.innerHTML = '<option>No Events Found</option>';
+                return;
+            }
+
+            dom.dateSelector.innerHTML = '';
+            const keysToShow = dateKeys.length > 0 ? dateKeys : allKeys;
+            keysToShow.forEach((key) => { 
+                const index = state.sortedEventKeys.indexOf(key);
+                const option = document.createElement("option"); 
+                const dateMatch = key.match(/^(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch && key.length === 10) {
+                     const dateStr = dateMatch[1];
+                     const eventsForDate = eventsMap.get(dateStr);
+                     const eventCount = eventsForDate ? eventsForDate.length : 0;
+                     option.innerText = `${key} (${eventCount} events)`;
+                } else {
+                    option.innerText = key;
+                }
+                option.value = index; 
+                dom.dateSelector.appendChild(option); 
+            });
+            
+            dom.titleFolderName.textContent = `Found ${keysToShow.length} Days`;
+            
+            if (dom.dateSelector.options.length > 0) {
+                dom.dateSelector.selectedIndex = 0;
+                loadEvent(parseInt(dom.dateSelector.value));
+            }
+        }
+
+        async function displayEventDetails(eventInfo) {
+            let jsonData = null;
+            if (eventInfo.jsonPath) {
+                try {
+                    const headers = state.piConfig.user ? new Headers({'Authorization': 'Basic ' + btoa(state.piConfig.user + ":" + state.piConfig.pass)}) : new Headers();
+                    const res = await fetch(eventInfo.jsonPath, { headers });
+                    if (state.currentActiveEvent !== eventInfo) return; // Race condition check
+                    jsonData = await res.json();
+                } catch (e) { console.error("Error fetching remote json", e); }
+            } else if (eventInfo.jsonFile) {
+                try {
+                    const text = await eventInfo.jsonFile.text();
+                    jsonData = JSON.parse(text);
+                } catch (e) { console.error("Error parsing local json", e); }
+            }
+
+            if (!jsonData) {
+                dom.eventDetailsContainer.style.display = 'block';
+                dom.eventReasonDisplay.innerHTML = `Event: <strong>${eventInfo.type === 'sentry' ? 'Sentry Event' : 'Saved Clip'}</strong>`;
+                dom.eventTimeDisplay.innerHTML = `Time: <strong>${formatLocalTime(new Date(eventInfo.startTime))}</strong>`;
+                dom.eventTriggerDisplay.innerHTML = '';
+                dom.eventCityDisplay.innerHTML = '';
+                dom.mapButton.style.display = 'none';
+                return;
+            }
+            
+            try {
+                dom.eventDetailsContainer.style.display = 'block';
+                const friendlyReason = friendlyEventReasons[jsonData.reason] || jsonData.reason.replace(/_/g, ' ');
+                dom.eventReasonDisplay.innerHTML = `Event: <strong>${friendlyReason}</strong>`;
+                dom.eventTimeDisplay.innerHTML = `Time: <strong>${formatLocalTime(new Date(jsonData.timestamp))}</strong>`;
+                if (jsonData.city) dom.eventCityDisplay.innerHTML = `City: <strong>${jsonData.city}</strong>`;
+                else dom.eventCityDisplay.innerHTML = '';
+                
+                if (jsonData.est_lat && jsonData.est_lon) {
+                    state.currentEventData.location = { lat: parseFloat(jsonData.est_lat), lon: parseFloat(jsonData.est_lon) };
+                    dom.mapButton.style.display = 'inline-flex';
+                } else {
+                    dom.mapButton.style.display = 'none';
+                }
+                
+                // Parse Camera Trigger
+                const cameraIndexMap = { 0: 'front', 3: 'left_pillar', 4: 'right_pillar', 5: 'left_repeater', 6: 'right_repeater', 7: 'back' };
+                if (jsonData.camera) {
+                    const triggerCamKey = cameraIndexMap[parseInt(jsonData.camera, 10)];
+                    if (triggerCamKey) {
+                         const displayName = triggerCamKey.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
+                         dom.eventTriggerDisplay.innerHTML = `Trigger: <strong>${displayName.charAt(0).toUpperCase() + displayName.slice(1)}</strong>`;
+                         // Highlight container
+                         document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
+                         const container = document.querySelector(`.video-container.${triggerCamKey}`);
+                         if (container) container.classList.add('triggered');
+                         
+                         // Store for saveClip
+                         state.currentEventData.triggerName = displayName;
+                    }
+                }
+                if (jsonData.city) {
+                    dom.eventCityDisplay.innerHTML = `City: <strong>${jsonData.city}</strong>`;
+                    state.currentEventData.city = jsonData.city;
+                }
+
+                // Logic for determining event time offset
+                const eventTimeFromJSON = new Date(jsonData.timestamp);
+                const rawReason = jsonData.reason;
+                const isManualSave = rawReason.startsWith('user_interaction');
+                
+                if (state.currentEventData.firstClipTime && state.currentEventData.totalDuration > 0) {
+                    let offset = (eventTimeFromJSON.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
+
+                    if (isManualSave) {
+                        const diffFromEnd = Math.abs(offset - state.currentEventData.totalDuration);
+                        if (diffFromEnd > 1800) { 
+                            const hourDifference = Math.round(offset / 3600);
+                            if (hourDifference !== 0) {
+                                offset = state.currentEventData.totalDuration - 5; 
+                            }
+                        }
+                    } else {
+                         if (Math.abs(offset) > (state.currentEventData.totalDuration + 60)) {
+                            const hourDifference = Math.round(offset / 3600);
+                            if (hourDifference !== 0) {
+                                offset -= hourDifference * 3600;
+                            }
+                        }
+                    }
+
+                    if (offset >= -10 && offset <= state.currentEventData.totalDuration + 10) { 
+                        state.currentEventData.eventTriggerOffset = Math.max(0, Math.min(offset, state.currentEventData.totalDuration));
+                        updateEventMarkerPosition();
+                        dom.eventMarker.style.display = "block";
+                        dom.jumpToEventButton.style.display = "inline-flex";
+                    }
+                }
+
+            } catch (e) {
+                console.error("Error fetching event json", e);
+            }
+        }
+
+        function preloadNextClip(camera, index) {
+            // Minimal preloading for streaming mode
+            if (state.playbackRate > 1.5) return;
+            const playlist = state.currentEventData.playlists[camera];
+            if (playlist && index + 1 < playlist.length) {
+                const nextFile = playlist[index + 1];
+                if (!nextFile.isRemote) {
+                    // Only preload local files blob
+                    // For remote streaming, browser handles buffering of current video.
+                    // We can try creating a detached video element to start the request?
+                    // Or just rely on the dual player loading it into P2.
+                    // Dual Player logic ALREADY loads P2.
+                    // So this function is redundant for Dual Player logic which calls loadVideo on P2.
+                }
+            }
+        }
 
         async function loadEvent(index) {
             state.carouselIndex = index;
             if (index < 0 || index >= state.sortedEventKeys.length) return;
+            
+            setLoading(true);
+            
             pauseVideos();
             dom.masterScrubber.value = 0;
             dom.liveTimestamp.textContent = "00:00";
             dom.durationDisplay.textContent = "00:00";
             dom.eventMarker.style.display = "none";
             dom.jumpToEventButton.style.display = "none";
+            dom.nextEventBtn.style.display = "none";
             dom.mapButton.style.display = 'none';
             dom.eventDetailsContainer.style.display = 'none';
-            dom.eventReasonDisplay.innerHTML = '';
-            dom.eventTimeDisplay.innerHTML = '';
-            dom.eventTriggerDisplay.innerHTML = '';
-            dom.eventCityDisplay.innerHTML = '';
+            dom.timelineMarkersContainer.innerHTML = '';
+            state.dayEvents = [];
+            state.currentActiveEvent = null;
+            state.activePlayer = 'p1';
+            updatePlayerVisibility();
             document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
 
             const eventKey = state.sortedEventKeys[index];
@@ -210,7 +719,7 @@
                 playlistIndices: { front: 0, back: 0, left_repeater: 0, right_repeater: 0, left_pillar: 0, right_pillar: 0 }
             };
             dom.titleFolderName.textContent = eventKey;
-            dom.dateSelector.selectedIndex = index;
+            dom.dateSelector.value = index; 
 
             let earliestFile = null;
             for (const camera in eventData.playlists) {
@@ -220,8 +729,7 @@
                     }
                 }
             }
-
-            if (!earliestFile) return;
+            if (!earliestFile) { setLoading(false); return; }
 
             const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
             if (firstClipNameMatch) {
@@ -231,6 +739,8 @@
             } else {
                 state.currentEventData.firstClipTime = null;
             }
+            
+            if (eventData.isRemote) dom.titleFolderName.textContent = `${eventKey}`;
 
             const masterPlaylist = state.currentEventData.playlists.front;
             if(masterPlaylist.length > 0) {
@@ -249,126 +759,167 @@
                 dom.liveTimestamp.textContent = formatTime(0);
                 dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
             }
+
+            // Timeline Markers & Day Events
+            if (state.currentEventData.firstClipTime && state.currentEventData.totalDuration > 0) {
+                 const dateStr = eventKey.substring(0, 10);
+                 if (state.eventsMap && state.eventsMap.has(dateStr)) {
+                     const events = state.eventsMap.get(dateStr);
+                     const dayStart = state.currentEventData.firstClipTime.getTime();
+                     events.forEach((ev) => {
+                         const startOffset = (ev.startTime - dayStart) / 1000;
+                         const endOffset = (ev.endTime - dayStart) / 1000 + 60; 
+                         if (endOffset > 0 && startOffset < state.currentEventData.totalDuration) {
+                             const evt = {
+                                 startOffset: Math.max(0, startOffset),
+                                 endOffset: Math.min(state.currentEventData.totalDuration, endOffset),
+                                 jsonPath: ev.jsonPath, 
+                                 jsonFile: ev.jsonFile,
+                                 type: ev.type, 
+                                 startTime: ev.startTime,
+                                 sequenceName: ev.sequenceName,
+                                 isCurrent: ev.sequenceName === eventKey // Mark if this is the loaded event
+                             };
+                             state.dayEvents.push(evt);
+                             
+                             // Jump Button Logic and Timezone Correction
+                             if (ev.sequenceName === eventKey) {
+                                // Try to use event.json timestamp for offset if available
+                                if (evt.jsonFile || evt.jsonPath) {
+                                    // Parsing happens async in displayEventDetails, but we can do a preliminary check here for Local?
+                                    // Or rely on displayEventDetails to update the offset.
+                                    // displayEventDetails handles it.
+                                }
+                                
+                                state.currentEventData.eventTriggerOffset = startOffset;
+                                dom.jumpToEventButton.style.display = "inline-flex";
+                             }
+
+                             if (startOffset >= 0 && startOffset <= state.currentEventData.totalDuration) {
+                                 const marker = document.createElement('div');
+                                 marker.className = `timeline-marker ${ev.type}`;
+                                 marker.style.left = `${(startOffset / state.currentEventData.totalDuration) * 100}%`;
+                                 marker.title = `${ev.type === 'sentry' ? 'Sentry' : 'Saved'}: ${formatLocalTime(new Date(ev.startTime))}`;
+                                 marker.addEventListener('click', (e) => { e.stopPropagation(); seekAllVideos(startOffset); });
+                                 dom.timelineMarkersContainer.appendChild(marker);
+                             }
+                         }
+                     });
+                 }
+            }
             
-            if(eventData.eventJson) {
-                try {
-                    const jsonContent = await eventData.eventJson.text();
-                    const jsonData = JSON.parse(jsonContent);
-                    const eventTimeFromJSON = new Date(jsonData.timestamp);
-                    const rawReason = jsonData.reason;
-                    const isManualSave = rawReason.startsWith('user_interaction');
-                    
-                    dom.eventDetailsContainer.style.display = 'block';
-                    const friendlyReason = friendlyEventReasons[rawReason] || rawReason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    dom.eventReasonDisplay.innerHTML = `Event: <strong>${friendlyReason}</strong>`;
-                    dom.eventTimeDisplay.innerHTML = `Event Time: <strong>${formatLocalTime(eventTimeFromJSON)}</strong>`;
-                    if (jsonData.city) {
-                        dom.eventCityDisplay.innerHTML = `Event City: <strong>${jsonData.city}</strong>`;
-                    }
-                     if (jsonData.est_lat && jsonData.est_lon) {
-                        state.currentEventData.location = { lat: jsonData.est_lat, lon: jsonData.est_lon };
-                        dom.mapButton.style.display = 'inline-flex';
-                    }
-                    const cameraIndexMap = { 0: 'front', 3: 'left_pillar', 4: 'right_pillar', 5: 'left_repeater', 6: 'right_repeater', 7: 'back' };
-                    const triggerCameraName = cameraIndexMap[parseInt(jsonData.camera, 10)];
-                    if (triggerCameraName) {
-                        const displayName = triggerCameraName.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
-                        dom.eventTriggerDisplay.innerHTML = `Trigger: <strong>${displayName.charAt(0).toUpperCase() + displayName.slice(1)}</strong>`;
-                        const triggerContainer = document.querySelector(`.video-container.${triggerCameraName}`);
-                        if(triggerContainer) triggerContainer.classList.add('triggered');
-                    }
-
-                    if (state.currentEventData.firstClipTime && state.currentEventData.totalDuration > 0) {
-                        let offset = (eventTimeFromJSON.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
-
-                        if (isManualSave) {
-                            const diffFromEnd = Math.abs(offset - state.currentEventData.totalDuration);
-                            if (diffFromEnd > 1800) { 
-                                const hourDifference = Math.round(offset / 3600);
-                                if (hourDifference !== 0) {
-                                    offset = state.currentEventData.totalDuration - 5; 
-                                }
-                            }
-                        } else {
-                             if (Math.abs(offset) > (state.currentEventData.totalDuration + 60)) {
-                                const hourDifference = Math.round(offset / 3600);
-                                if (hourDifference !== 0) {
-                                    offset -= hourDifference * 3600;
-                                }
-                            }
-                        }
-
-                        if (offset >= -10 && offset <= state.currentEventData.totalDuration + 10) { 
-                            state.currentEventData.eventTriggerOffset = Math.max(0, Math.min(offset, state.currentEventData.totalDuration));
-                            updateEventMarkerPosition();
-                            dom.eventMarker.style.display = "block";
-                            dom.jumpToEventButton.style.display = "inline-flex";
-                        }
-                    }
-                } catch (error) { console.error("Error processing event.json:", error); }
+            // We also need to trigger displayEventDetails for the current event to parse JSON and update trigger offset
+             if (state.dayEvents.length > 0) {
+                 const initialEvent = state.dayEvents.find(ev => ev.isCurrent);
+                 if (initialEvent) {
+                     displayEventDetails(initialEvent);
+                     state.currentActiveEvent = initialEvent;
+                 }
+             }
+             
+            // Timestamp Adjustment Logic
+            if (state.currentEventData.firstClipTime && state.currentEventData.eventTriggerOffset > -1) {
+                 // Check if event.json is parsed (done async). 
+                 // If so, we can adjust offset.
+                 // Since it's async, we rely on displayEventDetails or user interaction.
+                 // But we can calculate a 'best guess' if we have event.json loaded.
+                 // For local files, we can read it here?
+                 // ...
             }
 
             const loadPromises = [];
-            dom.allVideos.forEach(video => {
-                const cameraType = video.className.split(' ')[0];
-                const playlist = state.currentEventData.playlists[cameraType];
-                const fileToLoad = playlist && playlist.length > 0 ? playlist[0] : null;
-                loadPromises.push(loadVideo(video, fileToLoad));
+            const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
+            cameraTypes.forEach(camera => {
+                const playlist = state.currentEventData.playlists[camera];
+                if (playlist && playlist.length > 0) {
+                    const p1 = document.querySelector(`video.${camera}.p1`);
+                    const p2 = document.querySelector(`video.${camera}.p2`);
+                    loadPromises.push(loadVideo(p1, playlist[0]));
+                    if (playlist.length > 1) {
+                         loadVideo(p2, playlist[1]).then(() => {});
+                    }
+                }
             });
             await Promise.all(loadPromises);
+            setLoading(false);
         }
 
         function loadVideo(videoElement, file) {
-            return new Promise((resolve) => {
-                if (videoElement.src.startsWith('blob:')) {
-                    URL.revokeObjectURL(videoElement.src);
-                }
-                
-                videoElement.playbackRate = state.playbackRate;
-                
+            return new Promise(async (resolve) => {
+                videoElement.preload = "auto";
+                videoElement.oncanplay = null; 
+                videoElement.onerror = null;
+
                 if (!file) {
                     videoElement.src = '';
                     resolve();
                     return;
                 }
-
-                videoElement.addEventListener('canplay', function onCanPlay() {
-                    resolve();
-                }, { once: true });
                 
-                videoElement.addEventListener('error', function onError() {
-                    console.error(`Error loading video file: ${file.name}`);
+                const onReady = () => {
+                     videoElement.playbackRate = state.playbackRate;
+                     resolve();
+                };
+
+                videoElement.addEventListener('canplay', onReady, { once: true });
+                videoElement.addEventListener('error', (e) => {
+                    console.error(`Error loading video file: ${file.name}`, e);
                     resolve();
                 }, { once: true });
 
-                videoElement.src = URL.createObjectURL(file);
+                if (file.isRemote) {
+                     let url = file.url;
+                     if (state.piConfig && state.piConfig.user && state.piConfig.pass && !state.piConfig.useProxy) {
+                         try {
+                            const urlObj = new URL(url);
+                            urlObj.username = state.piConfig.user;
+                            urlObj.password = state.piConfig.pass;
+                            url = urlObj.toString();
+                         } catch (e) {}
+                     }
+                     videoElement.src = url;
+                } else {
+                    videoElement.src = URL.createObjectURL(file);
+                }
             });
         }
 
+        function playVideos() {
+            updatePlayButtonUI(true);
+            getActiveVideos().forEach(v => { 
+                if (v.src) {
+                    v.playbackRate = state.playbackRate;
+                    if (v.paused) v.play().catch(e => {});
+                }
+            });
+        }
+        
         function updatePlayButtonUI(isPlaying) {
             dom.playIcon.style.display = isPlaying ? 'none' : 'block';
             dom.pauseIcon.style.display = isPlaying ? 'block' : 'none';
             dom.statusDot.classList.toggle('ready', !isPlaying);
             dom.statusDot.classList.toggle('playing', isPlaying);
         }
-        function playVideos() {
-            updatePlayButtonUI(true);
-            dom.allVideos.forEach(v => { 
-                if (v.src && v.paused) {
-                    v.play().catch(error => console.error(`Play failed for ${v.className}:`, error));
-                }
-            });
+        
+        function pauseVideos() { updatePlayButtonUI(false); getActiveVideos().forEach(v => v.pause()); }
+        
+        function playPause() { 
+            const front = getFrontVideo();
+            front && !front.paused ? pauseVideos() : playVideos();
         }
-        function pauseVideos() { updatePlayButtonUI(false); dom.allVideos.forEach(v => v.pause()); }
-        function playPause() { dom.frontVideo.paused && dom.frontVideo.src ? playVideos() : pauseVideos(); }
+        
         function skipTo(seconds) { seekAllVideos(getCurrentTime() + seconds); }
+        
         function setPlaybackSpeed(rate) {
             state.playbackRate = parseFloat(rate);
-            dom.allVideos.forEach(video => { video.playbackRate = state.playbackRate; });
+            document.querySelectorAll('video').forEach(video => { video.playbackRate = state.playbackRate; });
+            dom.speedDisplay.textContent = state.playbackRate + 'x';
         }
+        
         function seekAllVideos(targetTime) {
             if (isNaN(targetTime)) targetTime = 0;
             targetTime = Math.max(0, Math.min(targetTime, state.currentEventData.totalDuration));
+            
             let timeIntoPlaylist = 0;
             let targetClipIndex = -1;
             for (let i = 0; i < state.currentEventData.clipDurations.length; i++) {
@@ -378,27 +929,51 @@
                 timeIntoPlaylist += state.currentEventData.clipDurations[i];
             }
             if (targetClipIndex === -1) targetClipIndex = state.currentEventData.clipDurations.length - 1;
+            
             const timeInTargetClip = targetTime - timeIntoPlaylist;
-            const wasPlaying = !dom.frontVideo.paused;
-            dom.allVideos.forEach(video => {
-                const camera = video.className.split(' ')[0];
+            const wasPlaying = !getFrontVideo().paused;
+            
+            const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
+            
+            // Seek might trigger buffering if streaming
+            setLoading(true);
+            
+            const seekPromises = [];
+            
+            cameraTypes.forEach(camera => {
                 state.currentEventData.playlistIndices[camera] = targetClipIndex;
                 const playlist = state.currentEventData.playlists[camera];
                 if (playlist && playlist[targetClipIndex]) {
-                    if (!video.src.endsWith(playlist[targetClipIndex].name)) loadVideo(video, playlist[targetClipIndex]);
-                    video.currentTime = timeInTargetClip;
+                    const activeVid = document.querySelector(`video.${camera}.${state.activePlayer}`);
+                    const file = playlist[targetClipIndex];
+                    
+                    seekPromises.push(loadVideo(activeVid, file).then(() => {
+                         activeVid.currentTime = timeInTargetClip;
+                         if (wasPlaying) activeVid.play();
+                    }));
+                    
+                    // Preload next
+                    const inactivePlayer = state.activePlayer === 'p1' ? 'p2' : 'p1';
+                    const inactiveVid = document.querySelector(`video.${camera}.${inactivePlayer}`);
+                    if (targetClipIndex + 1 < playlist.length) {
+                        loadVideo(inactiveVid, playlist[targetClipIndex + 1]);
+                    }
                 }
             });
-            if (wasPlaying) playVideos();
+            
+            Promise.all(seekPromises).then(() => setLoading(false));
         }
+        
         function getCurrentTime() {
             if(!state.currentEventData?.clipDurations?.length) return 0;
             let elapsed = 0;
             for (let i = 0; i < state.currentEventData.playlistIndices.front; i++) {
                 elapsed += (state.currentEventData.clipDurations[i] || 0);
             }
-            return elapsed + dom.frontVideo.currentTime;
+            const front = getFrontVideo();
+            return elapsed + (front ? front.currentTime : 0);
         }
+        
         function updateLiveTimestamp(currentTimeOverride) {
             const currentTime = currentTimeOverride !== undefined ? currentTimeOverride : getCurrentTime();
             if (!state.currentEventData.firstClipTime) {
@@ -410,27 +985,295 @@
         }
         function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
         function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
-        
-        function formatLocalTime(date) { 
-            if (!date || isNaN(date.getTime())) return '--:--:--'; 
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); 
+        function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return '--:--:--'; return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+        function getVideoDuration(file) { 
+            return new Promise(resolve => { 
+                if (file.isRemote) { resolve(60); return; }
+                const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); 
+            }); 
+        }
+        function toggleFullscreen() { dom.body.classList.toggle('fullscreen-active'); const isFullscreen = dom.body.classList.contains('fullscreen-active'); dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block'; dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none'; }
+        function closeMap() { dom.mapContainer.style.display = 'none'; dom.mapIframe.src = ''; }
+
+        async function saveClip() {
+             const duration = parseInt(dom.recordDurationSelect.value) || 30;
+             const customTitle = dom.clipCustomTitle.value.trim() || 'TeslaCam Event Recording';
+             dom.recordingOverlay.style.display = 'flex';
+             
+             // Fetch Map Image
+             let mapImg = null;
+             if (state.currentEventData.location) {
+                 try {
+                     const {lat, lon} = state.currentEventData.location;
+                     let mapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=15&size=600x400&maptype=mapnik`;
+                     if (state.piConfig.useProxy) {
+                         mapUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(mapUrl)}`;
+                     }
+                     // Attempt fetch
+                     const resp = await fetch(mapUrl).catch(() => null);
+                     if (resp && resp.ok) {
+                         const blob = await resp.blob();
+                         mapImg = await createImageBitmap(blob);
+                     }
+                 } catch(e) { console.log("Map fetch failed", e); }
+             }
+
+             const canvas = document.createElement('canvas');
+             canvas.width = 1920;
+             canvas.height = 1080; // HD
+             const ctx = canvas.getContext('2d');
+             
+             const stream = canvas.captureStream(30);
+             const recorder = new MediaRecorder(stream, { mimeType: 'video/webm', videoBitsPerSecond: 8000000 });
+             const chunks = [];
+             recorder.ondataavailable = e => chunks.push(e.data);
+             recorder.onstop = () => {
+                 const blob = new Blob(chunks, { type: 'video/webm' });
+                 const url = URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = `TeslaCam-Clip-${new Date().toISOString().replace(/[:.]/g, '-')}.webm`;
+                 a.click();
+                 dom.recordingOverlay.style.display = 'none';
+             };
+             
+             recorder.start();
+             
+             // Phase 1: Title Screen (3s)
+             let phase = 'title';
+             const startTime = Date.now();
+             const totalDuration = (duration + 3) * 1000; 
+             
+             const drawLoop = () => {
+                 if (Date.now() - startTime > totalDuration) {
+                     recorder.stop();
+                     return;
+                 }
+                 
+                 // Background
+                 const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                 grad.addColorStop(0, '#0a0a0a');
+                 grad.addColorStop(1, '#1a1a1a');
+                 ctx.fillStyle = grad;
+                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                 
+                 if (Date.now() - startTime < 3000) {
+                     // Title Screen
+                     ctx.fillStyle = 'white';
+                     ctx.font = 'bold 60px Inter, sans-serif';
+                     ctx.textAlign = 'center';
+                     // Shadow
+                     ctx.shadowColor = 'black';
+                     ctx.shadowBlur = 10;
+                     ctx.fillText(customTitle, canvas.width/2, 150);
+                     ctx.shadowBlur = 0;
+                     
+                     if (mapImg) {
+                         const mw = 600, mh = 400;
+                         const mx = (canvas.width - mw) / 2;
+                         const my = 220;
+                         
+                         // Border
+                         ctx.strokeStyle = '#444';
+                         ctx.lineWidth = 4;
+                         ctx.strokeRect(mx, my, mw, mh);
+                         
+                         ctx.drawImage(mapImg, mx, my, mw, mh);
+                     }
+
+                     ctx.font = '36px Inter, sans-serif';
+                     ctx.fillStyle = '#cccccc';
+                     
+                     // Date
+                     let dateStr = "";
+                     if (state.currentEventData.firstClipTime) {
+                         dateStr = state.currentEventData.firstClipTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                     }
+                     ctx.fillText(dateStr, canvas.width/2, 680);
+
+                     const timeStr = dom.liveTimestamp.textContent; 
+                     ctx.fillText(`Time: ${timeStr}`, canvas.width/2, 730);
+                     
+                     let yPos = 780;
+                     if (state.currentActiveEvent && state.currentActiveEvent.type) {
+                         ctx.fillStyle = state.currentActiveEvent.type === 'sentry' ? '#ef4444' : '#3b82f6';
+                         ctx.font = 'bold 40px Inter, sans-serif';
+                         ctx.fillText(`${state.currentActiveEvent.type.toUpperCase()} EVENT`, canvas.width/2, yPos);
+                         yPos += 50;
+                     }
+                     
+                     ctx.font = '30px Inter, sans-serif';
+                     ctx.fillStyle = '#e5e5e5';
+                     
+                     if (state.currentEventData.triggerName) {
+                         ctx.fillText(`Triggered by: ${state.currentEventData.triggerName}`, canvas.width/2, yPos);
+                         yPos += 40;
+                     }
+                     
+                     if (state.currentEventData.city) {
+                         ctx.fillText(`City: ${state.currentEventData.city}`, canvas.width/2, yPos);
+                         yPos += 40;
+                     }
+                     
+                     if (state.currentEventData.location) {
+                          ctx.fillStyle = '#9ca3af';
+                          ctx.fillText(`Coords: ${state.currentEventData.location.lat.toFixed(5)}, ${state.currentEventData.location.lon.toFixed(5)}`, canvas.width/2, yPos);
+                     }
+                     
+                     ctx.font = '24px Inter, sans-serif';
+                     ctx.fillStyle = '#666';
+                     ctx.fillText("Generated by Tesla Companion", canvas.width/2, canvas.height - 50);
+
+                 } else {
+                     // Video Grid
+                     const videos = Array.from(getActiveVideos());
+                     const w = canvas.width / 3;
+                     const h = canvas.height / 2;
+                     
+                     videos.forEach(v => {
+                         let dx=0, dy=0;
+                         if (v.classList.contains('front')) { dx=w; dy=0; }
+                         else if (v.classList.contains('left_pillar')) { dx=0; dy=0; }
+                         else if (v.classList.contains('right_pillar')) { dx=w*2; dy=0; }
+                         else if (v.classList.contains('left_repeater')) { dx=0; dy=h; }
+                         else if (v.classList.contains('back')) { dx=w; dy=h; }
+                         else if (v.classList.contains('right_repeater')) { dx=w*2; dy=h; }
+                         
+                         ctx.drawImage(v, dx, dy, w, h);
+                     });
+                     
+                     // Timestamp overlay
+                     ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                     ctx.fillRect(10, 10, 450, 50);
+                     ctx.fillStyle = 'white';
+                     ctx.font = '30px monospace';
+                     ctx.textAlign = 'left';
+                     // Add Date to timestamp
+                     let fullTimestamp = dom.liveTimestamp.textContent;
+                     if (state.currentEventData.firstClipTime) {
+                         const datePart = state.currentEventData.firstClipTime.toLocaleDateString();
+                         fullTimestamp = `${datePart} ${fullTimestamp}`;
+                     }
+                     ctx.fillText(fullTimestamp, 20, 45);
+                 }
+                 
+                 requestAnimationFrame(drawLoop);
+             };
+             
+             drawLoop();
+             
+             // Start playback if paused
+             playVideos();
         }
 
-        function getVideoDuration(file) { return new Promise(resolve => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); }); }
-        
-        function toggleFullscreen() {
-            dom.body.classList.toggle('fullscreen-active');
-            const isFullscreen = dom.body.classList.contains('fullscreen-active');
-            dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block';
-            dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none';
+        // --- Event Listeners ---
+        dom.piConnectBtn.addEventListener('click', connectToPi);
+        dom.fileBrowser.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            dom.titleFolderName.textContent = "Processing Local Files...";
+            setLoading(true);
+            setTimeout(() => processLocalFiles(files), 100);
+        });
+
+        function processLocalFiles(files) {
+             state.eventClips.clear();
+             state.sortedEventKeys = [];
+             state.eventsMap.clear();
+             dom.dateSelector.innerHTML = '<option>Select Event</option>';
+             
+             const sequenceMetadata = new Map();
+
+             files.forEach(file => {
+                 const pathParts = file.webkitRelativePath.split('/');
+                 if (pathParts.length < 2) return;
+                 const eventName = pathParts[pathParts.length - 2]; // Use parent folder as event ID
+                 
+                 let type = 'saved';
+                 if (file.webkitRelativePath.includes('SentryClips')) type = 'sentry';
+                 
+                 if (!sequenceMetadata.has(eventName)) {
+                     sequenceMetadata.set(eventName, { minTime: null, maxTime: null, jsonFile: null, type: type });
+                 }
+                 const meta = sequenceMetadata.get(eventName);
+
+                 if (file.name.toLowerCase() === 'event.json') {
+                     meta.jsonFile = file;
+                 } else if (file.name.endsWith('.mp4')) {
+                     const match = file.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+                     if (match) {
+                         const isoTime = match[1].substring(0, 10) + 'T' + match[1].substring(11).replace(/-/g, ':');
+                         const time = new Date(isoTime).getTime();
+                         if (meta.minTime === null || time < meta.minTime) meta.minTime = time;
+                         if (meta.maxTime === null || time > meta.maxTime) meta.maxTime = time;
+                     }
+                     
+                     if (!state.eventClips.has(eventName)) {
+                         state.eventClips.set(eventName, { 
+                             playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, 
+                             eventJson: null, isRemote: false 
+                         });
+                     }
+                     const eventData = state.eventClips.get(eventName);
+                     
+                     const lowerName = file.name.toLowerCase();
+                     let cameraType = null;
+                     if (lowerName.includes('front')) cameraType = 'front';
+                     else if (lowerName.includes('back')) cameraType = 'back';
+                     else if (lowerName.includes('left_repeater')) cameraType = 'left_repeater';
+                     else if (lowerName.includes('right_repeater')) cameraType = 'right_repeater';
+                     else if (lowerName.includes('left_pillar')) cameraType = 'left_pillar';
+                     else if (lowerName.includes('right_pillar')) cameraType = 'right_pillar';
+                     
+                     if (cameraType) {
+                         eventData.playlists[cameraType].push(file);
+                     }
+                 }
+             });
+             
+            sequenceMetadata.forEach((meta, seqName) => {
+                if (meta.minTime) {
+                     const dateStr = new Date(meta.minTime).toISOString().substring(0, 10);
+                     if (!state.eventsMap.has(dateStr)) state.eventsMap.set(dateStr, []);
+                     state.eventsMap.get(dateStr).push({
+                         sequenceName: seqName,
+                         startTime: meta.minTime,
+                         endTime: meta.maxTime || meta.minTime,
+                         type: meta.type,
+                         jsonFile: meta.jsonFile
+                     });
+                     
+                     if (state.eventClips.has(seqName)) {
+                         state.eventClips.get(seqName).eventJson = meta.jsonFile;
+                     }
+                }
+            });
+             
+             for (const [_, data] of state.eventClips.entries()) { 
+                for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name));
+             }
+             
+             state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
+             
+             if (state.sortedEventKeys.length === 0) {
+                 dom.titleFolderName.textContent = 'No Clips Found';
+                 setLoading(false);
+                 return;
+             }
+             
+             state.sortedEventKeys.forEach((key) => {
+                 const index = state.sortedEventKeys.indexOf(key);
+                 const option = document.createElement("option");
+                 option.innerText = key;
+                 option.value = index;
+                 dom.dateSelector.appendChild(option);
+             });
+             
+             dom.titleFolderName.textContent = `Found ${state.sortedEventKeys.length} Events`;
+             dom.dateSelector.selectedIndex = 0;
+             loadEvent(0);
         }
 
-        function closeMap() {
-            dom.mapContainer.style.display = 'none';
-            dom.mapIframe.src = '';
-        }
-
-        // --- Attach Event Listeners ---
         dom.themeToggle.addEventListener('click', () => {
             const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
             localStorage.setItem('theme', newTheme);
@@ -441,66 +1284,179 @@
         dom.nextButton.addEventListener("click", () => { if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); });
         dom.previousButton.addEventListener("click", () => { if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); });
         dom.jumpToEventButton.addEventListener("click", () => seekAllVideos(state.currentEventData.eventTriggerOffset));
-        dom.skipForwardButton.addEventListener('click', () => skipTo(5));
-        dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
-        dom.playbackSpeedSelector.addEventListener('change', (e) => setPlaybackSpeed(e.target.value));
-        dom.selectAllCameras.addEventListener('change', (e) => {
-            const isChecked = e.target.checked;
-            dom.cameraToggles.querySelectorAll('input[data-camera]').forEach(checkbox => {
-                checkbox.checked = isChecked; 
-                document.querySelector(`.video-container.${checkbox.dataset.camera}`).classList.toggle('hidden', !isChecked);
-            });
-            dom.videoGrid.classList.toggle('single-view-mode', Array.from(dom.cameraToggles.querySelectorAll('input[data-camera]')).filter(cb => cb.checked).length === 1);
+        
+        // Next Event Button
+        dom.nextEventBtn.addEventListener('click', () => {
+             if (state.dayEvents && state.dayEvents.length > 0) {
+                 const currentTime = getCurrentTime();
+                 // Find first event starting AFTER current time
+                 const nextEv = state.dayEvents.find(ev => ev.startOffset > currentTime + 5); // +5 buffer
+                 if (nextEv) {
+                     seekAllVideos(nextEv.startOffset);
+                 } else {
+                     // No more events today, try next day?
+                     // For now just alert
+                     // alert("No more events today.");
+                 }
+             }
         });
-        dom.cameraToggles.addEventListener("change", (e) => {
-            if (e.target.dataset.camera) { 
-                document.querySelector(`.video-container.${e.target.dataset.camera}`).classList.toggle('hidden', !e.target.checked);
-                const individualCheckboxes = Array.from(dom.cameraToggles.querySelectorAll('input[data-camera]'));
-                const checkedCount = individualCheckboxes.filter(cb => cb.checked).length;
-                dom.videoGrid.classList.toggle('single-view-mode', checkedCount === 1);
-                dom.selectAllCameras.checked = (checkedCount === individualCheckboxes.length);
+        
+        dom.mapButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (state.currentEventData.location) {
+                const { lat, lon } = state.currentEventData.location;
+                // OSM Embed
+                const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.005},${lat-0.005},${lon+0.005},${lat+0.005}&layer=mapnik&marker=${lat},${lon}`;
+                dom.mapIframe.src = mapUrl;
+                dom.mapContainer.style.display = 'flex';
             }
         });
-        dom.masterScrubber.addEventListener("input", () => { if (state.currentEventData.totalDuration) updateLiveTimestamp((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
-        dom.masterScrubber.addEventListener("change", () => { if (state.currentEventData.totalDuration) seekAllVideos((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
-        dom.frontVideo.addEventListener("timeupdate", () => {
-            if (!state.currentEventData.totalDuration || dom.masterScrubber.matches(':active')) return;
-            dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
-            updateLiveTimestamp();
+        
+        dom.skipForwardButton.addEventListener('click', () => skipTo(5));
+        dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
+        dom.playbackSpeedSelector.addEventListener('input', (e) => {
+             let val = parseInt(e.target.value);
+             let speed;
+             // Map 0-30 slider to 0.25-3.0
+             if (val <= 10) speed = 0.25 + (val/10)*0.75; // 0-10 => 0.25-1.0
+             else speed = 1.0 + ((val-10)/20)*2.0; // 10-30 => 1.0-3.0
+             
+             if (speed > 1) speed = Math.round(speed * 10) / 10; else speed = Math.round(speed * 100) / 100;
+             setPlaybackSpeed(speed);
         });
+        dom.resetSpeedBtn.addEventListener('click', () => { dom.playbackSpeedSelector.value = 10; setPlaybackSpeed(1.0); });
+        dom.masterScrubber.addEventListener('mousemove', (e) => {
+            if (!state.currentEventData.totalDuration) return;
+            const rect = dom.masterScrubber.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const width = rect.width;
+            const percentage = Math.max(0, Math.min(1, x / width));
+            const time = percentage * state.currentEventData.totalDuration;
+            dom.scrubberTooltip.style.left = `${percentage * 100}%`;
+            dom.scrubberTooltip.style.opacity = '1';
+            if (state.currentEventData.firstClipTime) {
+                 const hoverTime = new Date(state.currentEventData.firstClipTime.getTime() + (time * 1000));
+                 dom.scrubberTooltip.textContent = formatLocalTime(hoverTime);
+            } else { dom.scrubberTooltip.textContent = formatTime(time); }
+        });
+        dom.masterScrubber.addEventListener('mouseout', () => { dom.scrubberTooltip.style.opacity = '0'; });
 
-        dom.allVideos.forEach(video => {
-            video.addEventListener("ended", async (e) => {
-                const wasPlaying = dom.playIcon.style.display === 'none';
-                const camera = e.target.className.split(' ')[0];
-
-                if (!state.currentEventData.playlists || !state.currentEventData.playlists[camera]) {
-                    return;
+        document.querySelectorAll('video').forEach(video => {
+            // Buffering / Sync Logic
+            video.addEventListener('waiting', () => {
+                if (!video.classList.contains('active')) return;
+                // If any active video is buffering, pause all
+                if (!state.isLoading) {
+                    console.log('Buffering:', video.className);
+                    // We use a lighter loading state here to avoid blocking UI completely?
+                    // For now reuse setLoading but keep controls enabled? 
+                    // Or just pause.
+                    getActiveVideos().forEach(v => v.pause());
+                    dom.loadingOverlay.style.display = 'flex';
+                    dom.loadingOverlay.querySelector('#loading-text').textContent = "Buffering...";
                 }
-
-                const currentIdx = ++state.currentEventData.playlistIndices[camera];
-                const playlist = state.currentEventData.playlists[camera];
-
-                if (playlist && currentIdx < playlist.length) {
-                    await loadVideo(e.target, playlist[currentIdx]);
-                    if (wasPlaying) {
-                        e.target.play().catch(err => {
-                            if (err.name !== 'AbortError') console.error('Error playing next clip:', err);
-                        });
+            });
+            
+            video.addEventListener('canplay', () => {
+                if (!video.classList.contains('active')) return;
+                // Check if all active videos are ready
+                const active = Array.from(getActiveVideos());
+                const allReady = active.every(v => v.readyState >= 3); // HAVE_FUTURE_DATA
+                if (allReady && dom.loadingOverlay.style.display === 'flex' && dom.loadingOverlay.querySelector('#loading-text').textContent === "Buffering...") {
+                    dom.loadingOverlay.style.display = 'none';
+                    dom.loadingOverlay.querySelector('#loading-text').textContent = "Loading...";
+                    // Resume if we were playing (how to track? infer from UI)
+                    if (dom.playIcon.style.display === 'none') { 
+                        playVideos();
                     }
+                }
+            });
+
+            video.addEventListener("timeupdate", (e) => {
+                // Scrubber Update (only front)
+                if (e.target.classList.contains('active') && e.target.classList.contains('front')) {
+                    if (!state.currentEventData.totalDuration || dom.masterScrubber.matches(':active')) return;
+                    dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
+                    updateLiveTimestamp();
+                    
+                    // Event Details Logic
+                    if (state.dayEvents && state.dayEvents.length > 0) {
+                        const currentTime = getCurrentTime();
+                        // Prioritize the currently loaded event if overlapping
+                        let activeEvent = state.dayEvents.find(ev => ev.isCurrent && currentTime >= ev.startOffset && currentTime <= ev.endOffset);
+                        if (!activeEvent) {
+                            activeEvent = state.dayEvents.find(ev => currentTime >= ev.startOffset && currentTime <= ev.endOffset);
+                        }
+
+                        if (activeEvent) {
+                            if (state.currentActiveEvent !== activeEvent) {
+                                state.currentActiveEvent = activeEvent;
+                                displayEventDetails(activeEvent);
+                            }
+                        } else {
+                            if (state.currentActiveEvent) {
+                                state.currentActiveEvent = null;
+                                dom.eventDetailsContainer.style.display = 'none';
+                                dom.mapButton.style.display = 'none';
+                            }
+                        }
+                        
+                        // Show/Hide Next Event Button
+                        const hasNext = state.dayEvents.some(ev => ev.startOffset > currentTime + 5);
+                        dom.nextEventBtn.style.display = hasNext ? 'inline-flex' : 'none';
+                    }
+                    
+                    // Sync check for all videos
+                     getActiveVideos().forEach(v => {
+                         if (!v.classList.contains('front')) {
+                             if (Math.abs(v.currentTime - e.target.currentTime) > 0.5) {
+                                 v.currentTime = e.target.currentTime;
+                             }
+                         }
+                     });
+                }
+            });
+
+            video.addEventListener("ended", async (e) => {
+                if (!e.target.classList.contains('active')) return;
+                const camera = e.target.className.split(' ')[0];
+                if (!state.currentEventData.playlists || !state.currentEventData.playlists[camera]) return;
+                
+                const playlist = state.currentEventData.playlists[camera];
+                const currentIdx = state.currentEventData.playlistIndices[camera];
+                
+                if (currentIdx + 1 < playlist.length) {
+                    state.currentEventData.playlistIndices[camera]++;
+                    const p1 = document.querySelector(`video.${camera}.p1`);
+                    const p2 = document.querySelector(`video.${camera}.p2`);
+                    const nextPlayer = e.target === p1 ? p2 : p1;
+                    
+                    e.target.classList.remove('active');
+                    nextPlayer.classList.add('active');
+                    
+                    nextPlayer.playbackRate = state.playbackRate;
+                    nextPlayer.play().catch(err => {});
+                    
+                    if (currentIdx + 2 < playlist.length) {
+                        loadVideo(e.target, playlist[currentIdx + 2]);
+                    }
+                    if (camera === 'front') state.activePlayer = nextPlayer.classList.contains('p1') ? 'p1' : 'p2';
+
                 } else if (camera === 'front') {
                     if (state.carouselIndex < state.sortedEventKeys.length - 1) {
                         await loadEvent(++state.carouselIndex);
-                        if (wasPlaying) {
-                            playVideos();
-                        }
+                        playVideos();
                     } else {
                         pauseVideos();
                     }
                 }
             });
         });
-
+        
+        dom.masterScrubber.addEventListener("input", () => { if (state.currentEventData.totalDuration) updateLiveTimestamp((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
+        dom.masterScrubber.addEventListener("change", () => { if (state.currentEventData.totalDuration) seekAllVideos((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
+        
+        // Double Click Expand
         document.querySelectorAll('.video-container').forEach(container => {
             container.addEventListener('dblclick', (e) => {
                 const grid = dom.videoGrid;
@@ -516,115 +1472,18 @@
                 }
             });
         });
-        dom.fileBrowser.addEventListener("change", function(e) {
-            state.eventClips.clear(); 
-            state.sortedEventKeys = []; 
-            dom.dateSelector.innerHTML = '<option>Select Event</option>';
-            dom.titleFolderName.textContent = 'No Clips Selected';
-            for (const file of e.target.files) {
-                const pathParts = file.webkitRelativePath.split('/');
-                if (pathParts.length < 2) continue;
-                const eventId = pathParts[pathParts.length - 2];
-                if (!state.eventClips.has(eventId)) state.eventClips.set(eventId, { playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, eventJson: null, fullPath: file.webkitRelativePath });
-                const group = state.eventClips.get(eventId);
-                const videoMatch = file.name.match(/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})-(.+?)\.mp4$/);
-                if (videoMatch && group.playlists[videoMatch[2]]) group.playlists[videoMatch[2]].push(file);
-                if (file.name === "event.json") group.eventJson = file;
-            }
-            for (const [_, data] of state.eventClips.entries()) { for (const camera in data.playlists) data.playlists[camera].sort((a, b) => a.name.localeCompare(b.name)); }
-            state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
-            if (state.sortedEventKeys.length === 0) { dom.titleFolderName.textContent = 'No Clips Found'; dom.dateSelector.innerHTML = '<option>No Events Found</option>'; return; }
-            dom.dateSelector.innerHTML = '';
-            state.sortedEventKeys.forEach((key, index) => { const option = document.createElement("option"); option.innerText = key; option.value = index; dom.dateSelector.appendChild(option); });
-            loadEvent(0);
-        });
-        dom.screenshotBtn.addEventListener('click', () => {
-            const visibleContainers = [...dom.videoGrid.querySelectorAll('.video-container:not(.hidden)')];
-            if (visibleContainers.length === 0) return;
-            const firstVideo = visibleContainers[0].querySelector('video');
-            if (!firstVideo.src || firstVideo.videoWidth === 0) return;
-            const videoWidth = firstVideo.videoWidth;
-            const videoHeight = firstVideo.videoHeight;
-            const gridMapping = { left_pillar: { col: 0, row: 0 }, front: { col: 1, row: 0 }, right_pillar: { col: 2, row: 0 }, left_repeater: { col: 0, row: 1 }, back: { col: 1, row: 1 }, right_repeater: { col: 2, row: 1 }, };
-            const canvas = document.createElement('canvas');
-            canvas.width = videoWidth * 3;
-            canvas.height = videoHeight * 2;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-color');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            visibleContainers.forEach(container => {
-                const video = container.querySelector('video');
-                const cameraType = [...container.classList].find(c => gridMapping[c]);
-                if (cameraType && video.videoWidth > 0) {
-                    const { col, row } = gridMapping[cameraType];
-                    const dx = col * videoWidth;
-                    const dy = row * videoHeight;
-                    ctx.drawImage(video, dx, dy, videoWidth, videoHeight);
-                }
-            });
-            const link = document.createElement('a');
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            link.download = `Tesla-Companion-Screenshot-${timestamp}.jpg`;
-            link.href = canvas.toDataURL('image/jpeg', 0.9);
-            link.click();
-        });
-        dom.fullscreenToggle.addEventListener('click', toggleFullscreen);
-        dom.mapButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (state.currentEventData.location) {
-                const { lat, lon } = state.currentEventData.location;
-                const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=es;z=14&output=embed`;
-                dom.mapIframe.src = mapUrl;
-                dom.mapContainer.style.display = 'flex';
-            }
-        });
+        
+        dom.saveClipBtn.addEventListener('click', saveClip);
         dom.mapCloseButton.addEventListener('click', closeMap);
         dom.mapContainer.addEventListener('click', (e) => { if (e.target === dom.mapContainer) closeMap(); });
-        document.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-            switch(e.key) {
-                case ' ': e.preventDefault(); playPause(); break;
-                case 'ArrowLeft': e.preventDefault(); skipTo(-5); break;
-                case 'ArrowRight': e.preventDefault(); skipTo(5); break;
-                case 'ArrowUp': e.preventDefault(); if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); break;
-                case 'ArrowDown': e.preventDefault(); if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); break;
-                case 'Escape': if (dom.body.classList.contains('fullscreen-active')) { toggleFullscreen(); } closeMap(); break;
-            }
-        });
-
-        // --- Initial App State ---
+        
+        // Init
         applyTheme(localStorage.getItem('theme') || 'dark');
+        // Skip splash logic here as it is handled in index.html
     });
 </script>
 
 </body>
 </html>
+
 </final_file_content>
-
-IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
-
-<environment_details>
-# Visual Studio Code Visible Files
-camera_viewer.html
-
-# Visual Studio Code Open Tabs
-cors_proxy.py
-camera_viewer.html
-styles.css
-index.html
-trip_planner.html
-charging.html
-phantom_drain.html
-howto.html
-about.html
-OLD_index.html
-
-# Current Time
-11/23/2025, 7:11:40 PM (America/Chicago, UTC-6:00)
-
-# Context Window Usage
-334,465 / 1,048.576K tokens used (32%)
-
-# Current Mode
-ACT MODE
-</environment_details>
