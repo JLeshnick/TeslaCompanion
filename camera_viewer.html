@@ -488,7 +488,7 @@
                 if (meta.minTime) {
                      const dateStr = new Date(meta.minTime).toISOString().substring(0, 10);
                      if (!eventsMap.has(dateStr)) eventsMap.set(dateStr, []);
-                     state.eventsMap.get(dateStr).push({
+                     eventsMap.get(dateStr).push({
                          sequenceName: seqName,
                          startTime: meta.minTime,
                          endTime: meta.maxTime || meta.minTime,
@@ -526,7 +526,9 @@
                     if (!filename.match(/^\d{4}-\d{2}-\d{2}/)) fakeName = `${sequenceName}-${filename}`;
                     let fileUrl = `${baseUrl}/TeslaCam/${line}`;
                     if (useProxy) fileUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(fileUrl)}`;
-                    eventData.playlists[cameraType].push({ name: fakeName, url: fileUrl, isRemote: true });
+                    if (eventData.playlists[cameraType]) { // Safety check
+                        eventData.playlists[cameraType].push({ name: fakeName, url: fileUrl, isRemote: true });
+                    }
                 }
             }
 
@@ -610,6 +612,28 @@
                 } else {
                     dom.mapButton.style.display = 'none';
                 }
+                
+                // Parse Camera Trigger
+                const cameraIndexMap = { 0: 'front', 3: 'left_pillar', 4: 'right_pillar', 5: 'left_repeater', 6: 'right_repeater', 7: 'back' };
+                if (jsonData.camera) {
+                    const triggerCamKey = cameraIndexMap[parseInt(jsonData.camera, 10)];
+                    if (triggerCamKey) {
+                         const displayName = triggerCamKey.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
+                         dom.eventTriggerDisplay.innerHTML = `Trigger: <strong>${displayName.charAt(0).toUpperCase() + displayName.slice(1)}</strong>`;
+                         // Highlight container
+                         document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
+                         const container = document.querySelector(`.video-container.${triggerCamKey}`);
+                         if (container) container.classList.add('triggered');
+                         
+                         // Store for saveClip
+                         state.currentEventData.triggerName = displayName;
+                    }
+                }
+                if (jsonData.city) {
+                    dom.eventCityDisplay.innerHTML = `City: <strong>${jsonData.city}</strong>`;
+                    state.currentEventData.city = jsonData.city;
+                }
+
             } catch (e) {
                 console.error("Error fetching event json", e);
             }
@@ -703,7 +727,7 @@
                 dom.durationDisplay.textContent = formatTime(state.currentEventData.totalDuration);
             }
 
-            // Timeline Markers
+            // Timeline Markers & Day Events
             if (state.currentEventData.firstClipTime && state.currentEventData.totalDuration > 0) {
                  const dateStr = eventKey.substring(0, 10);
                  if (state.eventsMap && state.eventsMap.has(dateStr)) {
@@ -725,10 +749,17 @@
                              };
                              state.dayEvents.push(evt);
                              
-                             // Jump Button Logic
+                             // Jump Button Logic and Timezone Correction
                              if (ev.sequenceName === eventKey) {
-                                 state.currentEventData.eventTriggerOffset = startOffset;
-                                 dom.jumpToEventButton.style.display = "inline-flex";
+                                // Try to use event.json timestamp for offset if available
+                                if (evt.jsonFile || evt.jsonPath) {
+                                    // Parsing happens async in displayEventDetails, but we can do a preliminary check here for Local?
+                                    // Or rely on displayEventDetails to update the offset.
+                                    // displayEventDetails handles it.
+                                }
+                                
+                                state.currentEventData.eventTriggerOffset = startOffset;
+                                dom.jumpToEventButton.style.display = "inline-flex";
                              }
 
                              if (startOffset >= 0 && startOffset <= state.currentEventData.totalDuration) {
@@ -743,6 +774,15 @@
                      });
                  }
             }
+            
+            // We also need to trigger displayEventDetails for the current event to parse JSON and update trigger offset
+             if (state.dayEvents.length > 0) {
+                 const initialEvent = state.dayEvents.find(ev => ev.isCurrent);
+                 if (initialEvent) {
+                     displayEventDetails(initialEvent);
+                     state.currentActiveEvent = initialEvent;
+                 }
+             }
 
             const loadPromises = [];
             const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
@@ -1011,16 +1051,30 @@
                      const timeStr = dom.liveTimestamp.textContent; 
                      ctx.fillText(`Time: ${timeStr}`, canvas.width/2, 730);
                      
+                     let yPos = 780;
                      if (state.currentActiveEvent && state.currentActiveEvent.type) {
                          ctx.fillStyle = state.currentActiveEvent.type === 'sentry' ? '#ef4444' : '#3b82f6';
                          ctx.font = 'bold 40px Inter, sans-serif';
-                         ctx.fillText(`${state.currentActiveEvent.type.toUpperCase()} EVENT`, canvas.width/2, 820);
+                         ctx.fillText(`${state.currentActiveEvent.type.toUpperCase()} EVENT`, canvas.width/2, yPos);
+                         yPos += 50;
+                     }
+                     
+                     ctx.font = '30px Inter, sans-serif';
+                     ctx.fillStyle = '#e5e5e5';
+                     
+                     if (state.currentEventData.triggerName) {
+                         ctx.fillText(`Triggered by: ${state.currentEventData.triggerName}`, canvas.width/2, yPos);
+                         yPos += 40;
+                     }
+                     
+                     if (state.currentEventData.city) {
+                         ctx.fillText(`City: ${state.currentEventData.city}`, canvas.width/2, yPos);
+                         yPos += 40;
                      }
                      
                      if (state.currentEventData.location) {
                           ctx.fillStyle = '#9ca3af';
-                          ctx.font = '30px Inter, sans-serif';
-                          ctx.fillText(`Location: ${state.currentEventData.location.lat.toFixed(5)}, ${state.currentEventData.location.lon.toFixed(5)}`, canvas.width/2, 880);
+                          ctx.fillText(`Coords: ${state.currentEventData.location.lat.toFixed(5)}, ${state.currentEventData.location.lon.toFixed(5)}`, canvas.width/2, yPos);
                      }
                      
                      ctx.font = '24px Inter, sans-serif';
@@ -1193,28 +1247,15 @@
         dom.nextEventBtn.addEventListener('click', () => {
              if (state.dayEvents && state.dayEvents.length > 0) {
                  const currentTime = getCurrentTime();
-                 // Prioritize the currently loaded event if overlapping
-                 let activeEvent = state.dayEvents.find(ev => ev.isCurrent && currentTime >= ev.startOffset && currentTime <= ev.endOffset);
-                 if (!activeEvent) {
-                     activeEvent = state.dayEvents.find(ev => currentTime >= ev.startOffset && currentTime <= ev.endOffset);
-                 }
-
-                 if (activeEvent) {
-                     if (state.currentActiveEvent !== activeEvent) {
-                         state.currentActiveEvent = activeEvent;
-                         displayEventDetails(activeEvent);
-                     }
+                 // Find first event starting AFTER current time
+                 const nextEv = state.dayEvents.find(ev => ev.startOffset > currentTime + 5); // +5 buffer
+                 if (nextEv) {
+                     seekAllVideos(nextEv.startOffset);
                  } else {
-                     if (state.currentActiveEvent) {
-                         state.currentActiveEvent = null;
-                         dom.eventDetailsContainer.style.display = 'none';
-                         dom.mapButton.style.display = 'none';
-                     }
+                     // No more events today, try next day?
+                     // For now just alert
+                     // alert("No more events today.");
                  }
-                 
-                 // Show/Hide Next Event Button
-                 const hasNext = state.dayEvents.some(ev => ev.startOffset > currentTime + 5);
-                 dom.nextEventBtn.style.display = hasNext ? 'inline-flex' : 'none';
              }
         });
         
