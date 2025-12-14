@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera Viewer - Tesla Companion</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="styles.css">
     <style>
         .playback-speed-control {
@@ -243,33 +244,33 @@
                     <div class="video-grid" id="video-grid">
                         <div class="video-container front">
                             <div class="video-label">Front</div>
-                            <video class="front p1 active" muted playsinline crossOrigin="anonymous"></video>
-                            <video class="front p2" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="front p1 active" muted playsinline preload="auto"></video>
+                            <video class="front p2" muted playsinline preload="auto"></video>
                         </div>
                         <div class="video-container back">
                             <div class="video-label">Back</div>
-                            <video class="back p1 active" muted playsinline crossOrigin="anonymous"></video>
-                            <video class="back p2" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="back p1 active" muted playsinline preload="auto"></video>
+                            <video class="back p2" muted playsinline preload="auto"></video>
                         </div>
                         <div class="video-container left_repeater">
                             <div class="video-label">Left Fender</div>
-                            <video class="left_repeater p1 active" muted playsinline crossOrigin="anonymous"></video>
-                            <video class="left_repeater p2" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="left_repeater p1 active" muted playsinline preload="auto"></video>
+                            <video class="left_repeater p2" muted playsinline preload="auto"></video>
                         </div>
                         <div class="video-container right_repeater">
                             <div class="video-label">Right Fender</div>
-                            <video class="right_repeater p1 active" muted playsinline crossOrigin="anonymous"></video>
-                            <video class="right_repeater p2" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="right_repeater p1 active" muted playsinline preload="auto"></video>
+                            <video class="right_repeater p2" muted playsinline preload="auto"></video>
                         </div>
                         <div class="video-container left_pillar">
                             <div class="video-label">Left Pillar</div>
-                            <video class="left_pillar p1 active" muted playsinline crossOrigin="anonymous"></video>
-                            <video class="left_pillar p2" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="left_pillar p1 active" muted playsinline preload="auto"></video>
+                            <video class="left_pillar p2" muted playsinline preload="auto"></video>
                         </div>
                         <div class="video-container right_pillar">
                             <div class="video-label">Right Pillar</div>
-                            <video class="right_pillar p1 active" muted playsinline crossOrigin="anonymous"></video>
-                            <video class="right_pillar p2" muted playsinline crossOrigin="anonymous"></video>
+                            <video class="right_pillar p1 active" muted playsinline preload="auto"></video>
+                            <video class="right_pillar p2" muted playsinline preload="auto"></video>
                         </div>
                     </div>
              </div>
@@ -278,7 +279,10 @@
 
 <div id="map-container">
     <div id="map-close-button">×</div>
-    <iframe id="map-iframe" src="" frameborder="0" allowfullscreen></iframe>
+    <div id="map-instructions" style="position: absolute; top: 40px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem; border-radius: var(--border-radius-md); font-size: 0.8rem; z-index: 1001; display: none;">
+        Click on the map to add path points. Right-click to remove last point.
+    </div>
+    <div id="map-content" style="width: 100%; height: 100%;"></div>
 </div>
 
 <div id="recording-settings-overlay" class="modal-overlay">
@@ -289,8 +293,13 @@
         </div>
         
         <div class="modal-form-group">
-            <label for="modal-clip-title">Title</label>
+            <label for="modal-clip-title">Clip Title</label>
             <input type="text" id="modal-clip-title" class="modal-input" placeholder="Enter a title for this clip">
+        </div>
+        
+        <div class="modal-form-group">
+            <label for="modal-overlay-title">Overlay Title (shown on video)</label>
+            <input type="text" id="modal-overlay-title" class="modal-input" placeholder="e.g., Tesla Model 3">
         </div>
         
         <div class="modal-form-group">
@@ -301,6 +310,25 @@
                 <option value="30" selected>30 seconds</option>
                 <option value="60">60 seconds</option>
                 <option value="120">2 minutes</option>
+            </select>
+        </div>
+        
+        <div class="modal-form-group">
+            <label for="recording-quality">Recording Quality</label>
+            <select id="recording-quality" class="modal-input">
+                <option value="high" selected>High (25 Mbps)</option>
+                <option value="medium">Medium (15 Mbps)</option>
+                <option value="low">Low (8 Mbps)</option>
+            </select>
+        </div>
+        
+        <div class="modal-form-group">
+            <label for="overlay-position">Info Overlay Position</label>
+            <select id="overlay-position" class="modal-input">
+                <option value="bottom-left">Bottom Left</option>
+                <option value="bottom-right" selected>Bottom Right</option>
+                <option value="top-left">Top Left</option>
+                <option value="top-right">Top Right</option>
             </select>
         </div>
 
@@ -314,6 +342,22 @@
                 <label class="camera-checkbox"><input type="checkbox" value="left_pillar" checked> Left Pillar</label>
                 <label class="camera-checkbox"><input type="checkbox" value="right_pillar" checked> Right Pillar</label>
             </div>
+        </div>
+
+        <div class="modal-form-group">
+            <label>
+                <input type="checkbox" id="include-location-overlay" style="margin-right: 0.5rem;">
+                Include Live Location Overlay
+            </label>
+        </div>
+
+        <div class="modal-form-group" id="location-path-controls" style="display: none;">
+            <label for="modal-location-input">Location (optional)</label>
+            <input type="text" id="modal-location-input" class="modal-input" placeholder="Enter location or coordinates">
+            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                Coordinates: <span id="modal-coordinates-display">--</span>
+            </div>
+            <button class="btn" id="modal-set-path-btn" type="button" style="margin-top: 0.5rem;">Set Path on Map</button>
         </div>
 
         <div class="modal-actions">
@@ -335,7 +379,9 @@
             currentActiveEvent: null,
             activePlayer: "p1",
             isLoading: false,
-            waitingForSync: 0
+            waitingForSync: 0,
+            pathPoints: [], // Array of {lat, lng} for path
+            currentCoordinates: null // Current interpolated coordinates
         };
 
         const dom = {
@@ -357,8 +403,9 @@
             nextEventBtn: document.getElementById("next-event-btn"),
             mapButton: document.getElementById("map-button"),
             mapContainer: document.getElementById("map-container"),
-            mapIframe: document.getElementById("map-iframe"),
             mapCloseButton: document.getElementById("map-close-button"),
+            mapContent: document.getElementById("map-content"),
+            mapInstructions: document.getElementById("map-instructions"),
             cameraToggles: document.querySelector("#camera-toggles"),
             selectAllCameras: document.querySelector("#select-all-cameras"),
             themeToggle: document.querySelector("#theme-toggle"),
@@ -381,6 +428,11 @@
             eventTimeDisplay: document.getElementById("event-time-display"),
             eventTriggerDisplay: document.getElementById("event-trigger-display"),
             eventCityDisplay: document.getElementById("event-city-display"),
+            includeLocationOverlay: document.getElementById("include-location-overlay"),
+            locationPathControls: document.getElementById("location-path-controls"),
+            modalLocationInput: document.getElementById("modal-location-input"),
+            modalCoordinatesDisplay: document.getElementById("modal-coordinates-display"),
+            modalSetPathBtn: document.getElementById("modal-set-path-btn"),
             screenshotBtn: document.querySelector("#screenshot-btn"),
             saveClipBtn: document.querySelector("#save-clip-btn"),
             // Removed old recordDurationSelect and clipCustomTitle
@@ -401,10 +453,75 @@
             cancelRecordingBtn: document.getElementById("cancel-recording-btn"),
             startRecordingBtn: document.getElementById("start-recording-btn"),
             modalClipTitle: document.getElementById("modal-clip-title"),
+            modalOverlayTitle: document.getElementById("modal-overlay-title"),
             modalClipDuration: document.getElementById("modal-clip-duration"),
+            recordingQuality: document.getElementById("recording-quality"),
+            overlayPosition: document.getElementById("overlay-position"),
             zoomTimelineBtn: document.getElementById("zoom-timeline-btn"),
             progressContainer: document.querySelector(".header-row.progress-container"),
         };
+        
+        // Initialize Leaflet map
+        let map = null;
+        let pathPolyline = null;
+        let pathMarkers = [];
+        
+        function initMap() {
+            if (map) return;
+            map = L.map('map-content').setView([37.7749, -122.4194], 13); // Default to SF
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            map.on('click', (e) => {
+                if (dom.mapInstructions.style.display === 'block') {
+                    addPathPoint(e.latlng);
+                }
+            });
+            
+            map.on('contextmenu', (e) => {
+                if (dom.mapInstructions.style.display === 'block') {
+                    removeLastPathPoint();
+                }
+            });
+        }
+        
+        function addPathPoint(latlng) {
+            state.pathPoints.push(latlng);
+            updatePathDisplay();
+        }
+        
+        function removeLastPathPoint() {
+            if (state.pathPoints.length > 0) {
+                state.pathPoints.pop();
+                updatePathDisplay();
+            }
+        }
+        
+        function updatePathDisplay() {
+            // Clear existing
+            if (pathPolyline) map.removeLayer(pathPolyline);
+            pathMarkers.forEach(marker => map.removeLayer(marker));
+            pathMarkers = [];
+            
+            if (state.pathPoints.length > 0) {
+                // Add markers
+                state.pathPoints.forEach((point, index) => {
+                    const marker = L.marker(point).addTo(map);
+                    marker.bindPopup(`Point ${index + 1}: ${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`);
+                    pathMarkers.push(marker);
+                });
+                
+                // Add polyline
+                if (state.pathPoints.length > 1) {
+                    pathPolyline = L.polyline(state.pathPoints, {color: 'red'}).addTo(map);
+                }
+                
+                // Fit map to path
+                const group = new L.featureGroup(pathMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
         
         // Helpers
         function getActiveVideos() {
@@ -968,6 +1085,9 @@
                 } else {
                     videoElement.src = URL.createObjectURL(file);
                 }
+                
+                // Trigger load immediately for faster loading
+                videoElement.load();
             });
         }
 
@@ -1069,6 +1189,41 @@
             }
             const liveTime = new Date(state.currentEventData.firstClipTime.getTime() + (currentTime * 1000));
             dom.liveTimestamp.textContent = formatLocalTime(liveTime);
+            
+            // Update interpolated coordinates
+            updateCurrentCoordinates(currentTime);
+        }
+        
+        function updateCurrentCoordinates(currentTime) {
+            if (state.pathPoints.length < 2 || !state.currentEventData.totalDuration) {
+                state.currentCoordinates = null;
+                return;
+            }
+            
+            const totalDuration = state.currentEventData.totalDuration;
+            const progress = currentTime / totalDuration;
+            
+            // Clamp progress
+            const clampedProgress = Math.max(0, Math.min(1, progress));
+            
+            // Find segment
+            const numSegments = state.pathPoints.length - 1;
+            const segmentIndex = Math.floor(clampedProgress * numSegments);
+            const segmentProgress = (clampedProgress * numSegments) - segmentIndex;
+            
+            if (segmentIndex >= numSegments) {
+                state.currentCoordinates = state.pathPoints[state.pathPoints.length - 1];
+                return;
+            }
+            
+            const startPoint = state.pathPoints[segmentIndex];
+            const endPoint = state.pathPoints[segmentIndex + 1];
+            
+            // Interpolate
+            const lat = startPoint.lat + (endPoint.lat - startPoint.lat) * segmentProgress;
+            const lng = startPoint.lng + (endPoint.lng - startPoint.lng) * segmentProgress;
+            
+            state.currentCoordinates = { lat, lng };
         }
         function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
         function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, "0")}`; }
@@ -1080,7 +1235,10 @@
             }); 
         }
         function toggleFullscreen() { dom.body.classList.toggle("fullscreen-active"); const isFullscreen = dom.body.classList.contains("fullscreen-active"); dom.maximizeIcon.style.display = isFullscreen ? "none" : "block"; dom.minimizeIcon.style.display = isFullscreen ? "block" : "none"; }
-        function closeMap() { dom.mapContainer.style.display = "none"; dom.mapIframe.src = ""; }
+        function closeMap() { 
+            dom.mapContainer.style.display = "none"; 
+            dom.mapInstructions.style.display = "none";
+        }
 
         function saveClip() {
             dom.recordingSettingsOverlay.style.display = "flex";
@@ -1098,8 +1256,8 @@
                  return;
              }
 
-             // Canonical Order & Labels
-             const canonicalOrder = ["front", "back", "left_repeater", "right_repeater", "left_pillar", "right_pillar"];
+             // Camera order: Left Pillar, Front, Right Pillar, Left Fender, Back, Right Fender
+             const canonicalOrder = ["left_pillar", "front", "right_pillar", "left_repeater", "back", "right_repeater"];
              const cameraLabels = {
                  "front": "Front", "back": "Back", 
                  "left_repeater": "Left Fender", "right_repeater": "Right Fender",
@@ -1107,6 +1265,14 @@
              };
              
              const selectedCams = canonicalOrder.filter(c => selectedValues.has(c));
+             
+             // Get quality setting
+             const qualityMap = {
+                 'high': 25000000,
+                 'medium': 15000000,
+                 'low': 8000000
+             };
+             const bitrate = qualityMap[dom.recordingQuality.value] || 25000000;
 
              dom.recordingSettingsOverlay.style.display = "none";
              dom.recordingOverlay.style.display = "flex";
@@ -1149,8 +1315,8 @@
              if (MediaRecorder.isTypeSupported("video/mp4")) mimeType = "video/mp4";
              else if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) mimeType = "video/webm;codecs=vp9";
 
-             const stream = canvas.captureStream(30);
-             const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 25000000 }); // 25 Mbps
+             const stream = canvas.captureStream(30); // 30 FPS for balanced performance
+             const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: bitrate });
              const chunks = [];
              recorder.ondataavailable = e => chunks.push(e.data);
              recorder.onstop = () => {
@@ -1259,47 +1425,115 @@
                      // Video Grid
                      selectedCams.forEach((camType, index) => {
                          const video = document.querySelector(`video.${camType}.${state.activePlayer}`);
-                         if (video) {
+                         if (video && video.readyState >= 1) { // HAVE_METADATA or better
                              const col = index % cols;
                              const row = Math.floor(index / cols);
                              const dx = col * camWidth;
                              const dy = row * camHeight;
                              
-                             // Draw Background for letterboxing if needed? 
-                             // No, we are exact match 1280x960.
-                             ctx.drawImage(video, dx, dy, camWidth, camHeight);
+                             // Draw video
+                             try {
+                                 ctx.drawImage(video, dx, dy, camWidth, camHeight);
+                             } catch(e) {
+                                 // If drawing fails, fill with black
+                                 ctx.fillStyle = "black";
+                                 ctx.fillRect(dx, dy, camWidth, camHeight);
+                             }
                              
-                             // Draw Label
+                             // Draw camera label on each video
                              const label = cameraLabels[camType];
-                             const fontSize = 30; // Fixed font size for clarity at high res
-                             ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+                             ctx.font = `bold 28px Inter, sans-serif`;
                              ctx.textAlign = "left";
                              ctx.fillStyle = "white";
                              ctx.shadowColor = "black";
-                             ctx.shadowBlur = 4;
-                             ctx.lineWidth = 3;
+                             ctx.shadowBlur = 6;
+                             ctx.lineWidth = 4;
                              ctx.strokeStyle = "black";
-                             // Draw stroke then fill
-                             ctx.strokeText(label, dx + 20, dy + 50);
-                             ctx.fillText(label, dx + 20, dy + 50);
+                             ctx.strokeText(label, dx + 25, dy + 45);
+                             ctx.fillText(label, dx + 25, dy + 45);
                              ctx.shadowBlur = 0;
                          }
                      });
                      
-                     // Timestamp overlay
-                     const scaleFactor = canvas.width / 1920;
-                     ctx.fillStyle = "rgba(0,0,0,0.5)";
-                     ctx.fillRect(10 * scaleFactor, 10 * scaleFactor, 450 * scaleFactor, 50 * scaleFactor);
+                     // Compact corner info overlay
+                     const overlayPosition = dom.overlayPosition.value;
+                     const padding = 20;
+                     const boxWidth = 450;
+                     const boxHeight = 140;
+                     
+                     let boxX, boxY;
+                     if (overlayPosition === 'bottom-left') {
+                         boxX = padding;
+                         boxY = canvas.height - boxHeight - padding;
+                     } else if (overlayPosition === 'bottom-right') {
+                         boxX = canvas.width - boxWidth - padding;
+                         boxY = canvas.height - boxHeight - padding;
+                     } else if (overlayPosition === 'top-left') {
+                         boxX = padding;
+                         boxY = padding;
+                     } else { // top-right
+                         boxX = canvas.width - boxWidth - padding;
+                         boxY = padding;
+                     }
+                     
+                     // Semi-transparent background box
+                     ctx.fillStyle = "rgba(0,0,0,0.75)";
+                     ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+                     
+                     // Border
+                     ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                     ctx.lineWidth = 2;
+                     ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+                     
+                     const textX = boxX + 15;
+                     let textY = boxY + 30;
+                     
+                     // Title - use overlay title if provided
+                     let title = "Tesla Camera Clip";
+                     if (dom.modalOverlayTitle && dom.modalOverlayTitle.value.trim()) {
+                         title = dom.modalOverlayTitle.value.trim();
+                     } else if (state.currentEventData.title) {
+                         title = state.currentEventData.title;
+                     } else if (state.currentActiveEvent && state.currentActiveEvent.type) {
+                         title = `${state.currentActiveEvent.type === "sentry" ? "Sentry" : "Saved"} Clip`;
+                     }
+                     
                      ctx.fillStyle = "white";
-                     ctx.font = `${30 * scaleFactor}px monospace`;
+                     ctx.font = `bold 26px Inter, sans-serif`;
                      ctx.textAlign = "left";
-                     // Add Date to timestamp
-                     let fullTimestamp = dom.liveTimestamp.textContent;
+                     ctx.fillText(title, textX, textY);
+                     textY += 35;
+                     
+                     // Timestamp
+                     let timestampText = dom.liveTimestamp.textContent;
                      if (state.currentEventData.firstClipTime) {
                          const datePart = state.currentEventData.firstClipTime.toLocaleDateString();
-                         fullTimestamp = `${datePart} ${fullTimestamp}`;
+                         timestampText = `${datePart} ${timestampText}`;
                      }
-                     ctx.fillText(fullTimestamp, 20 * scaleFactor, 45 * scaleFactor);
+                     ctx.font = `bold 20px monospace`;
+                     ctx.fillText(timestampText, textX, textY);
+                     textY += 35;
+                     
+                     // Location and coordinates
+                     if (dom.includeLocationOverlay && dom.includeLocationOverlay.checked) {
+                         let locationText = "";
+                         if (state.currentEventData.city) {
+                             locationText = state.currentEventData.city;
+                         }
+                         if (state.currentCoordinates) {
+                             locationText += ` (${state.currentCoordinates.lat.toFixed(5)}, ${state.currentCoordinates.lng.toFixed(5)})`;
+                         } else if (state.currentEventData.location) {
+                             locationText += ` (${state.currentEventData.location.lat.toFixed(5)}, ${state.currentEventData.location.lon.toFixed(5)})`;
+                         }
+                         if (locationText) {
+                             ctx.font = `bold 18px Inter, sans-serif`;
+                             ctx.fillStyle = "#ffeb3b";
+                             ctx.shadowColor = "black";
+                             ctx.shadowBlur = 3;
+                             ctx.fillText(locationText, textX, textY);
+                             ctx.shadowBlur = 0;
+                         }
+                     }
                  }
                  
                  requestAnimationFrame(drawLoop);
@@ -1448,12 +1682,58 @@
         
         dom.mapButton.addEventListener("click", (e) => {
             e.preventDefault();
+            initMap();
+            dom.mapInstructions.style.display = 'none';
             if (state.currentEventData.location) {
                 const { lat, lon } = state.currentEventData.location;
-                // OSM Embed
-                const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.005},${lat-0.005},${lon+0.005},${lat+0.005}&layer=mapnik&marker=${lat},${lon}`;
-                dom.mapIframe.src = mapUrl;
-                dom.mapContainer.style.display = "flex";
+                map.setView([lat, lon], 15);
+                L.marker([lat, lon]).addTo(map).bindPopup('Event Location').openPopup();
+            }
+            dom.mapContainer.style.display = "flex";
+        });
+        
+        // Modal location overlay checkbox
+        dom.includeLocationOverlay.addEventListener("change", (e) => {
+            dom.locationPathControls.style.display = e.target.checked ? 'block' : 'none';
+            if (!e.target.checked) {
+                state.pathPoints = [];
+            }
+        });
+        
+        // Modal set path button
+        dom.modalSetPathBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            initMap();
+            dom.mapInstructions.style.display = 'block';
+            state.pathPoints = []; // Reset path
+            updatePathDisplay();
+            if (state.currentEventData.location) {
+                const { lat, lon } = state.currentEventData.location;
+                map.setView([lat, lon], 15);
+            }
+            dom.mapContainer.style.display = "flex";
+        });
+        
+        // Modal location input
+        dom.modalLocationInput.addEventListener("input", async (e) => {
+            const query = e.target.value.trim();
+            if (query.length < 3) {
+                dom.modalCoordinatesDisplay.textContent = '--';
+                return;
+            }
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+                const data = await response.json();
+                if (data.length > 0) {
+                    const { lat, lon } = data[0];
+                    dom.modalCoordinatesDisplay.textContent = `${parseFloat(lat).toFixed(5)}, ${parseFloat(lon).toFixed(5)}`;
+                    state.currentEventData.location = { lat: parseFloat(lat), lon: parseFloat(lon) };
+                } else {
+                    dom.modalCoordinatesDisplay.textContent = 'Not found';
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                dom.modalCoordinatesDisplay.textContent = 'Error';
             }
         });
         
@@ -1645,6 +1925,7 @@
         // Skip splash logic here as it is handled in index.html
     });
 </script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 </body>
 </html>
