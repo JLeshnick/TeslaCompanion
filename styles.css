@@ -751,3 +751,39 @@
         .autocomplete-item:hover {
             background-color: var(--control-bg-hover);
         }
+
+        /* Modal Specific Styles */
+        #recording-settings-overlay .modal-content {
+            width: 550px;
+        }
+        #recording-settings-overlay .modal-input[type="text"] {
+            padding: 0.75rem;
+            font-size: 1rem;
+            height: 48px; /* Larger height for better input experience */
+        }
+
+        #recording-settings-overlay .camera-select-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        #recording-settings-overlay .camera-checkbox {
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            justify-content: center; /* Center content in checkboxes */
+        }
+
+        #recording-settings-overlay .camera-checkbox input {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.75rem; /* Space between checkbox and label */
+        }
+
+        #recording-settings-overlay .modal-form-group label {
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+
+        #recording-settings-overlay .modal-actions {
+            margin-top: 2.5rem;
+        }

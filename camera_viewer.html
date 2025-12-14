@@ -58,6 +58,50 @@
             margin-bottom: 1rem;
         }
         @keyframes pulse-rec { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+        .progress-container.zoomed { overflow-x: auto; }
+        .progress-container.zoomed #master-scrubber { width: 1000%; }
+        .progress-container.zoomed::-webkit-scrollbar { height: 6px; }
+        .progress-container.zoomed::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 1000;
+            display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: var(--surface-color);
+            padding: 2rem;
+            border-radius: var(--border-radius-lg);
+            width: 500px;
+            max-width: 90%;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-color);
+        }
+        .modal-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .modal-form-group { margin-bottom: 1.5rem; }
+        .modal-form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color); }
+        .modal-input {
+            width: 100%; padding: 0.75rem;
+            background: var(--bg-color); border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md); color: var(--text-color);
+            font-size: 1rem;
+        }
+        .camera-select-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+        }
+        .camera-checkbox {
+            display: flex; align-items: center; padding: 0.5rem;
+            background: var(--bg-color); border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-color); cursor: pointer;
+        }
+        .camera-checkbox:hover { border-color: var(--primary-color); }
+        .camera-checkbox input { margin-right: 0.75rem; accent-color: var(--primary-color); width: 18px; height: 18px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+        .modal-btn { padding: 0.75rem 1.5rem; border-radius: var(--border-radius-md); font-weight: 600; cursor: pointer; border: none; }
+        .btn-cancel { background: transparent; color: var(--text-color); border: 1px solid var(--border-color); }
+        .btn-primary { background: var(--primary-color); color: white; }
     </style>
 </head>
 <body>
@@ -92,7 +136,7 @@
     <div id="recording-overlay">
         <svg id="recording-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
         <h2 style="margin:0;">Recording...</h2>
-        <p>Please wait while the clip is generated.</p>
+        <p>Generating high-quality video file.</p>
     </div>
 
     <div class="content-container">
@@ -139,22 +183,16 @@
                                     <div class="utility-btn-stack">
                                         <button class="btn icon-btn" id="screenshot-btn" title="Screenshot"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
                                         
-                                        <!-- Recording Controls -->
-                                        <div style="display:flex; gap:2px; align-items:center; background:var(--control-bg-color); border-radius:var(--border-radius-md); border:1px solid var(--border-color); padding:2px;">
-                                            <input type="text" id="clip-custom-title" placeholder="Title" style="width: 60px; background: transparent; border: none; color: var(--text-color); font-size: 0.7rem; padding: 0 4px; border-bottom: 1px solid var(--border-color);">
-                                            <select id="record-duration" style="background:transparent; border:none; color:var(--text-color); font-size:0.7rem; width:45px; cursor:pointer;">
-                                                <option value="5">5s</option>
-                                                <option value="10">10s</option>
-                                                <option value="15">15s</option>
-                                                <option value="20">20s</option>
-                                                <option value="25">25s</option>
-                                                <option value="30" selected>30s</option>
-                                            </select>
-                                            <button class="btn icon-btn" id="save-clip-btn" title="Save Clip" style="width:32px; height:32px; border:none; background:transparent;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
-                                        </div>
+                                        <button class="btn icon-btn" id="zoom-timeline-btn" title="Zoom Timeline">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                        </button>
+
+                                        <button class="btn icon-btn" id="save-clip-btn" title="Save Video Clip">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                                        </button>
 
                                         <button class="btn icon-btn" id="fullscreen-toggle" title="Toggle Fullscreen">
-                                            <svg id="maximize-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                                            <svg id="maximize-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0  0 0 2-2v-3M3 16v3a2 2 0  0 0 2 2h3"></path></svg>
                                             <svg id="minimize-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
                                         </button>
                                     </div>
@@ -243,17 +281,59 @@
     <iframe id="map-iframe" src="" frameborder="0" allowfullscreen></iframe>
 </div>
 
+<div id="recording-settings-overlay" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span>Save Video Clip</span>
+            <button class="btn icon-btn" id="close-modal-btn" style="background:none; border:none; padding:0; width:auto; height:auto;">&times;</button>
+        </div>
+        
+        <div class="modal-form-group">
+            <label for="modal-clip-title">Title</label>
+            <input type="text" id="modal-clip-title" class="modal-input" placeholder="Enter a title for this clip">
+        </div>
+        
+        <div class="modal-form-group">
+            <label for="modal-clip-duration">Duration</label>
+            <select id="modal-clip-duration" class="modal-input">
+                <option value="10">10 seconds</option>
+                <option value="20">20 seconds</option>
+                <option value="30" selected>30 seconds</option>
+                <option value="60">60 seconds</option>
+                <option value="120">2 minutes</option>
+            </select>
+        </div>
+
+        <div class="modal-form-group">
+            <label>Include Cameras</label>
+            <div class="camera-select-grid">
+                <label class="camera-checkbox"><input type="checkbox" value="front" checked> Front</label>
+                <label class="camera-checkbox"><input type="checkbox" value="back" checked> Back</label>
+                <label class="camera-checkbox"><input type="checkbox" value="left_repeater" checked> Left Fender</label>
+                <label class="camera-checkbox"><input type="checkbox" value="right_repeater" checked> Right Fender</label>
+                <label class="camera-checkbox"><input type="checkbox" value="left_pillar" checked> Left Pillar</label>
+                <label class="camera-checkbox"><input type="checkbox" value="right_pillar" checked> Right Pillar</label>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-btn btn-cancel" id="cancel-recording-btn">Cancel</button>
+            <button class="modal-btn btn-primary" id="start-recording-btn">Start Recording</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener("DOMContentLoaded", () => {
         const state = {
             playbackRate: 1, carouselIndex: 0, eventClips: new Map(),
             sortedEventKeys: [], currentEventData: {},
-            cameraSource: 'local', 
-            piConfig: { ip: '', user: '', pass: '', useProxy: false },
+            cameraSource: "local", 
+            piConfig: { ip: "", user: "", pass: "", useProxy: false },
             eventsMap: new Map(), 
             dayEvents: [], 
             currentActiveEvent: null,
-            activePlayer: 'p1',
+            activePlayer: "p1",
             isLoading: false,
             waitingForSync: 0
         };
@@ -271,52 +351,59 @@
             playPauseButton: document.querySelector("#play-pause-button"),
             playIcon: document.querySelector("#play-icon"), 
             pauseIcon: document.querySelector("#pause-icon"),
-            statusDot: document.querySelector('.status-dot'),
+            statusDot: document.querySelector(".status-dot"),
             eventMarker: document.querySelector("#event-marker"),
             jumpToEventButton: document.querySelector("#jump-to-event"),
-            nextEventBtn: document.getElementById('next-event-btn'),
-            mapButton: document.getElementById('map-button'),
-            mapContainer: document.getElementById('map-container'),
-            mapIframe: document.getElementById('map-iframe'),
-            mapCloseButton: document.getElementById('map-close-button'),
+            nextEventBtn: document.getElementById("next-event-btn"),
+            mapButton: document.getElementById("map-button"),
+            mapContainer: document.getElementById("map-container"),
+            mapIframe: document.getElementById("map-iframe"),
+            mapCloseButton: document.getElementById("map-close-button"),
             cameraToggles: document.querySelector("#camera-toggles"),
-            selectAllCameras: document.querySelector('#select-all-cameras'),
-            themeToggle: document.querySelector('#theme-toggle'),
-            themeIconSun: document.querySelector('#theme-icon-sun'),
-            themeIconMoon: document.querySelector('#theme-icon-moon'),
-            fullscreenToggle: document.getElementById('fullscreen-toggle'),
-            maximizeIcon: document.getElementById('maximize-icon'),
-            minimizeIcon: document.getElementById('minimize-icon'),
-            skipForwardButton: document.querySelector('#skip-forward'),
-            skipRewindButton: document.querySelector('#skip-rewind'),
-            playbackSpeedSelector: document.querySelector('#playback-speed'),
-            speedDisplay: document.querySelector('#speed-display'),
-            resetSpeedBtn: document.querySelector('#reset-speed'),
-            scrubberTooltip: document.getElementById('scrubber-tooltip'),
-            timelineMarkersContainer: document.getElementById('timeline-markers'),
-            collapsibleControls: document.querySelector('#collapsible-controls'),
-            titleFolderName: document.querySelector('.title-folder-name'),
-            eventDetailsContainer: document.getElementById('event-details-container'),
-            eventReasonDisplay: document.getElementById('event-reason-display'),
-            eventTimeDisplay: document.getElementById('event-time-display'),
-            eventTriggerDisplay: document.getElementById('event-trigger-display'),
-            eventCityDisplay: document.getElementById('event-city-display'),
-            screenshotBtn: document.querySelector('#screenshot-btn'),
-            saveClipBtn: document.querySelector('#save-clip-btn'),
-            recordDurationSelect: document.querySelector('#record-duration'),
-            clipCustomTitle: document.getElementById('clip-custom-title'),
-            cameraControlsContainer: document.getElementById('camera-controls-container'),
-            btnSourceLocal: document.getElementById('btn-source-local'),
-            btnSourcePi: document.getElementById('btn-source-pi'),
-            localFileControls: document.getElementById('local-file-controls'),
-            piFileControls: document.getElementById('pi-file-controls'),
-            piIpInput: document.getElementById('pi-ip'),
-            piUserInput: document.getElementById('pi-user'),
-            piPassInput: document.getElementById('pi-pass'),
-            piUseProxy: document.getElementById('pi-use-proxy'),
-            piConnectBtn: document.getElementById('pi-connect-btn'),
-            loadingOverlay: document.getElementById('loading-overlay'),
-            recordingOverlay: document.getElementById('recording-overlay'),
+            selectAllCameras: document.querySelector("#select-all-cameras"),
+            themeToggle: document.querySelector("#theme-toggle"),
+            themeIconSun: document.querySelector("#theme-icon-sun"),
+            themeIconMoon: document.querySelector("#theme-icon-moon"),
+            fullscreenToggle: document.getElementById("fullscreen-toggle"),
+            maximizeIcon: document.getElementById("maximize-icon"),
+            minimizeIcon: document.getElementById("minimize-icon"),
+            skipForwardButton: document.querySelector("#skip-forward"),
+            skipRewindButton: document.querySelector("#skip-rewind"),
+            playbackSpeedSelector: document.querySelector("#playback-speed"),
+            speedDisplay: document.querySelector("#speed-display"),
+            resetSpeedBtn: document.querySelector("#reset-speed"),
+            scrubberTooltip: document.getElementById("scrubber-tooltip"),
+            timelineMarkersContainer: document.getElementById("timeline-markers"),
+            collapsibleControls: document.querySelector("#collapsible-controls"),
+            titleFolderName: document.querySelector(".title-folder-name"),
+            eventDetailsContainer: document.getElementById("event-details-container"),
+            eventReasonDisplay: document.getElementById("event-reason-display"),
+            eventTimeDisplay: document.getElementById("event-time-display"),
+            eventTriggerDisplay: document.getElementById("event-trigger-display"),
+            eventCityDisplay: document.getElementById("event-city-display"),
+            screenshotBtn: document.querySelector("#screenshot-btn"),
+            saveClipBtn: document.querySelector("#save-clip-btn"),
+            // Removed old recordDurationSelect and clipCustomTitle
+            cameraControlsContainer: document.getElementById("camera-controls-container"),
+            btnSourceLocal: document.getElementById("btn-source-local"),
+            btnSourcePi: document.getElementById("btn-source-pi"),
+            localFileControls: document.getElementById("local-file-controls"),
+            piFileControls: document.getElementById("pi-file-controls"),
+            piIpInput: document.getElementById("pi-ip"),
+            piUserInput: document.getElementById("pi-user"),
+            piPassInput: document.getElementById("pi-pass"),
+            piUseProxy: document.getElementById("pi-use-proxy"),
+            piConnectBtn: document.getElementById("pi-connect-btn"),
+            loadingOverlay: document.getElementById("loading-overlay"),
+            recordingOverlay: document.getElementById("recording-overlay"),
+            recordingSettingsOverlay: document.getElementById("recording-settings-overlay"),
+            closeModalBtn: document.getElementById("close-modal-btn"),
+            cancelRecordingBtn: document.getElementById("cancel-recording-btn"),
+            startRecordingBtn: document.getElementById("start-recording-btn"),
+            modalClipTitle: document.getElementById("modal-clip-title"),
+            modalClipDuration: document.getElementById("modal-clip-duration"),
+            zoomTimelineBtn: document.getElementById("zoom-timeline-btn"),
+            progressContainer: document.querySelector(".header-row.progress-container"),
         };
         
         // Helpers
@@ -328,7 +415,7 @@
         }
         function setLoading(loading) {
             state.isLoading = loading;
-            dom.loadingOverlay.style.display = loading ? 'flex' : 'none';
+            dom.loadingOverlay.style.display = loading ? "flex" : "none";
             dom.playPauseButton.disabled = loading;
             dom.masterScrubber.disabled = loading;
             dom.dateSelector.disabled = loading;
@@ -337,30 +424,30 @@
         }
 
         const friendlyEventReasons = {
-            'sentry_aware_object_detection': 'Sentry: Object Detected',
-            'user_interaction_dashcam_icon_tapped': 'Dashcam Saved (Manual)',
-            'user_interaction_honk': 'Dashcam Saved (Honk)',
-            'sentry_locked_handle_pulled': 'Sentry: Handle Pulled',
-            'user_interaction_dashcam_multifunction_selected': 'Dashcam Saved (Manual)',
+            "sentry_aware_object_detection": "Sentry: Object Detected",
+            "user_interaction_dashcam_icon_tapped": "Dashcam Saved (Manual)",
+            "user_interaction_honk": "Dashcam Saved (Honk)",
+            "sentry_locked_handle_pulled": "Sentry: Handle Pulled",
+            "user_interaction_dashcam_multifunction_selected": "Dashcam Saved (Manual)",
         };
 
         window.switchCameraSource = (source) => {
             state.cameraSource = source;
-            if (source === 'local') {
-                dom.btnSourceLocal.classList.add('active');
-                dom.btnSourcePi.classList.remove('active');
-                dom.localFileControls.style.display = 'block';
-                dom.piFileControls.style.display = 'none';
+            if (source === "local") {
+                dom.btnSourceLocal.classList.add("active");
+                dom.btnSourcePi.classList.remove("active");
+                dom.localFileControls.style.display = "block";
+                dom.piFileControls.style.display = "none";
             } else {
-                dom.btnSourceLocal.classList.remove('active');
-                dom.btnSourcePi.classList.add('active');
-                dom.localFileControls.style.display = 'none';
-                dom.piFileControls.style.display = 'flex';
-                if (localStorage.getItem('piConfig')) {
-                    const saved = JSON.parse(localStorage.getItem('piConfig'));
-                    dom.piIpInput.value = saved.ip || '';
-                    dom.piUserInput.value = saved.user || '';
-                    dom.piPassInput.value = saved.pass || '';
+                dom.btnSourceLocal.classList.remove("active");
+                dom.btnSourcePi.classList.add("active");
+                dom.localFileControls.style.display = "none";
+                dom.piFileControls.style.display = "flex";
+                if (localStorage.getItem("piConfig")) {
+                    const saved = JSON.parse(localStorage.getItem("piConfig"));
+                    dom.piIpInput.value = saved.ip || "";
+                    dom.piUserInput.value = saved.user || "";
+                    dom.piPassInput.value = saved.pass || "";
                     dom.piUseProxy.checked = saved.useProxy || false;
                 }
             }
@@ -371,37 +458,37 @@
             state.eventClips.clear();
             state.sortedEventKeys = [];
             state.eventsMap.clear();
-            dom.dateSelector.innerHTML = '<option>Select Event</option>';
-            dom.titleFolderName.textContent = 'No Clips Selected';
-            document.querySelectorAll('video').forEach(v => v.src = '');
-            dom.eventDetailsContainer.style.display = 'none';
+            dom.dateSelector.innerHTML = "<option>Select Event</option>";
+            dom.titleFolderName.textContent = "No Clips Selected";
+            document.querySelectorAll("video").forEach(v => v.src = "");
+            dom.eventDetailsContainer.style.display = "none";
             dom.liveTimestamp.textContent = "00:00";
             dom.durationDisplay.textContent = "00:00";
             dom.masterScrubber.value = 0;
             dom.eventMarker.style.display = "none";
-            dom.timelineMarkersContainer.innerHTML = '';
+            dom.timelineMarkersContainer.innerHTML = "";
             dom.jumpToEventButton.style.display = "none";
             dom.nextEventBtn.style.display = "none";
-            dom.mapButton.style.display = 'none';
-            state.activePlayer = 'p1';
+            dom.mapButton.style.display = "none";
+            state.activePlayer = "p1";
             updatePlayerVisibility();
             setLoading(false);
         }
         
         function updatePlayerVisibility() {
-            document.querySelectorAll('.video-container video').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll(`.video-container video.${state.activePlayer}`).forEach(v => v.classList.add('active'));
+            document.querySelectorAll(".video-container video").forEach(v => v.classList.remove("active"));
+            document.querySelectorAll(`.video-container video.${state.activePlayer}`).forEach(v => v.classList.add("active"));
         }
         
         const applyTheme = (theme) => {
-            if (theme === 'light') {
-                dom.body.classList.add('light-mode');
-                dom.themeIconSun.style.display = 'none';
-                dom.themeIconMoon.style.display = 'block';
+            if (theme === "light") {
+                dom.body.classList.add("light-mode");
+                dom.themeIconSun.style.display = "none";
+                dom.themeIconMoon.style.display = "block";
             } else {
-                dom.body.classList.remove('light-mode');
-                dom.themeIconSun.style.display = 'block';
-                dom.themeIconMoon.style.display = 'none';
+                dom.body.classList.remove("light-mode");
+                dom.themeIconSun.style.display = "block";
+                dom.themeIconMoon.style.display = "none";
             }
         }
 
@@ -417,17 +504,17 @@
             }
 
             state.piConfig = { ip, user, pass, useProxy };
-            localStorage.setItem('piConfig', JSON.stringify(state.piConfig));
+            localStorage.setItem("piConfig", JSON.stringify(state.piConfig));
 
             dom.titleFolderName.textContent = "Connecting...";
             
             const authHeaders = new Headers();
             if (user && pass) {
-                authHeaders.set('Authorization', 'Basic ' + btoa(user + ":" + pass));
+                authHeaders.set("Authorization", "Basic " + btoa(user + ":" + pass));
             }
 
             try {
-                const baseUrl = ip.startsWith('http') ? ip : `http://${ip}`;
+                const baseUrl = ip.startsWith("http") ? ip : `http://${ip}`;
                 let url = `${baseUrl}/cgi-bin/videolist.sh`;
                 if (useProxy) {
                     url = `http://localhost:8000/proxy?url=${encodeURIComponent(url)}`;
@@ -448,32 +535,32 @@
         function processRemoteFileList(fileListText, baseUrl, authHeaders) {
             state.eventClips.clear();
             state.sortedEventKeys = [];
-            dom.dateSelector.innerHTML = '<option>Select Event</option>';
-            const lines = fileListText.split('\n');
+            dom.dateSelector.innerHTML = "<option>Select Event</option>";
+            const lines = fileListText.split("\n");
             const useProxy = state.piConfig.useProxy;
             const sequenceMetadata = new Map(); 
 
             for (const lineRaw of lines) {
                  const line = lineRaw.trim();
                  if (!line) continue;
-                 if (line.startsWith('SentryClips') || line.startsWith('SavedClips')) {
-                     const parts = line.split('/');
+                 if (line.startsWith("SentryClips") || line.startsWith("SavedClips")) {
+                     const parts = line.split("/");
                      if (parts.length >= 2) {
                          const group = parts[0];
                          const sequenceName = parts[1];
-                         const filename = parts.length > 2 ? parts[parts.length - 1] : '';
+                         const filename = parts.length > 2 ? parts[parts.length - 1] : "";
                          if (!sequenceMetadata.has(sequenceName)) {
-                             sequenceMetadata.set(sequenceName, { minTime: null, maxTime: null, jsonPath: null, type: group === 'SentryClips' ? 'sentry' : 'saved' });
+                             sequenceMetadata.set(sequenceName, { minTime: null, maxTime: null, jsonPath: null, type: group === "SentryClips" ? "sentry" : "saved" });
                          }
                          const meta = sequenceMetadata.get(sequenceName);
-                         if (filename === 'event.json') {
+                         if (filename === "event.json") {
                              let jsonUrl = `${baseUrl}/TeslaCam/${line}`;
                              if (useProxy) jsonUrl = `http://localhost:8000/proxy?url=${encodeURIComponent(jsonUrl)}`;
                              meta.jsonPath = jsonUrl;
-                         } else if (filename.endsWith('.mp4')) {
+                         } else if (filename.endsWith(".mp4")) {
                              const match = filename.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
                              if (match) {
-                                 const isoTime = match[1].substring(0, 10) + 'T' + match[1].substring(11).replace(/-/g, ':');
+                                 const isoTime = match[1].substring(0, 10) + "T" + match[1].substring(11).replace(/-/g, ":");
                                  const time = new Date(isoTime).getTime();
                                  if (meta.minTime === null || time < meta.minTime) meta.minTime = time;
                                  if (meta.maxTime === null || time > meta.maxTime) meta.maxTime = time;
@@ -502,10 +589,10 @@
             for (const lineRaw of lines) {
                 const line = lineRaw.trim();
                 if (!line) continue;
-                const parts = line.split('/');
+                const parts = line.split("/");
                 if (parts.length < 3) continue;
                 const [group, sequenceName, filename] = parts;
-                if (!['RecentClips', 'SavedClips', 'SentryClips'].includes(group)) continue;
+                if (!["RecentClips", "SavedClips", "SentryClips"].includes(group)) continue;
                 if (!state.eventClips.has(sequenceName)) {
                     state.eventClips.set(sequenceName, { 
                         playlists: { front: [], back: [], left_repeater: [], right_repeater: [], left_pillar: [], right_pillar: [] }, 
@@ -514,14 +601,14 @@
                 }
                 const eventData = state.eventClips.get(sequenceName);
                 let cameraType = null;
-                if (filename.includes('front')) cameraType = 'front';
-                else if (filename.includes('back')) cameraType = 'back';
-                else if (filename.includes('left_repeater')) cameraType = 'left_repeater';
-                else if (filename.includes('right_repeater')) cameraType = 'right_repeater';
-                else if (filename.includes('left_pillar')) cameraType = 'left_pillar';
-                else if (filename.includes('right_pillar')) cameraType = 'right_pillar';
+                if (filename.includes("front")) cameraType = "front";
+                else if (filename.includes("back")) cameraType = "back";
+                else if (filename.includes("left_repeater")) cameraType = "left_repeater";
+                else if (filename.includes("right_repeater")) cameraType = "right_repeater";
+                else if (filename.includes("left_pillar")) cameraType = "left_pillar";
+                else if (filename.includes("right_pillar")) cameraType = "right_pillar";
 
-                if (cameraType && filename.endsWith('.mp4')) {
+                if (cameraType && filename.endsWith(".mp4")) {
                     let fakeName = filename;
                     if (!filename.match(/^\d{4}-\d{2}-\d{2}/)) fakeName = `${sequenceName}-${filename}`;
                     let fileUrl = `${baseUrl}/TeslaCam/${line}`;
@@ -541,12 +628,12 @@
             const dateKeys = allKeys.filter(k => k.match(/^\d{4}-\d{2}-\d{2}$/));
             
             if (dateKeys.length === 0 && allKeys.length === 0) {
-                dom.titleFolderName.textContent = 'No Clips Found on Pi';
-                dom.dateSelector.innerHTML = '<option>No Events Found</option>';
+                dom.titleFolderName.textContent = "No Clips Found on Pi";
+                dom.dateSelector.innerHTML = "<option>No Events Found</option>";
                 return;
             }
 
-            dom.dateSelector.innerHTML = '';
+            dom.dateSelector.innerHTML = "";
             const keysToShow = dateKeys.length > 0 ? dateKeys : allKeys;
             keysToShow.forEach((key) => { 
                 const index = state.sortedEventKeys.indexOf(key);
@@ -561,7 +648,7 @@
                     option.innerText = key;
                 }
                 option.value = index; 
-                dom.dateSelector.appendChild(option); 
+                dom.dateSelector.appendChild(option);
             });
             
             dom.titleFolderName.textContent = `Found ${keysToShow.length} Days`;
@@ -576,7 +663,7 @@
             let jsonData = null;
             if (eventInfo.jsonPath) {
                 try {
-                    const headers = state.piConfig.user ? new Headers({'Authorization': 'Basic ' + btoa(state.piConfig.user + ":" + state.piConfig.pass)}) : new Headers();
+                    const headers = state.piConfig.user ? new Headers({"Authorization": "Basic " + btoa(state.piConfig.user + ":" + state.piConfig.pass)}) : new Headers();
                     const res = await fetch(eventInfo.jsonPath, { headers });
                     if (state.currentActiveEvent !== eventInfo) return; // Race condition check
                     jsonData = await res.json();
@@ -589,41 +676,41 @@
             }
 
             if (!jsonData) {
-                dom.eventDetailsContainer.style.display = 'block';
-                dom.eventReasonDisplay.innerHTML = `Event: <strong>${eventInfo.type === 'sentry' ? 'Sentry Event' : 'Saved Clip'}</strong>`;
+                dom.eventDetailsContainer.style.display = "block";
+                dom.eventReasonDisplay.innerHTML = `Event: <strong>${eventInfo.type === "sentry" ? "Sentry Event" : "Saved Clip"}</strong>`;
                 dom.eventTimeDisplay.innerHTML = `Time: <strong>${formatLocalTime(new Date(eventInfo.startTime))}</strong>`;
-                dom.eventTriggerDisplay.innerHTML = '';
-                dom.eventCityDisplay.innerHTML = '';
-                dom.mapButton.style.display = 'none';
+                dom.eventTriggerDisplay.innerHTML = "";
+                dom.eventCityDisplay.innerHTML = "";
+                dom.mapButton.style.display = "none";
                 return;
             }
             
             try {
-                dom.eventDetailsContainer.style.display = 'block';
-                const friendlyReason = friendlyEventReasons[jsonData.reason] || jsonData.reason.replace(/_/g, ' ');
+                dom.eventDetailsContainer.style.display = "block";
+                const friendlyReason = friendlyEventReasons[jsonData.reason] || jsonData.reason.replace(/_/g, " ");
                 dom.eventReasonDisplay.innerHTML = `Event: <strong>${friendlyReason}</strong>`;
                 dom.eventTimeDisplay.innerHTML = `Time: <strong>${formatLocalTime(new Date(jsonData.timestamp))}</strong>`;
                 if (jsonData.city) dom.eventCityDisplay.innerHTML = `City: <strong>${jsonData.city}</strong>`;
-                else dom.eventCityDisplay.innerHTML = '';
+                else dom.eventCityDisplay.innerHTML = "";
                 
                 if (jsonData.est_lat && jsonData.est_lon) {
                     state.currentEventData.location = { lat: parseFloat(jsonData.est_lat), lon: parseFloat(jsonData.est_lon) };
-                    dom.mapButton.style.display = 'inline-flex';
+                    dom.mapButton.style.display = "inline-flex";
                 } else {
-                    dom.mapButton.style.display = 'none';
+                    dom.mapButton.style.display = "none";
                 }
                 
                 // Parse Camera Trigger
-                const cameraIndexMap = { 0: 'front', 3: 'left_pillar', 4: 'right_pillar', 5: 'left_repeater', 6: 'right_repeater', 7: 'back' };
+                const cameraIndexMap = { 0: "front", 3: "left_pillar", 4: "right_pillar", 5: "left_repeater", 6: "right_repeater", 7: "back" };
                 if (jsonData.camera) {
                     const triggerCamKey = cameraIndexMap[parseInt(jsonData.camera, 10)];
                     if (triggerCamKey) {
-                         const displayName = triggerCamKey.replace('_repeater', ' Fender').replace('_pillar', ' Pillar').replace(/_/g, ' ');
+                         const displayName = triggerCamKey.replace("_repeater", " Fender").replace("_pillar", " Pillar").replace(/_/g, " ");
                          dom.eventTriggerDisplay.innerHTML = `Trigger: <strong>${displayName.charAt(0).toUpperCase() + displayName.slice(1)}</strong>`;
                          // Highlight container
-                         document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
+                         document.querySelectorAll(".video-container").forEach(c => c.classList.remove("triggered"));
                          const container = document.querySelector(`.video-container.${triggerCamKey}`);
-                         if (container) container.classList.add('triggered');
+                         if (container) container.classList.add("triggered");
                          
                          // Store for saveClip
                          state.currentEventData.triggerName = displayName;
@@ -637,7 +724,7 @@
                 // Logic for determining event time offset
                 const eventTimeFromJSON = new Date(jsonData.timestamp);
                 const rawReason = jsonData.reason;
-                const isManualSave = rawReason.startsWith('user_interaction');
+                const isManualSave = rawReason.startsWith("user_interaction");
                 
                 if (state.currentEventData.firstClipTime && state.currentEventData.totalDuration > 0) {
                     let offset = (eventTimeFromJSON.getTime() - state.currentEventData.firstClipTime.getTime()) / 1000;
@@ -684,7 +771,6 @@
                     // We can try creating a detached video element to start the request?
                     // Or just rely on the dual player loading it into P2.
                     // Dual Player logic ALREADY loads P2.
-                    // So this function is redundant for Dual Player logic which calls loadVideo on P2.
                 }
             }
         }
@@ -702,14 +788,14 @@
             dom.eventMarker.style.display = "none";
             dom.jumpToEventButton.style.display = "none";
             dom.nextEventBtn.style.display = "none";
-            dom.mapButton.style.display = 'none';
-            dom.eventDetailsContainer.style.display = 'none';
-            dom.timelineMarkersContainer.innerHTML = '';
+            dom.mapButton.style.display = "none";
+            dom.eventDetailsContainer.style.display = "none";
+            dom.timelineMarkersContainer.innerHTML = "";
             state.dayEvents = [];
             state.currentActiveEvent = null;
-            state.activePlayer = 'p1';
+            state.activePlayer = "p1";
             updatePlayerVisibility();
-            document.querySelectorAll('.video-container').forEach(c => c.classList.remove('triggered'));
+            document.querySelectorAll(".video-container").forEach(c => c.classList.remove("triggered"));
 
             const eventKey = state.sortedEventKeys[index];
             const eventData = state.eventClips.get(eventKey);
@@ -734,7 +820,7 @@
             const firstClipNameMatch = earliestFile.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
             if (firstClipNameMatch) {
                 const dateTimeString = firstClipNameMatch[1];
-                const formattedDateTimeString = dateTimeString.substring(0, 10) + 'T' + dateTimeString.substring(11).replace(/-/g, ':');
+                const formattedDateTimeString = dateTimeString.substring(0, 10) + "T" + dateTimeString.substring(11).replace(/-/g, ":");
                 state.currentEventData.firstClipTime = new Date(formattedDateTimeString);
             } else {
                 state.currentEventData.firstClipTime = null;
@@ -746,7 +832,8 @@
             if(masterPlaylist.length > 0) {
                 state.currentEventData.clipDurations = await Promise.all(masterPlaylist.map(getVideoDuration));
                 state.currentEventData.totalDuration = state.currentEventData.clipDurations.reduce((a, b) => a + b, 0);
-            } else {
+            }
+             else {
                 state.currentEventData.clipDurations = [];
                 state.currentEventData.totalDuration = 0;
             }
@@ -796,11 +883,11 @@
                              }
 
                              if (startOffset >= 0 && startOffset <= state.currentEventData.totalDuration) {
-                                 const marker = document.createElement('div');
+                                 const marker = document.createElement("div");
                                  marker.className = `timeline-marker ${ev.type}`;
                                  marker.style.left = `${(startOffset / state.currentEventData.totalDuration) * 100}%`;
-                                 marker.title = `${ev.type === 'sentry' ? 'Sentry' : 'Saved'}: ${formatLocalTime(new Date(ev.startTime))}`;
-                                 marker.addEventListener('click', (e) => { e.stopPropagation(); seekAllVideos(startOffset); });
+                                 marker.title = `${ev.type === "sentry" ? "Sentry" : "Saved"}: ${formatLocalTime(new Date(ev.startTime))}`;
+                                 marker.addEventListener("click", (e) => { e.stopPropagation(); seekAllVideos(startOffset); });
                                  dom.timelineMarkersContainer.appendChild(marker);
                              }
                          }
@@ -821,14 +908,14 @@
             if (state.currentEventData.firstClipTime && state.currentEventData.eventTriggerOffset > -1) {
                  // Check if event.json is parsed (done async). 
                  // If so, we can adjust offset.
-                 // Since it's async, we rely on displayEventDetails or user interaction.
-                 // But we can calculate a 'best guess' if we have event.json loaded.
+                 // Since it\'s async, we rely on displayEventDetails or user interaction.
+                 // But we can calculate a \'best guess\' if we have event.json loaded.
                  // For local files, we can read it here?
                  // ...
             }
 
             const loadPromises = [];
-            const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
+            const cameraTypes = ["front", "back", "left_repeater", "right_repeater", "left_pillar", "right_pillar"];
             cameraTypes.forEach(camera => {
                 const playlist = state.currentEventData.playlists[camera];
                 if (playlist && playlist.length > 0) {
@@ -851,7 +938,7 @@
                 videoElement.onerror = null;
 
                 if (!file) {
-                    videoElement.src = '';
+                    videoElement.src = "";
                     resolve();
                     return;
                 }
@@ -861,8 +948,8 @@
                      resolve();
                 };
 
-                videoElement.addEventListener('canplay', onReady, { once: true });
-                videoElement.addEventListener('error', (e) => {
+                videoElement.addEventListener("canplay", onReady, { once: true });
+                videoElement.addEventListener("error", (e) => {
                     console.error(`Error loading video file: ${file.name}`, e);
                     resolve();
                 }, { once: true });
@@ -895,10 +982,10 @@
         }
         
         function updatePlayButtonUI(isPlaying) {
-            dom.playIcon.style.display = isPlaying ? 'none' : 'block';
-            dom.pauseIcon.style.display = isPlaying ? 'block' : 'none';
-            dom.statusDot.classList.toggle('ready', !isPlaying);
-            dom.statusDot.classList.toggle('playing', isPlaying);
+            dom.playIcon.style.display = isPlaying ? "none" : "block";
+            dom.pauseIcon.style.display = isPlaying ? "block" : "none";
+            dom.statusDot.classList.toggle("ready", !isPlaying);
+            dom.statusDot.classList.toggle("playing", isPlaying);
         }
         
         function pauseVideos() { updatePlayButtonUI(false); getActiveVideos().forEach(v => v.pause()); }
@@ -912,8 +999,8 @@
         
         function setPlaybackSpeed(rate) {
             state.playbackRate = parseFloat(rate);
-            document.querySelectorAll('video').forEach(video => { video.playbackRate = state.playbackRate; });
-            dom.speedDisplay.textContent = state.playbackRate + 'x';
+            document.querySelectorAll("video").forEach(video => { video.playbackRate = state.playbackRate; });
+            dom.speedDisplay.textContent = state.playbackRate + "x";
         }
         
         function seekAllVideos(targetTime) {
@@ -933,7 +1020,7 @@
             const timeInTargetClip = targetTime - timeIntoPlaylist;
             const wasPlaying = !getFrontVideo().paused;
             
-            const cameraTypes = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
+            const cameraTypes = ["front", "back", "left_repeater", "right_repeater", "left_pillar", "right_pillar"];
             
             // Seek might trigger buffering if streaming
             setLoading(true);
@@ -953,7 +1040,7 @@
                     }));
                     
                     // Preload next
-                    const inactivePlayer = state.activePlayer === 'p1' ? 'p2' : 'p1';
+                    const inactivePlayer = state.activePlayer === "p1" ? "p2" : "p1";
                     const inactiveVid = document.querySelector(`video.${camera}.${inactivePlayer}`);
                     if (targetClipIndex + 1 < playlist.length) {
                         loadVideo(inactiveVid, playlist[targetClipIndex + 1]);
@@ -984,21 +1071,45 @@
             dom.liveTimestamp.textContent = formatLocalTime(liveTime);
         }
         function updateEventMarkerPosition() { if (state.currentEventData.eventTriggerOffset > 0 && state.currentEventData.totalDuration > 0) dom.eventMarker.style.left = `${(state.currentEventData.eventTriggerOffset / state.currentEventData.totalDuration) * 100}%`; }
-        function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, '0')}`; }
-        function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return '--:--:--'; return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+        function formatTime(seconds) { if (isNaN(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs.toString().padStart(2, "0")}`; }
+        function formatLocalTime(date) { if (!date || isNaN(date.getTime())) return "--:--:--"; return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }); }
         function getVideoDuration(file) { 
             return new Promise(resolve => { 
                 if (file.isRemote) { resolve(60); return; }
-                const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); 
+                const v = document.createElement("video"); v.preload = "metadata"; v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); }; v.onerror = () => resolve(0); v.src = URL.createObjectURL(file); 
             }); 
         }
-        function toggleFullscreen() { dom.body.classList.toggle('fullscreen-active'); const isFullscreen = dom.body.classList.contains('fullscreen-active'); dom.maximizeIcon.style.display = isFullscreen ? 'none' : 'block'; dom.minimizeIcon.style.display = isFullscreen ? 'block' : 'none'; }
-        function closeMap() { dom.mapContainer.style.display = 'none'; dom.mapIframe.src = ''; }
+        function toggleFullscreen() { dom.body.classList.toggle("fullscreen-active"); const isFullscreen = dom.body.classList.contains("fullscreen-active"); dom.maximizeIcon.style.display = isFullscreen ? "none" : "block"; dom.minimizeIcon.style.display = isFullscreen ? "block" : "none"; }
+        function closeMap() { dom.mapContainer.style.display = "none"; dom.mapIframe.src = ""; }
 
-        async function saveClip() {
-             const duration = parseInt(dom.recordDurationSelect.value) || 30;
-             const customTitle = dom.clipCustomTitle.value.trim() || 'TeslaCam Event Recording';
-             dom.recordingOverlay.style.display = 'flex';
+        function saveClip() {
+            dom.recordingSettingsOverlay.style.display = "flex";
+        }
+
+        async function performRecording() {
+             const duration = parseInt(dom.modalClipDuration.value) || 30;
+             const customTitle = dom.modalClipTitle.value.trim() || "TeslaCam Event Recording";
+             
+             const checkboxes = Array.from(document.querySelectorAll(".camera-checkbox input:checked"));
+             const selectedValues = new Set(checkboxes.map(cb => cb.value));
+             
+             if (selectedValues.size === 0) {
+                 alert("Please select at least one camera.");
+                 return;
+             }
+
+             // Canonical Order & Labels
+             const canonicalOrder = ["front", "back", "left_repeater", "right_repeater", "left_pillar", "right_pillar"];
+             const cameraLabels = {
+                 "front": "Front", "back": "Back", 
+                 "left_repeater": "Left Fender", "right_repeater": "Right Fender",
+                 "left_pillar": "Left Pillar", "right_pillar": "Right Pillar"
+             };
+             
+             const selectedCams = canonicalOrder.filter(c => selectedValues.has(c));
+
+             dom.recordingSettingsOverlay.style.display = "none";
+             dom.recordingOverlay.style.display = "flex";
              
              // Fetch Map Image
              let mapImg = null;
@@ -1018,29 +1129,45 @@
                  } catch(e) { console.log("Map fetch failed", e); }
              }
 
-             const canvas = document.createElement('canvas');
-             canvas.width = 1920;
-             canvas.height = 1080; // HD
-             const ctx = canvas.getContext('2d');
+             // Calculate Layout
+             const numCams = selectedCams.length;
+             let cols = 1, rows = 1;
+             if (numCams === 1) { cols=1; rows=1; }
+             else if (numCams === 2) { cols=2; rows=1; }
+             else if (numCams <= 4) { cols=2; rows=2; }
+             else { cols=3; rows=2; }
+
+             const camWidth = 1280;
+             const camHeight = 960;
+             const canvas = document.createElement("canvas");
+             canvas.width = camWidth * cols;
+             canvas.height = camHeight * rows;
+             const ctx = canvas.getContext("2d");
              
+             // Format check
+             let mimeType = "video/webm";
+             if (MediaRecorder.isTypeSupported("video/mp4")) mimeType = "video/mp4";
+             else if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) mimeType = "video/webm;codecs=vp9";
+
              const stream = canvas.captureStream(30);
-             const recorder = new MediaRecorder(stream, { mimeType: 'video/webm', videoBitsPerSecond: 8000000 });
+             const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 25000000 }); // 25 Mbps
              const chunks = [];
              recorder.ondataavailable = e => chunks.push(e.data);
              recorder.onstop = () => {
-                 const blob = new Blob(chunks, { type: 'video/webm' });
+                 const blob = new Blob(chunks, { type: mimeType });
                  const url = URL.createObjectURL(blob);
-                 const a = document.createElement('a');
+                 const a = document.createElement("a");
                  a.href = url;
-                 a.download = `TeslaCam-Clip-${new Date().toISOString().replace(/[:.]/g, '-')}.webm`;
+                 const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+                 a.download = `TeslaCam-Clip-${new Date().toISOString().replace(/[:.]/g, "-")}.${ext}`;
                  a.click();
-                 dom.recordingOverlay.style.display = 'none';
+                 dom.recordingOverlay.style.display = "none";
              };
              
              recorder.start();
              
              // Phase 1: Title Screen (3s)
-             let phase = 'title';
+             let phase = "title";
              const startTime = Date.now();
              const totalDuration = (duration + 3) * 1000; 
              
@@ -1052,109 +1179,127 @@
                  
                  // Background
                  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-                 grad.addColorStop(0, '#0a0a0a');
-                 grad.addColorStop(1, '#1a1a1a');
+                 grad.addColorStop(0, "#0a0a0a");
+                 grad.addColorStop(1, "#1a1a1a");
                  ctx.fillStyle = grad;
                  ctx.fillRect(0, 0, canvas.width, canvas.height);
                  
                  if (Date.now() - startTime < 3000) {
                      // Title Screen
-                     ctx.fillStyle = 'white';
-                     ctx.font = 'bold 60px Inter, sans-serif';
-                     ctx.textAlign = 'center';
+                     ctx.fillStyle = "white";
+                     // Scale font based on resolution
+                     const scaleFactor = canvas.width / 1920;
+                     ctx.font = `bold ${60 * scaleFactor}px Inter, sans-serif`;
+                     ctx.textAlign = "center";
                      // Shadow
-                     ctx.shadowColor = 'black';
-                     ctx.shadowBlur = 10;
-                     ctx.fillText(customTitle, canvas.width/2, 150);
+                     ctx.shadowColor = "black";
+                     ctx.shadowBlur = 10 * scaleFactor;
+                     ctx.fillText(customTitle, canvas.width/2, 150 * scaleFactor);
                      ctx.shadowBlur = 0;
                      
                      if (mapImg) {
-                         const mw = 600, mh = 400;
+                         const mw = 600 * scaleFactor, mh = 400 * scaleFactor;
                          const mx = (canvas.width - mw) / 2;
-                         const my = 220;
+                         const my = 220 * scaleFactor;
                          
                          // Border
-                         ctx.strokeStyle = '#444';
-                         ctx.lineWidth = 4;
+                         ctx.strokeStyle = "#444";
+                         ctx.lineWidth = 4 * scaleFactor;
                          ctx.strokeRect(mx, my, mw, mh);
                          
                          ctx.drawImage(mapImg, mx, my, mw, mh);
                      }
 
-                     ctx.font = '36px Inter, sans-serif';
-                     ctx.fillStyle = '#cccccc';
+                     ctx.font = `${36 * scaleFactor}px Inter, sans-serif`;
+                     ctx.fillStyle = "#cccccc";
                      
                      // Date
                      let dateStr = "";
                      if (state.currentEventData.firstClipTime) {
-                         dateStr = state.currentEventData.firstClipTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                         dateStr = state.currentEventData.firstClipTime.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
                      }
-                     ctx.fillText(dateStr, canvas.width/2, 680);
+                     ctx.fillText(dateStr, canvas.width/2, 680 * scaleFactor);
 
                      const timeStr = dom.liveTimestamp.textContent; 
-                     ctx.fillText(`Time: ${timeStr}`, canvas.width/2, 730);
+                     ctx.fillText(`Time: ${timeStr}`, canvas.width/2, 730 * scaleFactor);
                      
-                     let yPos = 780;
-                     if (state.currentActiveEvent && state.currentActiveEvent.type) {
-                         ctx.fillStyle = state.currentActiveEvent.type === 'sentry' ? '#ef4444' : '#3b82f6';
-                         ctx.font = 'bold 40px Inter, sans-serif';
-                         ctx.fillText(`${state.currentActiveEvent.type.toUpperCase()} EVENT`, canvas.width/2, yPos);
-                         yPos += 50;
+                     let yPos = 780 * scaleFactor;
+                     if (state.currentEventData.firstClipTime) {
+                        if (state.currentActiveEvent && state.currentActiveEvent.type) {
+                            ctx.fillStyle = state.currentActiveEvent.type === "sentry" ? "#ef4444" : "#3b82f6";
+                            ctx.font = `bold ${40 * scaleFactor}px Inter, sans-serif`;
+                            ctx.fillText(`${state.currentActiveEvent.type.toUpperCase()} EVENT`, canvas.width/2, yPos);
+                            yPos += 50 * scaleFactor;
+                        }
+
+                        ctx.font = `${30 * scaleFactor}px Inter, sans-serif`;
+                        ctx.fillStyle = "#e5e5e5";
+                        
+                        if (state.currentEventData.triggerName) {
+                            ctx.fillText(`Triggered by: ${state.currentEventData.triggerName}`, canvas.width/2, yPos);
+                            yPos += 40 * scaleFactor;
+                        }
+                        
+                        if (state.currentEventData.city) {
+                            ctx.fillText(`City: ${state.currentEventData.city}`, canvas.width/2, yPos);
+                            yPos += 40 * scaleFactor;
+                        }
+                        
+                        if (state.currentEventData.location) {
+                                ctx.fillStyle = "#9ca3af";
+                                ctx.fillText(`Coords: ${state.currentEventData.location.lat.toFixed(5)}, ${state.currentEventData.location.lon.toFixed(5)}`, canvas.width/2, yPos);
+                        }
                      }
-                     
-                     ctx.font = '30px Inter, sans-serif';
-                     ctx.fillStyle = '#e5e5e5';
-                     
-                     if (state.currentEventData.triggerName) {
-                         ctx.fillText(`Triggered by: ${state.currentEventData.triggerName}`, canvas.width/2, yPos);
-                         yPos += 40;
-                     }
-                     
-                     if (state.currentEventData.city) {
-                         ctx.fillText(`City: ${state.currentEventData.city}`, canvas.width/2, yPos);
-                         yPos += 40;
-                     }
-                     
-                     if (state.currentEventData.location) {
-                          ctx.fillStyle = '#9ca3af';
-                          ctx.fillText(`Coords: ${state.currentEventData.location.lat.toFixed(5)}, ${state.currentEventData.location.lon.toFixed(5)}`, canvas.width/2, yPos);
-                     }
-                     
-                     ctx.font = '24px Inter, sans-serif';
-                     ctx.fillStyle = '#666';
-                     ctx.fillText("Generated by Tesla Companion", canvas.width/2, canvas.height - 50);
+
+                     ctx.font = `${24 * scaleFactor}px Inter, sans-serif`;
+                     ctx.fillStyle = "#666";
+                     ctx.fillText("Generated by Tesla Companion", canvas.width/2, canvas.height - 50 * scaleFactor);
 
                  } else {
                      // Video Grid
-                     const videos = Array.from(getActiveVideos());
-                     const w = canvas.width / 3;
-                     const h = canvas.height / 2;
-                     
-                     videos.forEach(v => {
-                         let dx=0, dy=0;
-                         if (v.classList.contains('front')) { dx=w; dy=0; }
-                         else if (v.classList.contains('left_pillar')) { dx=0; dy=0; }
-                         else if (v.classList.contains('right_pillar')) { dx=w*2; dy=0; }
-                         else if (v.classList.contains('left_repeater')) { dx=0; dy=h; }
-                         else if (v.classList.contains('back')) { dx=w; dy=h; }
-                         else if (v.classList.contains('right_repeater')) { dx=w*2; dy=h; }
-                         
-                         ctx.drawImage(v, dx, dy, w, h);
+                     selectedCams.forEach((camType, index) => {
+                         const video = document.querySelector(`video.${camType}.${state.activePlayer}`);
+                         if (video) {
+                             const col = index % cols;
+                             const row = Math.floor(index / cols);
+                             const dx = col * camWidth;
+                             const dy = row * camHeight;
+                             
+                             // Draw Background for letterboxing if needed? 
+                             // No, we are exact match 1280x960.
+                             ctx.drawImage(video, dx, dy, camWidth, camHeight);
+                             
+                             // Draw Label
+                             const label = cameraLabels[camType];
+                             const fontSize = 30; // Fixed font size for clarity at high res
+                             ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+                             ctx.textAlign = "left";
+                             ctx.fillStyle = "white";
+                             ctx.shadowColor = "black";
+                             ctx.shadowBlur = 4;
+                             ctx.lineWidth = 3;
+                             ctx.strokeStyle = "black";
+                             // Draw stroke then fill
+                             ctx.strokeText(label, dx + 20, dy + 50);
+                             ctx.fillText(label, dx + 20, dy + 50);
+                             ctx.shadowBlur = 0;
+                         }
                      });
                      
                      // Timestamp overlay
-                     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                     ctx.fillRect(10, 10, 450, 50);
-                     ctx.fillStyle = 'white';
-                     ctx.font = '30px monospace';
-                     ctx.textAlign = 'left';
+                     const scaleFactor = canvas.width / 1920;
+                     ctx.fillStyle = "rgba(0,0,0,0.5)";
+                     ctx.fillRect(10 * scaleFactor, 10 * scaleFactor, 450 * scaleFactor, 50 * scaleFactor);
+                     ctx.fillStyle = "white";
+                     ctx.font = `${30 * scaleFactor}px monospace`;
+                     ctx.textAlign = "left";
                      // Add Date to timestamp
                      let fullTimestamp = dom.liveTimestamp.textContent;
                      if (state.currentEventData.firstClipTime) {
                          const datePart = state.currentEventData.firstClipTime.toLocaleDateString();
                          fullTimestamp = `${datePart} ${fullTimestamp}`;
                      }
-                     ctx.fillText(fullTimestamp, 20, 45);
+                     ctx.fillText(fullTimestamp, 20 * scaleFactor, 45 * scaleFactor);
                  }
                  
                  requestAnimationFrame(drawLoop);
@@ -1165,10 +1310,10 @@
              // Start playback if paused
              playVideos();
         }
-
+        
         // --- Event Listeners ---
-        dom.piConnectBtn.addEventListener('click', connectToPi);
-        dom.fileBrowser.addEventListener('change', (e) => {
+        dom.piConnectBtn.addEventListener("click", connectToPi);
+        dom.fileBrowser.addEventListener("change", (e) => {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
             dom.titleFolderName.textContent = "Processing Local Files...";
@@ -1180,32 +1325,32 @@
              state.eventClips.clear();
              state.sortedEventKeys = [];
              state.eventsMap.clear();
-             dom.dateSelector.innerHTML = '<option>Select Event</option>';
+             dom.dateSelector.innerHTML = "<option>Select Event</option>";
              
              const sequenceMetadata = new Map();
 
              files.forEach(file => {
-                 const pathParts = file.webkitRelativePath.split('/');
+                 const pathParts = file.webkitRelativePath.split("/");
                  if (pathParts.length < 2) return;
                  const eventName = pathParts[pathParts.length - 2]; // Use parent folder as event ID
                  
-                 let type = 'saved';
-                 if (file.webkitRelativePath.includes('SentryClips')) type = 'sentry';
+                 let type = "saved";
+                 if (file.webkitRelativePath.includes("SentryClips")) type = "sentry";
                  
                  if (!sequenceMetadata.has(eventName)) {
                      sequenceMetadata.set(eventName, { minTime: null, maxTime: null, jsonFile: null, type: type });
                  }
                  const meta = sequenceMetadata.get(eventName);
 
-                 if (file.name.toLowerCase() === 'event.json') {
+                 if (file.name.toLowerCase() === "event.json") {
                      meta.jsonFile = file;
-                 } else if (file.name.endsWith('.mp4')) {
+                 } else if (file.name.endsWith(".mp4")) {
                      const match = file.name.match(/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
                      if (match) {
-                         const isoTime = match[1].substring(0, 10) + 'T' + match[1].substring(11).replace(/-/g, ':');
-                         const time = new Date(isoTime).getTime();
-                         if (meta.minTime === null || time < meta.minTime) meta.minTime = time;
-                         if (meta.maxTime === null || time > meta.maxTime) meta.maxTime = time;
+                                 const isoTime = match[1].substring(0, 10) + "T" + match[1].substring(11).replace(/-/g, ":");
+                                 const time = new Date(isoTime).getTime();
+                                 if (meta.minTime === null || time < meta.minTime) meta.minTime = time;
+                                 if (meta.maxTime === null || time > meta.maxTime) meta.maxTime = time;
                      }
                      
                      if (!state.eventClips.has(eventName)) {
@@ -1218,23 +1363,23 @@
                      
                      const lowerName = file.name.toLowerCase();
                      let cameraType = null;
-                     if (lowerName.includes('front')) cameraType = 'front';
-                     else if (lowerName.includes('back')) cameraType = 'back';
-                     else if (lowerName.includes('left_repeater')) cameraType = 'left_repeater';
-                     else if (lowerName.includes('right_repeater')) cameraType = 'right_repeater';
-                     else if (lowerName.includes('left_pillar')) cameraType = 'left_pillar';
-                     else if (lowerName.includes('right_pillar')) cameraType = 'right_pillar';
+                     if (lowerName.includes("front")) cameraType = "front";
+                     else if (lowerName.includes("back")) cameraType = "back";
+                     else if (lowerName.includes("left_repeater")) cameraType = "left_repeater";
+                     else if (lowerName.includes("right_repeater")) cameraType = "right_repeater";
+                     else if (lowerName.includes("left_pillar")) cameraType = "left_pillar";
+                     else if (lowerName.includes("right_pillar")) cameraType = "right_pillar";
                      
                      if (cameraType) {
                          eventData.playlists[cameraType].push(file);
                      }
                  }
-             });
+            });
              
             sequenceMetadata.forEach((meta, seqName) => {
                 if (meta.minTime) {
                      const dateStr = new Date(meta.minTime).toISOString().substring(0, 10);
-                     if (!state.eventsMap.has(dateStr)) state.eventsMap.set(dateStr, []);
+                     if (!state.eventsMap.has(dateStr)) eventsMap.set(dateStr, []);
                      state.eventsMap.get(dateStr).push({
                          sequenceName: seqName,
                          startTime: meta.minTime,
@@ -1256,7 +1401,7 @@
              state.sortedEventKeys = Array.from(state.eventClips.keys()).sort();
              
              if (state.sortedEventKeys.length === 0) {
-                 dom.titleFolderName.textContent = 'No Clips Found';
+                 dom.titleFolderName.textContent = "No Clips Found";
                  setLoading(false);
                  return;
              }
@@ -1274,19 +1419,19 @@
              loadEvent(0);
         }
 
-        dom.themeToggle.addEventListener('click', () => {
-            const newTheme = dom.body.classList.contains('light-mode') ? 'dark' : 'light';
-            localStorage.setItem('theme', newTheme);
+        dom.themeToggle.addEventListener("click", () => {
+            const newTheme = dom.body.classList.contains("light-mode") ? "dark" : "light";
+            localStorage.setItem("theme", newTheme);
             applyTheme(newTheme);
         });
-        dom.playPauseButton.addEventListener('click', playPause);
+        dom.playPauseButton.addEventListener("click", playPause);
         dom.dateSelector.addEventListener("change", (e) => loadEvent(parseInt(e.target.value)));
         dom.nextButton.addEventListener("click", () => { if (state.carouselIndex < state.sortedEventKeys.length - 1) loadEvent(++state.carouselIndex); });
         dom.previousButton.addEventListener("click", () => { if (state.carouselIndex > 0) loadEvent(--state.carouselIndex); });
         dom.jumpToEventButton.addEventListener("click", () => seekAllVideos(state.currentEventData.eventTriggerOffset));
         
         // Next Event Button
-        dom.nextEventBtn.addEventListener('click', () => {
+        dom.nextEventBtn.addEventListener("click", () => {
              if (state.dayEvents && state.dayEvents.length > 0) {
                  const currentTime = getCurrentTime();
                  // Find first event starting AFTER current time
@@ -1301,20 +1446,20 @@
              }
         });
         
-        dom.mapButton.addEventListener('click', (e) => {
+        dom.mapButton.addEventListener("click", (e) => {
             e.preventDefault();
             if (state.currentEventData.location) {
                 const { lat, lon } = state.currentEventData.location;
                 // OSM Embed
                 const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.005},${lat-0.005},${lon+0.005},${lat+0.005}&layer=mapnik&marker=${lat},${lon}`;
                 dom.mapIframe.src = mapUrl;
-                dom.mapContainer.style.display = 'flex';
+                dom.mapContainer.style.display = "flex";
             }
         });
         
-        dom.skipForwardButton.addEventListener('click', () => skipTo(5));
-        dom.skipRewindButton.addEventListener('click', () => skipTo(-5));
-        dom.playbackSpeedSelector.addEventListener('input', (e) => {
+        dom.skipForwardButton.addEventListener("click", () => skipTo(5));
+        dom.skipRewindButton.addEventListener("click", () => skipTo(-5));
+        dom.playbackSpeedSelector.addEventListener("input", (e) => {
              let val = parseInt(e.target.value);
              let speed;
              // Map 0-30 slider to 0.25-3.0
@@ -1324,8 +1469,8 @@
              if (speed > 1) speed = Math.round(speed * 10) / 10; else speed = Math.round(speed * 100) / 100;
              setPlaybackSpeed(speed);
         });
-        dom.resetSpeedBtn.addEventListener('click', () => { dom.playbackSpeedSelector.value = 10; setPlaybackSpeed(1.0); });
-        dom.masterScrubber.addEventListener('mousemove', (e) => {
+        dom.resetSpeedBtn.addEventListener("click", () => { dom.playbackSpeedSelector.value = 10; setPlaybackSpeed(1.0); });
+        dom.masterScrubber.addEventListener("mousemove", (e) => {
             if (!state.currentEventData.totalDuration) return;
             const rect = dom.masterScrubber.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -1333,40 +1478,40 @@
             const percentage = Math.max(0, Math.min(1, x / width));
             const time = percentage * state.currentEventData.totalDuration;
             dom.scrubberTooltip.style.left = `${percentage * 100}%`;
-            dom.scrubberTooltip.style.opacity = '1';
+            dom.scrubberTooltip.style.opacity = "1";
             if (state.currentEventData.firstClipTime) {
                  const hoverTime = new Date(state.currentEventData.firstClipTime.getTime() + (time * 1000));
                  dom.scrubberTooltip.textContent = formatLocalTime(hoverTime);
             } else { dom.scrubberTooltip.textContent = formatTime(time); }
         });
-        dom.masterScrubber.addEventListener('mouseout', () => { dom.scrubberTooltip.style.opacity = '0'; });
+        dom.masterScrubber.addEventListener("mouseout", () => { dom.scrubberTooltip.style.opacity = "0"; });
 
-        document.querySelectorAll('video').forEach(video => {
+        document.querySelectorAll("video").forEach(video => {
             // Buffering / Sync Logic
-            video.addEventListener('waiting', () => {
-                if (!video.classList.contains('active')) return;
+            video.addEventListener("waiting", () => {
+                if (!video.classList.contains("active")) return;
                 // If any active video is buffering, pause all
                 if (!state.isLoading) {
-                    console.log('Buffering:', video.className);
+                    console.log("Buffering:", video.className);
                     // We use a lighter loading state here to avoid blocking UI completely?
                     // For now reuse setLoading but keep controls enabled? 
                     // Or just pause.
                     getActiveVideos().forEach(v => v.pause());
-                    dom.loadingOverlay.style.display = 'flex';
-                    dom.loadingOverlay.querySelector('#loading-text').textContent = "Buffering...";
+                    dom.loadingOverlay.style.display = "flex";
+                    dom.loadingOverlay.querySelector("#loading-text").textContent = "Buffering...";
                 }
             });
             
-            video.addEventListener('canplay', () => {
-                if (!video.classList.contains('active')) return;
+            video.addEventListener("canplay", () => {
+                if (!video.classList.contains("active")) return;
                 // Check if all active videos are ready
                 const active = Array.from(getActiveVideos());
                 const allReady = active.every(v => v.readyState >= 3); // HAVE_FUTURE_DATA
-                if (allReady && dom.loadingOverlay.style.display === 'flex' && dom.loadingOverlay.querySelector('#loading-text').textContent === "Buffering...") {
-                    dom.loadingOverlay.style.display = 'none';
-                    dom.loadingOverlay.querySelector('#loading-text').textContent = "Loading...";
+                if (allReady && dom.loadingOverlay.style.display === "flex" && dom.loadingOverlay.querySelector("#loading-text").textContent === "Buffering...") {
+                    dom.loadingOverlay.style.display = "none";
+                    dom.loadingOverlay.querySelector("#loading-text").textContent = "Loading...";
                     // Resume if we were playing (how to track? infer from UI)
-                    if (dom.playIcon.style.display === 'none') { 
+                    if (dom.playIcon.style.display === "none") { 
                         playVideos();
                     }
                 }
@@ -1374,8 +1519,8 @@
 
             video.addEventListener("timeupdate", (e) => {
                 // Scrubber Update (only front)
-                if (e.target.classList.contains('active') && e.target.classList.contains('front')) {
-                    if (!state.currentEventData.totalDuration || dom.masterScrubber.matches(':active')) return;
+                if (e.target.classList.contains("active") && e.target.classList.contains("front")) {
+                    if (!state.currentEventData.totalDuration || dom.masterScrubber.matches(":active")) return;
                     dom.masterScrubber.value = (getCurrentTime() / state.currentEventData.totalDuration) * 100;
                     updateLiveTimestamp();
                     
@@ -1393,22 +1538,23 @@
                                 state.currentActiveEvent = activeEvent;
                                 displayEventDetails(activeEvent);
                             }
-                        } else {
+                        }
+                        else {
                             if (state.currentActiveEvent) {
                                 state.currentActiveEvent = null;
-                                dom.eventDetailsContainer.style.display = 'none';
-                                dom.mapButton.style.display = 'none';
+                                dom.eventDetailsContainer.style.display = "none";
+                                dom.mapButton.style.display = "none";
                             }
                         }
                         
                         // Show/Hide Next Event Button
                         const hasNext = state.dayEvents.some(ev => ev.startOffset > currentTime + 5);
-                        dom.nextEventBtn.style.display = hasNext ? 'inline-flex' : 'none';
+                        dom.nextEventBtn.style.display = hasNext ? "inline-flex" : "none";
                     }
                     
                     // Sync check for all videos
                      getActiveVideos().forEach(v => {
-                         if (!v.classList.contains('front')) {
+                         if (!v.classList.contains("front")) {
                              if (Math.abs(v.currentTime - e.target.currentTime) > 0.5) {
                                  v.currentTime = e.target.currentTime;
                              }
@@ -1418,8 +1564,8 @@
             });
 
             video.addEventListener("ended", async (e) => {
-                if (!e.target.classList.contains('active')) return;
-                const camera = e.target.className.split(' ')[0];
+                if (!e.target.classList.contains("active")) return;
+                const camera = e.target.className.split(" ")[0];
                 if (!state.currentEventData.playlists || !state.currentEventData.playlists[camera]) return;
                 
                 const playlist = state.currentEventData.playlists[camera];
@@ -1431,8 +1577,8 @@
                     const p2 = document.querySelector(`video.${camera}.p2`);
                     const nextPlayer = e.target === p1 ? p2 : p1;
                     
-                    e.target.classList.remove('active');
-                    nextPlayer.classList.add('active');
+                    e.target.classList.remove("active");
+                    nextPlayer.classList.add("active");
                     
                     nextPlayer.playbackRate = state.playbackRate;
                     nextPlayer.play().catch(err => {});
@@ -1440,9 +1586,9 @@
                     if (currentIdx + 2 < playlist.length) {
                         loadVideo(e.target, playlist[currentIdx + 2]);
                     }
-                    if (camera === 'front') state.activePlayer = nextPlayer.classList.contains('p1') ? 'p1' : 'p2';
+                    if (camera === "front") state.activePlayer = nextPlayer.classList.contains("p1") ? "p1" : "p2";
 
-                } else if (camera === 'front') {
+                } else if (camera === "front") {
                     if (state.carouselIndex < state.sortedEventKeys.length - 1) {
                         await loadEvent(++state.carouselIndex);
                         playVideos();
@@ -1457,33 +1603,48 @@
         dom.masterScrubber.addEventListener("change", () => { if (state.currentEventData.totalDuration) seekAllVideos((dom.masterScrubber.value / 100) * state.currentEventData.totalDuration); });
         
         // Double Click Expand
-        document.querySelectorAll('.video-container').forEach(container => {
-            container.addEventListener('dblclick', (e) => {
+        document.querySelectorAll(".video-container").forEach(container => {
+            container.addEventListener("dblclick", (e) => {
                 const grid = dom.videoGrid;
                 const clickedContainer = e.currentTarget;
-                if (grid.classList.contains('expanded-view')) {
-                    if (clickedContainer.classList.contains('expanded')) {
-                        grid.classList.remove('expanded-view');
-                        clickedContainer.classList.remove('expanded');
+                if (grid.classList.contains("expanded-view")) {
+                    if (clickedContainer.classList.contains("expanded")) {
+                        grid.classList.remove("expanded-view");
+                        clickedContainer.classList.remove("expanded");
                     }
                 } else {
-                    grid.classList.add('expanded-view');
-                    clickedContainer.classList.add('expanded');
+                    grid.classList.add("expanded-view");
+                    clickedContainer.classList.add("expanded");
                 }
             });
         });
         
-        dom.saveClipBtn.addEventListener('click', saveClip);
-        dom.mapCloseButton.addEventListener('click', closeMap);
-        dom.mapContainer.addEventListener('click', (e) => { if (e.target === dom.mapContainer) closeMap(); });
+        dom.saveClipBtn.addEventListener("click", saveClip);
+        dom.closeModalBtn.addEventListener("click", () => dom.recordingSettingsOverlay.style.display = "none");
+        dom.cancelRecordingBtn.addEventListener("click", () => dom.recordingSettingsOverlay.style.display = "none");
+        dom.startRecordingBtn.addEventListener("click", performRecording);
+        dom.mapCloseButton.addEventListener("click", closeMap);
+        
+        dom.zoomTimelineBtn.addEventListener("click", () => {
+            dom.progressContainer.classList.toggle("zoomed");
+            const isZoomed = dom.progressContainer.classList.contains("zoomed");
+            dom.zoomTimelineBtn.classList.toggle("active", isZoomed);
+            dom.zoomTimelineBtn.style.color = isZoomed ? "var(--primary-color)" : "inherit";
+            
+            if (isZoomed) {
+                const percent = dom.masterScrubber.value / 100;
+                const scrollWidth = dom.masterScrubber.scrollWidth;
+                const clientWidth = dom.progressContainer.clientWidth;
+                dom.progressContainer.scrollLeft = (scrollWidth * percent) - (clientWidth / 2);
+            }
+        });
+        dom.mapContainer.addEventListener("click", (e) => { if (e.target === dom.mapContainer) closeMap(); });
         
         // Init
-        applyTheme(localStorage.getItem('theme') || 'dark');
+        applyTheme(localStorage.getItem("theme") || "dark");
         // Skip splash logic here as it is handled in index.html
     });
 </script>
 
 </body>
 </html>
-
-</final_file_content>
